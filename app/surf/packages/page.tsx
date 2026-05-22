@@ -1,18 +1,88 @@
 import type { Metadata } from "next";
-import { PagePlaceholder } from "@/components/primitives/page-placeholder";
+import { Container } from "@/components/primitives/container";
+import { getActiveSurfPackages } from "@/lib/surf-packages";
 
 export const metadata: Metadata = {
   title: "Surf Packages | Tifawave Surf Stay",
   description:
-    "A placeholder for Tifawave surf packages, coaching tiers, and level guidance."
+    "Explore active Tifawave surf packages with pricing, duration, level guidance, and inclusions."
 };
 
-export default function SurfPackagesPage() {
+export default async function SurfPackagesPage() {
+  const packages = await getActiveSurfPackages();
+
   return (
-    <PagePlaceholder
-      eyebrow="Surf Packages"
-      title="The package matcher will live here."
-      description="This page will introduce Surf & Stay, Coached Surf Week, and Private Progression with clear inclusions, level guidance, and honest pricing."
-    />
+    <main className="surf-packages-page">
+      <section className="surf-packages-hero" aria-labelledby="surf-packages-title">
+        <Container>
+          <p className="eyebrow">Surf Packages</p>
+          <h1 id="surf-packages-title">Choose the surf rhythm that fits.</h1>
+          <p>
+            Active Tifawave packages with clear pricing, duration, surf level,
+            and what is included before you book.
+          </p>
+        </Container>
+      </section>
+
+      <section className="surf-packages-list" aria-label="Available packages">
+        <Container>
+          {packages.length > 0 ? (
+            <div className="surf-packages-grid">
+              {packages.map((pkg) => (
+                <article className="surf-package-panel" key={pkg.id}>
+                  <div>
+                    <p className="eyebrow">{pkg.surfLevel}</p>
+                    <h2>{pkg.name}</h2>
+                    <p>{pkg.fullDescription}</p>
+                  </div>
+
+                  <dl className="surf-package-facts">
+                    <div>
+                      <dt>Price</dt>
+                      <dd>
+                        {pkg.priceLabel} / {pkg.unitLabel}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Duration</dt>
+                      <dd>{pkg.unitLabel}</dd>
+                    </div>
+                  </dl>
+
+                  <ul>
+                    {pkg.inclusions.map((inclusion) => (
+                      <li key={inclusion}>
+                        <svg
+                          aria-hidden="true"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path d="M20 6 9 17l-5-5" />
+                        </svg>
+                        <span>{inclusion}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <a className="btn btn-primary" href="/book">
+                    Book
+                  </a>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="admin-empty-state">
+              <p className="eyebrow">Packages unavailable</p>
+              <h2>Active surf packages will appear here.</h2>
+              <p>Check back soon or contact Tifawave for current options.</p>
+            </div>
+          )}
+        </Container>
+      </section>
+    </main>
   );
 }

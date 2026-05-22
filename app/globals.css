@@ -1107,6 +1107,125 @@ select {
   color: var(--ink);
 }
 
+.surf-packages-page {
+  background: var(--bone);
+}
+
+.surf-packages-hero {
+  padding: clamp(76px, 11vw, 132px) 0 clamp(42px, 7vw, 72px);
+}
+
+.surf-packages-hero h1 {
+  max-width: 12ch;
+  margin: 14px 0 18px;
+  color: var(--ink);
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(3rem, 8vw, 6.4rem);
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  line-height: 0.95;
+}
+
+.surf-packages-hero p:last-child {
+  max-width: 58ch;
+  margin: 0;
+  color: var(--muted);
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  line-height: 1.8;
+}
+
+.surf-packages-list {
+  padding: 0 0 clamp(76px, 11vw, 132px);
+}
+
+.surf-packages-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.surf-package-panel {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 22px;
+  border: 1px solid rgb(11 31 42 / 10%);
+  border-radius: 22px;
+  background: rgb(251 248 242 / 88%);
+  padding: clamp(22px, 3vw, 30px);
+  box-shadow: 0 24px 60px -46px rgb(11 31 42 / 60%);
+}
+
+.surf-package-panel h2 {
+  margin: 10px 0 12px;
+  color: var(--ink);
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  font-weight: 300;
+  line-height: 1.05;
+}
+
+.surf-package-panel p:not(.eyebrow) {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.75;
+}
+
+.surf-package-facts {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.surf-package-facts div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.surf-package-facts dt {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.surf-package-facts dd {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 800;
+  text-align: right;
+}
+
+.surf-package-panel ul {
+  display: grid;
+  gap: 11px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.surf-package-panel li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--ink-700);
+}
+
+.surf-package-panel li svg {
+  flex: none;
+  margin-top: 3px;
+  color: var(--seaglass);
+}
+
+.surf-package-panel .btn {
+  align-self: flex-start;
+  margin-top: auto;
+}
+
 .booking-page {
   min-height: calc(100svh - 72px);
   padding: clamp(64px, 9vw, 118px) 0;
@@ -2190,6 +2309,19 @@ select {
 
   .packages-preview-grid {
     grid-template-columns: 1fr;
+  }
+
+  .surf-packages-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .surf-package-facts div {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .surf-package-facts dd {
+    text-align: left;
   }
 
   .stay-preview-inner {

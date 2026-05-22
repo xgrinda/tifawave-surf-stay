@@ -1,7 +1,9 @@
-import { homePackages } from "@/data/home-packages";
 import { Container } from "@/components/primitives/container";
+import { getActiveSurfPackages } from "@/lib/surf-packages";
 
-export function PackagesPreview() {
+export async function PackagesPreview() {
+  const packages = await getActiveSurfPackages();
+
   return (
     <section className="packages-preview" aria-labelledby="packages-preview-title">
       <Container>
@@ -15,12 +17,12 @@ export function PackagesPreview() {
         </div>
 
         <div className="packages-preview-grid">
-          {homePackages.map((pkg) => (
+          {packages.map((pkg) => (
             <article
               className={`package-card package-card-${pkg.tone}${
                 pkg.featured ? " is-featured" : ""
               }`}
-              key={pkg.name}
+              key={pkg.id}
             >
               <div className="package-card-media">
                 <div className="package-card-image" />
@@ -31,7 +33,7 @@ export function PackagesPreview() {
 
               <div className="package-card-body">
                 <h3>{pkg.name}</h3>
-                <p className="package-card-best">{pkg.bestFor}</p>
+                <p className="package-card-best">{pkg.shortDescription}</p>
                 <ul>
                   {pkg.inclusions.map((item) => (
                     <li key={item}>
@@ -54,8 +56,8 @@ export function PackagesPreview() {
                 <div className="package-card-footer">
                   <p className="package-card-price">
                     <span>From</span>
-                    <strong>{pkg.price}</strong>
-                    <small> / {pkg.unit}</small>
+                    <strong>{pkg.priceLabel}</strong>
+                    <small> / {pkg.unitLabel}</small>
                   </p>
                   <a className="btn btn-primary" href="/book">
                     Book

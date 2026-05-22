@@ -48,6 +48,54 @@ export type Database = {
         };
         Relationships: [];
       };
+      packages: {
+        Row: {
+          id: string;
+          slug: string;
+          name: string;
+          short_description: string;
+          full_description: string;
+          price_cents: number;
+          duration: string;
+          surf_level: string;
+          inclusions: string[];
+          is_active: boolean;
+          display_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          slug: string;
+          name: string;
+          short_description?: string;
+          full_description?: string;
+          price_cents?: number;
+          duration?: string;
+          surf_level?: string;
+          inclusions?: string[];
+          is_active?: boolean;
+          display_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          slug?: string;
+          name?: string;
+          short_description?: string;
+          full_description?: string;
+          price_cents?: number;
+          duration?: string;
+          surf_level?: string;
+          inclusions?: string[];
+          is_active?: boolean;
+          display_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       bookings: {
         Row: {
           id: string;
