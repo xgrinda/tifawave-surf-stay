@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Row } from "@/lib/supabase/types";
@@ -92,6 +93,16 @@ type PaymentState =
   | {
       status: "error";
       message: string;
+    };
+
+export type BookingPaymentReturn =
+  | {
+      status: "success";
+      bookingId: string;
+    }
+  | {
+      status: "cancelled";
+      bookingId?: string;
     };
 
 type FieldErrors = {
@@ -198,6 +209,88 @@ function statusLabel(
   }
 
   return "Ready to check";
+}
+
+export function BookingPaymentReturnPanel({
+  paymentReturn
+}: {
+  paymentReturn: BookingPaymentReturn;
+}) {
+  if (paymentReturn.status === "success") {
+    return (
+      <section
+        className="booking-return-shell booking-return-success"
+        aria-labelledby="booking-return-title"
+      >
+        <p className="eyebrow">Deposit received</p>
+        <h1 id="booking-return-title">Your booking request is confirmed.</h1>
+        <p>
+          Thank you. The deposit has been received, and the Tifawave team will
+          review the details and follow up with arrival notes.
+        </p>
+        <dl>
+          <div>
+            <dt>Booking ID</dt>
+            <dd>{paymentReturn.bookingId}</dd>
+          </div>
+          <div>
+            <dt>Next steps</dt>
+            <dd>Watch your email for the booking confirmation and trip details.</dd>
+          </div>
+          <div>
+            <dt>Need a hand?</dt>
+            <dd>Message Tifawave on WhatsApp or email hello@tifawave.com.</dd>
+          </div>
+        </dl>
+        <div className="booking-return-actions">
+          <Link className="btn btn-primary" href="/">
+            Back home
+          </Link>
+          <a className="btn btn-secondary" href="#whatsapp">
+            Contact Tifawave
+          </a>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section
+      className="booking-return-shell booking-return-cancelled"
+      aria-labelledby="booking-return-title"
+    >
+      <p className="eyebrow">Payment cancelled</p>
+      <h1 id="booking-return-title">No deposit was collected.</h1>
+      <p>
+        That is okay. You can retry the booking flow when ready, or contact
+        Tifawave if you need help completing the deposit.
+      </p>
+      <dl>
+        {paymentReturn.bookingId ? (
+          <div>
+            <dt>Booking ID</dt>
+            <dd>{paymentReturn.bookingId}</dd>
+          </div>
+        ) : null}
+        <div>
+          <dt>Status</dt>
+          <dd>Your booking is not confirmed until the deposit succeeds.</dd>
+        </div>
+        <div>
+          <dt>Support</dt>
+          <dd>WhatsApp or email hello@tifawave.com and we will help.</dd>
+        </div>
+      </dl>
+      <div className="booking-return-actions">
+        <Link className="btn btn-primary" href="/book">
+          Try again
+        </Link>
+        <a className="btn btn-secondary" href="#whatsapp">
+          Contact Tifawave
+        </a>
+      </div>
+    </section>
+  );
 }
 
 export function BookingAvailabilityForm() {

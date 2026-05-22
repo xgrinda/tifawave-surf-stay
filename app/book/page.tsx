@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
-import { BookingAvailabilityForm } from "@/components/booking/booking-availability-form";
+import {
+  BookingAvailabilityForm,
+  BookingPaymentReturnPanel,
+  type BookingPaymentReturn
+} from "@/components/booking/booking-availability-form";
 import { Container } from "@/components/primitives/container";
 
 export const metadata: Metadata = {
@@ -8,11 +12,52 @@ export const metadata: Metadata = {
     "Check Tifawave room availability and place a temporary direct booking hold."
 };
 
-export default function BookPage() {
+type BookPageProps = {
+  searchParams?: Promise<{
+    bookingId?: string;
+    payment?: string;
+  }>;
+};
+
+function getPaymentReturn({
+  bookingId,
+  payment
+}: {
+  bookingId?: string;
+  payment?: string;
+}): BookingPaymentReturn | null {
+  if (payment === "success" && bookingId) {
+    return {
+      status: "success",
+      bookingId
+    };
+  }
+
+  if (payment === "cancelled") {
+    return {
+      status: "cancelled",
+      bookingId
+    };
+  }
+
+  return null;
+}
+
+export default async function BookPage({ searchParams }: BookPageProps) {
+  const params = await searchParams;
+  const paymentReturn = getPaymentReturn({
+    bookingId: params?.bookingId,
+    payment: params?.payment
+  });
+
   return (
     <main className="booking-page">
       <Container>
-        <BookingAvailabilityForm />
+        {paymentReturn ? (
+          <BookingPaymentReturnPanel paymentReturn={paymentReturn} />
+        ) : (
+          <BookingAvailabilityForm />
+        )}
       </Container>
     </main>
   );

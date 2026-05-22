@@ -1489,6 +1489,94 @@ select {
   font-size: 0.875rem;
 }
 
+.booking-return-shell {
+  display: grid;
+  gap: 18px;
+  width: min(100%, 760px);
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 24px;
+  background:
+    radial-gradient(80% 80% at 100% 0%, rgb(233 184 114 / 24%), transparent 60%),
+    var(--ink-800);
+  color: var(--linen);
+  padding: clamp(24px, 5vw, 42px);
+  box-shadow: 0 28px 70px -42px rgb(11 31 42 / 70%);
+}
+
+.booking-return-cancelled {
+  background:
+    radial-gradient(80% 80% at 100% 0%, rgb(201 104 62 / 20%), transparent 60%),
+    var(--ink-800);
+}
+
+.booking-return-shell .eyebrow {
+  color: var(--sun);
+}
+
+.booking-return-shell h1 {
+  max-width: 11ch;
+  margin: 0;
+  color: white;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(2.7rem, 8vw, 5rem);
+  font-weight: 300;
+  line-height: 0.98;
+}
+
+.booking-return-shell p:not(.eyebrow) {
+  max-width: 52ch;
+  margin: 0;
+  color: rgb(246 241 231 / 78%);
+  font-size: 1rem;
+}
+
+.booking-return-shell dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 4px 0 0;
+}
+
+.booking-return-shell dl div {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-height: 112px;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 16px;
+  background: rgb(255 255 255 / 5%);
+  padding: 14px;
+}
+
+.booking-return-shell dt {
+  color: var(--muted-dark);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.booking-return-shell dd {
+  min-width: 0;
+  margin: 0;
+  color: white;
+  font-size: 0.9375rem;
+  overflow-wrap: anywhere;
+}
+
+.booking-return-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.booking-return-actions .btn-primary {
+  background: var(--sun);
+  color: var(--ink);
+}
+
 .site-header:has(+ .admin-page),
 .admin-page ~ .site-footer,
 .admin-page ~ .mobile-booking-bar {
@@ -2107,6 +2195,27 @@ select {
 
   .booking-pending-confirmation {
     padding: 18px;
+  }
+
+  .booking-return-shell {
+    border-radius: 20px;
+    padding: 22px;
+  }
+
+  .booking-return-shell h1 {
+    max-width: 10ch;
+  }
+
+  .booking-return-shell dl {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-return-shell dl div {
+    min-height: 0;
+  }
+
+  .booking-return-actions .btn {
+    width: 100%;
   }
 
   .booking-confirmation dl,
