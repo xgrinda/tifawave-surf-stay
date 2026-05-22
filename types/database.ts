@@ -18,6 +18,7 @@ export type Database = {
           max_guests: number;
           is_active: boolean;
           base_price_cents: number;
+          external_ical_urls: string[];
           created_at: string;
           updated_at: string;
         };
@@ -29,6 +30,7 @@ export type Database = {
           max_guests?: number;
           is_active?: boolean;
           base_price_cents?: number;
+          external_ical_urls?: string[];
           created_at?: string;
           updated_at?: string;
         };
@@ -40,6 +42,7 @@ export type Database = {
           max_guests?: number;
           is_active?: boolean;
           base_price_cents?: number;
+          external_ical_urls?: string[];
           created_at?: string;
           updated_at?: string;
         };
@@ -121,6 +124,12 @@ export type Database = {
           blocked_range: string;
           reason: string;
           note: string | null;
+          source: "admin" | "ical";
+          source_uid: string | null;
+          source_url: string | null;
+          source_hash: string | null;
+          imported_at: string | null;
+          last_seen_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -131,6 +140,12 @@ export type Database = {
           end_date: string;
           reason: string;
           note?: string | null;
+          source?: "admin" | "ical";
+          source_uid?: string | null;
+          source_url?: string | null;
+          source_hash?: string | null;
+          imported_at?: string | null;
+          last_seen_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -141,6 +156,12 @@ export type Database = {
           end_date?: string;
           reason?: string;
           note?: string | null;
+          source?: "admin" | "ical";
+          source_uid?: string | null;
+          source_url?: string | null;
+          source_hash?: string | null;
+          imported_at?: string | null;
+          last_seen_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };

@@ -5,7 +5,8 @@ import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/admin/auth";
 import {
   createAdminBlockedDate,
-  removeAdminBlockedDate
+  removeAdminBlockedDate,
+  updateAdminRoomIcalUrls
 } from "@/lib/admin/blocked-dates";
 
 function redirectWithMessage(params: Record<string, string>): never {
@@ -50,5 +51,25 @@ export async function removeBlockedDateAction(formData: FormData) {
   revalidatePath("/admin/blocked-dates");
   redirectWithMessage({
     removed: "1"
+  });
+}
+
+export async function updateRoomIcalUrlsAction(formData: FormData) {
+  await requireAdmin();
+
+  const result = await updateAdminRoomIcalUrls({
+    roomId: String(formData.get("roomId") ?? ""),
+    urlsText: String(formData.get("externalIcalUrls") ?? "")
+  });
+
+  if (!result.ok) {
+    redirectWithMessage({
+      error: result.message
+    });
+  }
+
+  revalidatePath("/admin/blocked-dates");
+  redirectWithMessage({
+    ical: "1"
   });
 }

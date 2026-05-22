@@ -7,8 +7,10 @@ import {
 import { logoutAdminAction } from "../login/actions";
 import {
   createBlockedDateAction,
-  removeBlockedDateAction
+  removeBlockedDateAction,
+  updateRoomIcalUrlsAction
 } from "./actions";
+import { getSiteUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +23,7 @@ type AdminBlockedDatesPageProps = {
   searchParams?: Promise<{
     created?: string;
     error?: string;
+    ical?: string;
     removed?: string;
   }>;
 };
@@ -61,6 +64,13 @@ function getMessage(params: Awaited<AdminBlockedDatesPageProps["searchParams"]>)
     };
   }
 
+  if (params?.ical) {
+    return {
+      tone: "success",
+      text: "iCal feed URLs saved."
+    };
+  }
+
   return null;
 }
 
@@ -76,6 +86,7 @@ export default async function AdminBlockedDatesPage({
   ]);
   const message = getMessage(params);
   const today = new Date().toISOString().slice(0, 10);
+  const siteUrl = getSiteUrl();
 
   return (
     <main className="admin-page admin-blocked-dates-page">
@@ -150,6 +161,49 @@ export default async function AdminBlockedDatesPage({
           </form>
         </section>
 
+        <section className="admin-panel-section" aria-labelledby="ical-feeds-title">
+          <div className="admin-section-heading">
+            <div>
+              <h2 id="ical-feeds-title">iCal feeds</h2>
+              <p>Store external room feeds for import sync and share room export feeds.</p>
+            </div>
+          </div>
+
+          <div className="admin-ical-grid">
+            {rooms.map((room) => (
+              <form
+                action={updateRoomIcalUrlsAction}
+                className="admin-ical-card"
+                key={room.id}
+              >
+                <input name="roomId" type="hidden" value={room.id} />
+                <div className="admin-ical-card-heading">
+                  <h3>{room.name}</h3>
+                  <a
+                    href={`${siteUrl}/api/ical/rooms/${room.slug}`}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    Export feed
+                  </a>
+                </div>
+                <label className="admin-field">
+                  <span>External iCal URLs</span>
+                  <textarea
+                    name="externalIcalUrls"
+                    placeholder="https://example.com/calendar.ics"
+                    rows={3}
+                    defaultValue={room.externalIcalUrls.join("\n")}
+                  />
+                </label>
+                <button className="admin-status-button" type="submit">
+                  Save feeds
+                </button>
+              </form>
+            ))}
+          </div>
+        </section>
+
         <div className="admin-bookings-table-wrap">
           {blockedDates.length > 0 ? (
             <table className="admin-bookings-table admin-blocked-dates-table">
@@ -158,6 +212,7 @@ export default async function AdminBlockedDatesPage({
                   <th scope="col">Room</th>
                   <th scope="col">Dates</th>
                   <th scope="col">Reason</th>
+                  <th scope="col">Source</th>
                   <th scope="col">Created</th>
                   <th scope="col">Actions</th>
                 </tr>
@@ -172,6 +227,14 @@ export default async function AdminBlockedDatesPage({
                     </td>
                     <td>
                       <span className="admin-status-pill">{block.reason}</span>
+                    </td>
+                    <td>
+                      <span className="admin-source-cell">
+                        {block.source === "ical" ? "iCal import" : "Admin"}
+                        {block.sourceUrl ? (
+                          <small>{block.sourceUrl}</small>
+                        ) : null}
+                      </span>
                     </td>
                     <td>{formatDateTime(block.createdAt)}</td>
                     <td>

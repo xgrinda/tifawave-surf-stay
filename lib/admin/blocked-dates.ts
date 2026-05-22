@@ -15,6 +15,7 @@ export type AdminRoomOption = {
   name: string;
   slug: string;
   isActive: boolean;
+  externalIcalUrls: string[];
 };
 
 export type AdminBlockedDate = {
@@ -24,6 +25,8 @@ export type AdminBlockedDate = {
   startDate: string;
   endDate: string;
   reason: string;
+  source: "admin" | "ical";
+  sourceUrl: string | null;
   createdAt: string;
 };
 
@@ -33,7 +36,13 @@ export type CreateAdminBlockedDateInput = {
   endDate: string;
 };
 
+export type UpdateAdminRoomIcalUrlsInput = {
+  roomId: string;
+  urlsText: string;
+};
+
 const ADMIN_BLOCK_REASON = "admin_block";
+const MAX_ICAL_URLS_PER_ROOM = 8;
 
 function isIsoDate(value: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -63,7 +72,7 @@ export async function getAdminRoomOptions(): Promise<AdminRoomOption[]> {
   const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase
     .from("rooms")
-    .select("id, name, slug, is_active")
+    .select("id, name, slug, is_active, external_ical_urls")
     .order("name", { ascending: true });
 
   if (error) {
@@ -74,7 +83,8 @@ export async function getAdminRoomOptions(): Promise<AdminRoomOption[]> {
     id: room.id,
     name: room.name,
     slug: room.slug,
-    isActive: room.is_active
+    isActive: room.is_active,
+    externalIcalUrls: room.external_ical_urls
   }));
 }
 
@@ -82,7 +92,7 @@ export async function getAdminBlockedDates(): Promise<AdminBlockedDate[]> {
   const supabase = createSupabaseAdminClient();
   const { data: blocks, error: blocksError } = await supabase
     .from("blocked_dates")
-    .select("id, room_id, start_date, end_date, reason, created_at")
+    .select("id, room_id, start_date, end_date, reason, source, source_url, created_at")
     .order("start_date", { ascending: true })
     .order("created_at", { ascending: false });
 
@@ -113,8 +123,78 @@ export async function getAdminBlockedDates(): Promise<AdminBlockedDate[]> {
     startDate: block.start_date,
     endDate: block.end_date,
     reason: block.reason,
+    source: block.source,
+    sourceUrl: block.source_url,
     createdAt: block.created_at
   }));
+}
+
+function normalizeIcalUrls(urlsText: string): string[] {
+  const urls = urlsText
+    .split(/\r?\n|,/)
+    .map((url) => url.trim())
+    .filter(Boolean);
+  const uniqueUrls = Array.from(new Set(urls));
+
+  if (uniqueUrls.length > MAX_ICAL_URLS_PER_ROOM) {
+    throw new Error(`Use ${MAX_ICAL_URLS_PER_ROOM} iCal URLs or fewer per room.`);
+  }
+
+  for (const url of uniqueUrls) {
+    const parsedUrl = new URL(url);
+
+    if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+      throw new Error("iCal URLs must start with http:// or https://.");
+    }
+  }
+
+  return uniqueUrls;
+}
+
+export async function updateAdminRoomIcalUrls({
+  roomId,
+  urlsText
+}: UpdateAdminRoomIcalUrlsInput): Promise<AdminBlockedDateResult> {
+  const id = roomId.trim();
+
+  if (!id) {
+    return {
+      ok: false,
+      message: "Choose a room to update."
+    };
+  }
+
+  let externalIcalUrls: string[];
+
+  try {
+    externalIcalUrls = normalizeIcalUrls(urlsText);
+  } catch (error) {
+    return {
+      ok: false,
+      message:
+        error instanceof Error ? error.message : "Could not read iCal URLs."
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { error } = await supabase
+    .from("rooms")
+    .update({
+      external_ical_urls: externalIcalUrls,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", id);
+
+  if (error) {
+    return {
+      ok: false,
+      message: error.message
+    };
+  }
+
+  return {
+    ok: true
+  };
 }
 
 export async function createAdminBlockedDate({
