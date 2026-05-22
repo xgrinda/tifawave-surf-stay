@@ -4,8 +4,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/admin/auth";
 import {
+  createAdminRoomImage,
   createAdminRoom,
+  removeAdminRoomImage,
   setAdminRoomActive,
+  setAdminRoomImagePrimary,
+  updateAdminRoomImage,
   updateAdminRoom
 } from "@/lib/admin/rooms";
 
@@ -28,9 +32,20 @@ function roomInputFromForm(formData: FormData) {
   };
 }
 
+function roomImageInputFromForm(formData: FormData) {
+  return {
+    altText: stringField(formData, "altText"),
+    imageUrl: stringField(formData, "imageUrl"),
+    isPrimary: stringField(formData, "isPrimary") === "true",
+    roomId: stringField(formData, "roomId"),
+    sortOrder: stringField(formData, "sortOrder")
+  };
+}
+
 function revalidateRooms() {
   revalidatePath("/admin/rooms");
   revalidatePath("/book");
+  revalidatePath("/stay");
 }
 
 export async function createRoomAction(formData: FormData) {
@@ -87,5 +102,76 @@ export async function toggleRoomActiveAction(formData: FormData) {
   revalidateRooms();
   redirectWithMessage({
     status: "1"
+  });
+}
+
+export async function createRoomImageAction(formData: FormData) {
+  await requireAdmin();
+
+  const result = await createAdminRoomImage(roomImageInputFromForm(formData));
+
+  if (!result.ok) {
+    redirectWithMessage({
+      error: result.message
+    });
+  }
+
+  revalidateRooms();
+  redirectWithMessage({
+    image: "1"
+  });
+}
+
+export async function updateRoomImageAction(formData: FormData) {
+  await requireAdmin();
+
+  const result = await updateAdminRoomImage({
+    ...roomImageInputFromForm(formData),
+    id: stringField(formData, "imageId")
+  });
+
+  if (!result.ok) {
+    redirectWithMessage({
+      error: result.message
+    });
+  }
+
+  revalidateRooms();
+  redirectWithMessage({
+    image: "1"
+  });
+}
+
+export async function setRoomImagePrimaryAction(formData: FormData) {
+  await requireAdmin();
+
+  const result = await setAdminRoomImagePrimary(stringField(formData, "imageId"));
+
+  if (!result.ok) {
+    redirectWithMessage({
+      error: result.message
+    });
+  }
+
+  revalidateRooms();
+  redirectWithMessage({
+    image: "1"
+  });
+}
+
+export async function removeRoomImageAction(formData: FormData) {
+  await requireAdmin();
+
+  const result = await removeAdminRoomImage(stringField(formData, "imageId"));
+
+  if (!result.ok) {
+    redirectWithMessage({
+      error: result.message
+    });
+  }
+
+  revalidateRooms();
+  redirectWithMessage({
+    image: "1"
   });
 }

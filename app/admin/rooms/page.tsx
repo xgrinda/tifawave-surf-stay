@@ -3,8 +3,11 @@ import { requireAdmin } from "@/lib/admin/auth";
 import { getAdminRooms } from "@/lib/admin/rooms";
 import { logoutAdminAction } from "../login/actions";
 import {
+  createRoomImageAction,
   createRoomAction,
+  removeRoomImageAction,
   toggleRoomActiveAction,
+  updateRoomImageAction,
   updateRoomAction
 } from "./actions";
 
@@ -19,6 +22,7 @@ type AdminRoomsPageProps = {
   searchParams?: Promise<{
     created?: string;
     error?: string;
+    image?: string;
     status?: string;
     updated?: string;
   }>;
@@ -50,6 +54,13 @@ function getMessage(params: Awaited<AdminRoomsPageProps["searchParams"]>) {
     return {
       tone: "success",
       text: "Room status updated."
+    };
+  }
+
+  if (params?.image) {
+    return {
+      tone: "success",
+      text: "Room images updated."
     };
   }
 
@@ -154,6 +165,9 @@ export default async function AdminRoomsPage({
                     <div>
                       <h3>{room.name}</h3>
                       <p>{room.slug}</p>
+                      <a className="admin-inline-link" href={`/stay/${room.slug}`}>
+                        View public detail page
+                      </a>
                     </div>
                     <span
                       className={`admin-status-pill ${
@@ -238,6 +252,143 @@ export default async function AdminRoomsPage({
                       {room.isActive ? "Deactivate room" : "Activate room"}
                     </button>
                   </form>
+
+                  <section
+                    className="admin-room-image-section"
+                    aria-labelledby={`room-images-${room.id}`}
+                  >
+                    <div className="admin-room-image-heading">
+                      <div>
+                        <h4 id={`room-images-${room.id}`}>Images</h4>
+                        <p>
+                          Add URL-based room images for the public detail page.
+                        </p>
+                      </div>
+                      <span>{room.images.length} images</span>
+                    </div>
+
+                    <form
+                      className="admin-room-image-form"
+                      action={createRoomImageAction}
+                    >
+                      <input name="roomId" type="hidden" value={room.id} />
+                      <label className="admin-field admin-field-wide">
+                        <span>Image URL</span>
+                        <input
+                          name="imageUrl"
+                          placeholder="https://example.com/room.jpg"
+                          required
+                          type="url"
+                        />
+                      </label>
+                      <label className="admin-field">
+                        <span>Alt text</span>
+                        <input
+                          name="altText"
+                          placeholder={`${room.name} in morning light`}
+                          type="text"
+                        />
+                      </label>
+                      <label className="admin-field">
+                        <span>Sort order</span>
+                        <input
+                          defaultValue={room.images.length * 10 + 10}
+                          min="0"
+                          name="sortOrder"
+                          required
+                          type="number"
+                        />
+                      </label>
+                      <label className="admin-checkbox-field">
+                        <input name="isPrimary" type="checkbox" value="true" />
+                        <span>Primary image</span>
+                      </label>
+                      <button className="admin-status-button" type="submit">
+                        Add image
+                      </button>
+                    </form>
+
+                    {room.images.length > 0 ? (
+                      <div className="admin-room-images">
+                        {room.images.map((image) => (
+                          <article className="admin-room-image-card" key={image.id}>
+                            <div
+                              aria-label={image.altText || `${room.name} image`}
+                              className="admin-room-image-preview"
+                              role="img"
+                              style={{
+                                backgroundImage: `url("${image.imageUrl}")`
+                              }}
+                            />
+                            <form
+                              className="admin-room-image-edit"
+                              action={updateRoomImageAction}
+                            >
+                              <input name="imageId" type="hidden" value={image.id} />
+                              <input name="roomId" type="hidden" value={room.id} />
+                              <label className="admin-field admin-field-wide">
+                                <span>Image URL</span>
+                                <input
+                                  defaultValue={image.imageUrl}
+                                  name="imageUrl"
+                                  required
+                                  type="url"
+                                />
+                              </label>
+                              <label className="admin-field">
+                                <span>Alt text</span>
+                                <input
+                                  defaultValue={image.altText}
+                                  name="altText"
+                                  type="text"
+                                />
+                              </label>
+                              <label className="admin-field">
+                                <span>Sort order</span>
+                                <input
+                                  defaultValue={image.sortOrder}
+                                  min="0"
+                                  name="sortOrder"
+                                  required
+                                  type="number"
+                                />
+                              </label>
+                              <label className="admin-checkbox-field">
+                                <input
+                                  defaultChecked={image.isPrimary}
+                                  name="isPrimary"
+                                  type="checkbox"
+                                  value="true"
+                                />
+                                <span>Primary image</span>
+                              </label>
+                              <div className="admin-room-image-actions">
+                                <button className="admin-status-button" type="submit">
+                                  Save image
+                                </button>
+                                {image.isPrimary ? (
+                                  <span className="admin-status-pill">primary</span>
+                                ) : null}
+                              </div>
+                            </form>
+                            <form action={removeRoomImageAction}>
+                              <input name="imageId" type="hidden" value={image.id} />
+                              <button
+                                className="admin-status-button admin-status-danger"
+                                type="submit"
+                              >
+                                Remove image
+                              </button>
+                            </form>
+                          </article>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="admin-room-image-empty">
+                        No image URLs have been added for this room yet.
+                      </p>
+                    )}
+                  </section>
                 </article>
               ))}
             </div>

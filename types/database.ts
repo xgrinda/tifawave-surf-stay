@@ -48,6 +48,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      room_images: {
+        Row: {
+          id: string;
+          room_id: string;
+          image_url: string;
+          alt_text: string;
+          sort_order: number;
+          is_primary: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          room_id: string;
+          image_url: string;
+          alt_text?: string;
+          sort_order?: number;
+          is_primary?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          room_id?: string;
+          image_url?: string;
+          alt_text?: string;
+          sort_order?: number;
+          is_primary?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       packages: {
         Row: {
           id: string;
