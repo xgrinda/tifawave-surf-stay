@@ -156,3 +156,4 @@ Official references:
 - [Supabase CLI migrations](https://supabase.com/docs/guides/local-development/overview)
 - [Resend domain verification](https://resend.com/docs/dashboard/domains/introduction)
 # tifawave-surf-stay
+# tifawave-surf-stay
