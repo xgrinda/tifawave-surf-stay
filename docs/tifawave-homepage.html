@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tifawave Surf Stay · Tamraght</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    /* Ocean / Sand / Sunset palette */
+    --ink:#0B1F2A;          /* deep atlantic */
+    --ink-700:#13303D;
+    --ink-800:#0E2731;
+    --bone:#F6F1E7;         /* sand */
+    --linen:#FBF8F2;
+    --clay:#C9683E;         /* sunset terracotta - PRIMARY CTA */
+    --clay-deep:#A8502C;
+    --seaglass:#2E8B8B;     /* atlantic teal */
+    --sun:#E9B872;          /* golden hour */
+    --coral:#E08A5B;        /* sunset mid */
+    --text-strong:#0B1F2A;
+    --on-dark:#F1ECE2;
+    --muted:#6B7B82;
+    --muted-dark:#9DB0B6;
+    --line:#E3DBCC;
+    --line-dark:#1E3A47;
+    --r:18px;
+    --maxw:1200px;
+    --ease:cubic-bezier(.22,.61,.36,1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Inter',system-ui,sans-serif;
+    background:var(--bone);
+    color:var(--text-strong);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  .serif{font-family:'Fraunces',Georgia,serif;font-weight:300;letter-spacing:-.01em;line-height:1.05}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+  .eyebrow{font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--seaglass)}
+  .eyebrow.on-dark{color:var(--sun)}
+  img{display:block;max-width:100%}
+
+  /* ---------- NAV ---------- */
+  header.nav{position:fixed;top:0;left:0;right:0;z-index:100;transition:all .4s var(--ease)}
+  .nav-inner{display:flex;align-items:center;justify-content:space-between;max-width:var(--maxw);margin:0 auto;padding:18px 24px}
+  .logo{font-family:'Fraunces',serif;font-weight:400;font-size:22px;letter-spacing:.02em;color:var(--on-dark);transition:color .4s}
+  .logo .dot{color:var(--sun)}
+  .nav-links{display:flex;gap:34px;align-items:center}
+  .nav-links a{color:var(--on-dark);text-decoration:none;font-size:14.5px;font-weight:500;opacity:.88;transition:opacity .25s}
+  .nav-links a:hover{opacity:1}
+  .nav-cta{background:var(--clay);color:#fff;padding:11px 22px;border-radius:100px;font-size:14px;font-weight:600;text-decoration:none;transition:transform .2s var(--ease),background .25s;display:inline-block}
+  .nav-cta:hover{background:var(--clay-deep);transform:translateY(-2px)}
+  header.nav.scrolled{background:rgba(11,31,42,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid rgba(255,255,255,.08)}
+  header.nav.scrolled .nav-inner{padding:12px 24px}
+  .burger{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:8px}
+  .burger span{width:24px;height:2px;background:var(--on-dark);display:block}
+
+  /* ---------- HERO ---------- */
+  .hero{position:relative;min-height:100svh;display:flex;align-items:flex-end;color:var(--on-dark);overflow:hidden}
+  .hero-bg{position:absolute;inset:0;background:
+      radial-gradient(120% 80% at 70% 20%, rgba(233,184,114,.45), transparent 55%),
+      radial-gradient(140% 90% at 20% 90%, rgba(46,139,139,.35), transparent 60%),
+      linear-gradient(180deg,#10303d 0%, #0B1F2A 60%, #081821 100%);
+    animation:drift 18s ease-in-out infinite alternate}
+  @keyframes drift{from{transform:scale(1.04) translateY(0)}to{transform:scale(1.12) translateY(-14px)}}
+  .hero-wave{position:absolute;left:0;right:0;bottom:0;height:42%;background:
+      radial-gradient(80% 120% at 50% 120%, rgba(46,139,139,.55), transparent 70%);
+    filter:blur(8px)}
+  .hero-grain{position:absolute;inset:0;opacity:.06;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+  .hero-content{position:relative;z-index:2;width:100%;padding-bottom:64px}
+  .hero h1{font-size:clamp(44px,8vw,104px);max-width:14ch;margin-bottom:22px}
+  .hero h1 .line{display:block;overflow:hidden}
+  .hero h1 .line span{display:block;transform:translateY(110%);animation:rise .9s var(--ease) forwards}
+  .hero h1 .line:nth-child(2) span{animation-delay:.12s}
+  .hero h1 .line:nth-child(3) span{animation-delay:.24s}
+  @keyframes rise{to{transform:translateY(0)}}
+  .hero p.sub{font-size:clamp(16px,2vw,20px);max-width:48ch;opacity:0;animation:fadein .8s ease .5s forwards;color:#E7E0D3}
+  @keyframes fadein{to{opacity:.92}}
+  .hero-actions{display:flex;gap:14px;flex-wrap:wrap;margin-top:32px;opacity:0;animation:fadein .8s ease .7s forwards}
+  .btn{padding:15px 30px;border-radius:100px;font-size:15px;font-weight:600;text-decoration:none;cursor:pointer;border:none;transition:transform .2s var(--ease),background .25s,box-shadow .25s;display:inline-flex;align-items:center;gap:9px}
+  .btn-primary{background:var(--clay);color:#fff;box-shadow:0 10px 30px -8px rgba(201,104,62,.6)}
+  .btn-primary:hover{background:var(--clay-deep);transform:translateY(-3px);box-shadow:0 16px 40px -10px rgba(201,104,62,.7)}
+  .btn-ghost{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.28);backdrop-filter:blur(6px)}
+  .btn-ghost:hover{background:rgba(255,255,255,.16);transform:translateY(-3px)}
+  .hero-trust{display:flex;gap:22px;align-items:center;margin-top:38px;font-size:14px;opacity:0;animation:fadein .8s ease .9s forwards;color:#D8D0C2;flex-wrap:wrap}
+  .hero-trust .star{color:var(--sun);letter-spacing:1px}
+  .scrollcue{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);z-index:3;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#cfc7b8;display:flex;flex-direction:column;align-items:center;gap:8px}
+  .scrollcue .arrow{width:1px;height:30px;background:linear-gradient(var(--sun),transparent);animation:cue 1.8s ease infinite}
+  @keyframes cue{0%,100%{opacity:.3;transform:scaleY(.7)}50%{opacity:1;transform:scaleY(1)}}
+
+  /* ---------- REVEAL ---------- */
+  .reveal{opacity:0;transform:translateY(28px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
+  .reveal.in{opacity:1;transform:none}
+  .reveal[data-d="1"]{transition-delay:.08s}
+  .reveal[data-d="2"]{transition-delay:.16s}
+  .reveal[data-d="3"]{transition-delay:.24s}
+
+  section{padding:clamp(72px,11vw,140px) 0}
+  .sec-head{max-width:60ch}
+  .sec-head h2{font-size:clamp(30px,5vw,54px);margin:14px 0 16px}
+  .sec-head p{font-size:17px;color:var(--muted);max-width:52ch}
+
+  /* trust strip */
+  .strip{background:var(--ink);color:var(--on-dark);padding:26px 0}
+  .strip .wrap{display:flex;gap:36px;align-items:center;justify-content:center;flex-wrap:wrap;opacity:.8;font-size:14px;letter-spacing:.04em}
+  .strip b{color:var(--sun);font-weight:600}
+
+  /* pillars */
+  .pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin-top:54px}
+  .pillar{padding:34px 30px;border:1px solid var(--line);border-radius:var(--r);background:var(--linen);transition:transform .4s var(--ease),box-shadow .4s}
+  .pillar:hover{transform:translateY(-6px);box-shadow:0 24px 50px -28px rgba(11,31,42,.4)}
+  .pillar .ic{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;background:var(--bone);color:var(--seaglass);margin-bottom:20px}
+  .pillar h3{font-family:'Fraunces',serif;font-weight:400;font-size:23px;margin-bottom:8px}
+  .pillar p{color:var(--muted);font-size:15px}
+
+  /* packages */
+  .packages{background:var(--ink);color:var(--on-dark)}
+  .packages .eyebrow{color:var(--sun)}
+  .packages .sec-head h2{color:#fff}
+  .packages .sec-head p{color:var(--muted-dark)}
+  .pkg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:54px}
+  .pkg{position:relative;border:1px solid var(--line-dark);border-radius:22px;overflow:hidden;background:var(--ink-700);display:flex;flex-direction:column;transition:transform .4s var(--ease),box-shadow .4s,border-color .4s}
+  .pkg:hover{transform:translateY(-8px);box-shadow:0 30px 60px -30px rgba(0,0,0,.7)}
+  .pkg.feat{border-color:var(--sun)}
+  .pkg-img{height:190px;position:relative;overflow:hidden}
+  .pkg-img .ph{position:absolute;inset:0;transition:transform .6s var(--ease)}
+  .pkg:hover .pkg-img .ph{transform:scale(1.06)}
+  .pkg-1 .ph{background:linear-gradient(135deg,#13303D,#2E8B8B)}
+  .pkg-2 .ph{background:linear-gradient(135deg,#A8502C,#E9B872)}
+  .pkg-3 .ph{background:linear-gradient(135deg,#0E2731,#C9683E)}
+  .ribbon{position:absolute;top:14px;right:14px;background:var(--sun);color:var(--ink);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:6px 12px;border-radius:100px}
+  .pkg-body{padding:26px 24px 28px;display:flex;flex-direction:column;flex:1}
+  .pkg-body h3{font-family:'Fraunces',serif;font-weight:400;font-size:25px;color:#fff;margin-bottom:4px}
+  .pkg-best{font-size:13px;color:var(--sun);margin-bottom:18px;font-weight:500}
+  .pkg ul{list-style:none;display:flex;flex-direction:column;gap:11px;margin-bottom:24px}
+  .pkg li{font-size:14.5px;color:#CFDADD;display:flex;gap:10px;align-items:flex-start}
+  .pkg li svg{flex:none;margin-top:3px;color:var(--seaglass)}
+  .pkg-foot{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .price{font-variant-numeric:tabular-nums}
+  .price .from{display:block;font-size:11px;color:var(--muted-dark);text-transform:uppercase;letter-spacing:.1em}
+  .price .amt{font-family:'Fraunces',serif;font-size:30px;color:#fff}
+  .pkg .btn-primary{padding:12px 22px;font-size:14px;box-shadow:none}
+
+  /* editorial split */
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+  .split.rev{direction:rtl}.split.rev>*{direction:ltr}
+  .split-media{height:480px;border-radius:24px;overflow:hidden;background:linear-gradient(160deg,#2E8B8B,#0B1F2A)}
+  .split-media.m2{background:linear-gradient(160deg,#E9B872,#C9683E 60%,#0B1F2A)}
+  .split-text h2{font-size:clamp(28px,4vw,46px);margin:14px 0 18px}
+  .split-text p{color:var(--muted);font-size:16.5px;margin-bottom:14px}
+  .link-u{color:var(--clay);font-weight:600;text-decoration:none;border-bottom:2px solid var(--clay);padding-bottom:3px;font-size:15px;transition:gap .2s;display:inline-flex;gap:6px;align-items:center}
+  .link-u:hover{gap:11px}
+
+  /* day timeline */
+  .day{background:var(--linen)}
+  .timeline{display:flex;gap:18px;overflow-x:auto;padding:42px 4px 18px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+  .tcard{flex:none;width:240px;scroll-snap-align:start;background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px;transition:transform .3s}
+  .tcard:hover{transform:translateY(-5px)}
+  .tcard .time{font-family:'Fraunces',serif;font-size:21px;color:var(--clay)}
+  .tcard h4{font-size:16px;margin:8px 0 6px}
+  .tcard p{font-size:14px;color:var(--muted)}
+
+  /* reviews */
+  .reviews{background:var(--ink);color:var(--on-dark);text-align:center}
+  .reviews .big{font-family:'Fraunces',serif;font-weight:300;font-size:clamp(26px,4vw,42px);max-width:20ch;margin:0 auto;line-height:1.25;color:#fff}
+  .reviews .star{color:var(--sun);font-size:20px;letter-spacing:3px}
+  .rev-meta{margin-top:26px;color:var(--muted-dark);font-size:14px}
+  .rev-logos{display:flex;gap:30px;justify-content:center;flex-wrap:wrap;margin-top:48px;opacity:.7;font-size:14px}
+  .rev-logos b{color:#fff}
+
+  /* final cta */
+  .final{background:
+     radial-gradient(100% 120% at 80% 0%, rgba(233,184,114,.5), transparent 55%),
+     linear-gradient(135deg,#C9683E, #A8502C 55%, #0B1F2A);
+    color:#fff;text-align:center}
+  .final h2{font-size:clamp(32px,6vw,64px);max-width:16ch;margin:0 auto 18px}
+  .final p{opacity:.9;max-width:46ch;margin:0 auto 30px;font-size:17px}
+  .booking-bar{display:inline-flex;gap:6px;background:rgba(255,255,255,.14);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.3);padding:8px;border-radius:100px;flex-wrap:wrap;justify-content:center}
+  .booking-bar .field{padding:12px 20px;text-align:left;border-radius:100px;min-width:120px}
+  .booking-bar .field small{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.1em;opacity:.7}
+  .booking-bar .field span{font-weight:600;font-size:15px}
+  .booking-bar .btn-primary{background:#fff;color:var(--clay-deep);box-shadow:none}
+  .booking-bar .btn-primary:hover{background:var(--bone)}
+
+  /* footer */
+  footer{background:var(--ink-800);color:var(--muted-dark);padding:80px 0 40px}
+  .foot-top{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:40px;padding-bottom:50px;border-bottom:1px solid var(--line-dark)}
+  footer .logo{font-size:26px;color:#fff;display:block;margin-bottom:14px}
+  .foot-brand p{font-size:14.5px;max-width:32ch;margin-bottom:22px}
+  .news{display:flex;gap:8px;max-width:340px}
+  .news input{flex:1;background:rgba(255,255,255,.06);border:1px solid var(--line-dark);border-radius:100px;padding:13px 18px;color:#fff;font-size:14px;font-family:inherit}
+  .news input::placeholder{color:var(--muted-dark)}
+  .news button{background:var(--clay);border:none;color:#fff;padding:0 22px;border-radius:100px;font-weight:600;cursor:pointer;font-size:14px}
+  .foot-col h5{color:#fff;font-size:13px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:16px}
+  .foot-col a{display:block;color:var(--muted-dark);text-decoration:none;font-size:14.5px;margin-bottom:11px;transition:color .2s}
+  .foot-col a:hover{color:var(--sun)}
+  .foot-bot{display:flex;justify-content:space-between;align-items:center;padding-top:28px;font-size:13px;flex-wrap:wrap;gap:14px}
+
+  /* mobile sticky book bar */
+  .mobile-bar{position:fixed;left:0;right:0;bottom:0;z-index:90;display:none;gap:10px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:rgba(11,31,42,.86);backdrop-filter:blur(16px);border-top:1px solid rgba(255,255,255,.1);transform:translateY(120%);transition:transform .4s var(--ease)}
+  .mobile-bar.show{transform:translateY(0)}
+  .mobile-bar .btn{flex:1;justify-content:center;padding:14px}
+  .mobile-bar .wa{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.25)}
+
+  /* responsive */
+  @media(max-width:880px){
+    .nav-links{display:none}
+    .burger{display:flex}
+    .pillars,.pkg-grid{grid-template-columns:1fr}
+    .split,.foot-top{grid-template-columns:1fr;gap:32px}
+    .split.rev{direction:ltr}
+    .split-media{height:300px;order:-1}
+    .mobile-bar{display:flex}
+    .hero-content{padding-bottom:96px}
+    .foot-top{grid-template-columns:1fr 1fr}
+    .foot-brand{grid-column:1/-1}
+  }
+  @media(prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important}
+    .reveal{opacity:1;transform:none}
+    .hero h1 .line span{transform:none}
+    .hero p.sub,.hero-actions,.hero-trust{opacity:1}
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<header class="nav" id="nav">
+  <div class="nav-inner">
+    <a href="#" class="logo">Tifawave<span class="dot">.</span></a>
+    <nav class="nav-links">
+      <a href="#packages">Surf</a>
+      <a href="#stay">Stay</a>
+      <a href="#experiences">Experiences</a>
+      <a href="#story">Story</a>
+      <a href="#plan">Plan</a>
+    </nav>
+    <div style="display:flex;align-items:center;gap:14px">
+      <a href="#book" class="nav-cta">Check Availability</a>
+      <button class="burger" aria-label="Open menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-wave"></div>
+  <div class="hero-grain"></div>
+  <div class="hero-content">
+    <div class="wrap">
+      <div class="eyebrow on-dark" style="margin-bottom:18px">Tamraght · Morocco</div>
+      <h1 class="serif">
+        <span class="line"><span>Surf the Atlantic.</span></span>
+        <span class="line"><span>Stay in the story.</span></span>
+      </h1>
+      <p class="sub">A boutique surf sanctuary on Morocco's Atlantic coast — expert coaching, design-led rooms, and slow mornings a barefoot walk from the lineup.</p>
+      <div class="hero-actions">
+        <a href="#book" class="btn btn-primary">Check Availability
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <a href="#packages" class="btn btn-ghost">Explore Packages</a>
+      </div>
+      <div class="hero-trust">
+        <span><span class="star">★★★★★</span> &nbsp;4.9 · 600+ guests</span>
+        <span>·</span>
+        <span>Free cancellation up to 30 days</span>
+      </div>
+    </div>
+  </div>
+  <div class="scrollcue"><span>Scroll to dive in</span><span class="arrow"></span></div>
+</section>
+
+<!-- TRUST STRIP -->
+<div class="strip">
+  <div class="wrap">
+    <span><b>4.9★</b> Google</span>
+    <span><b>9.6</b> Booking.com</span>
+    <span>Featured in <b>Surfer</b> · <b>Condé Nast</b></span>
+    <span><b>600+</b> guests since 2019</span>
+  </div>
+</div>
+
+<!-- PROMISE / PILLARS -->
+<section id="story">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Why Tifawave</span>
+      <h2 class="serif">Not a hostel. A place you'll miss before you've left.</h2>
+      <p>We built Tifawave for surfers who want to actually get better — in a home that's quiet, beautiful, and unmistakably Moroccan.</p>
+    </div>
+    <div class="pillars">
+      <div class="pillar reveal" data-d="1">
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 16c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 11c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/></svg></div>
+        <h3>The Wave</h3>
+        <p>World-class Atlantic breaks for every level — from mellow Banana Point to the walls of Anchor Point.</p>
+      </div>
+      <div class="pillar reveal" data-d="2">
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21V10l9-7 9 7v11M9 21v-6h6v6"/></svg></div>
+        <h3>The Stay</h3>
+        <p>Design-led rooms, rooftop terraces, and a table where strangers become a crew over tagine.</p>
+      </div>
+      <div class="pillar reveal" data-d="3">
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M19 5l-3 3M8 16l-3 3"/></svg></div>
+        <h3>The Craft</h3>
+        <p>Small groups, certified guides, daily video analysis. You'll leave surfing better than you arrived.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PACKAGES -->
+<section id="packages" class="packages">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Surf Packages</span>
+      <h2 class="serif">Choose your week.</h2>
+      <p>Transparent pricing, real inclusions, and a level of coaching that matches exactly where you are.</p>
+    </div>
+    <div class="pkg-grid">
+      <div class="pkg pkg-1 reveal" data-d="1">
+        <div class="pkg-img"><div class="ph"></div></div>
+        <div class="pkg-body">
+          <h3>Surf &amp; Stay</h3>
+          <span class="pkg-best">Best for independent surfers &amp; nomads</span>
+          <ul>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Daily guided sessions</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Breakfast &amp; board storage</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Flexible nights · fast wifi</li>
+          </ul>
+          <div class="pkg-foot">
+            <div class="price"><span class="from">From</span><span class="amt">€59</span><span style="font-size:12px;color:var(--muted-dark)"> / night</span></div>
+            <a href="#book" class="btn btn-primary">Book</a>
+          </div>
+        </div>
+      </div>
+      <div class="pkg pkg-2 feat reveal" data-d="2">
+        <div class="pkg-img"><div class="ph"></div><span class="ribbon">Most Popular</span></div>
+        <div class="pkg-body">
+          <h3>Coached Surf Week</h3>
+          <span class="pkg-best">Best for improvers who want results</span>
+          <ul>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>5× coached sessions + video analysis</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Private room · breakfast + 3 dinners</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Yoga 2× · airport transfer</li>
+          </ul>
+          <div class="pkg-foot">
+            <div class="price"><span class="from">From</span><span class="amt">€690</span><span style="font-size:12px;color:var(--muted-dark)"> / week</span></div>
+            <a href="#book" class="btn btn-primary">Book</a>
+          </div>
+        </div>
+      </div>
+      <div class="pkg pkg-3 reveal" data-d="3">
+        <div class="pkg-img"><div class="ph"></div></div>
+        <div class="pkg-body">
+          <h3>Private Progression</h3>
+          <span class="pkg-best">Best for couples &amp; fast progress</span>
+          <ul>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>1:1 / 1:2 daily coaching</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Suite · all meals included</li>
+            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Hammam &amp; transfers</li>
+          </ul>
+          <div class="pkg-foot">
+            <div class="price"><span class="from">From</span><span class="amt">€1,290</span><span style="font-size:12px;color:var(--muted-dark)"> / week</span></div>
+            <a href="#book" class="btn btn-primary">Book</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STAY split -->
+<section id="stay">
+  <div class="wrap">
+    <div class="split reveal">
+      <div class="split-media"></div>
+      <div class="split-text">
+        <span class="eyebrow">The Stay</span>
+        <h2 class="serif">Rooms that feel like the calm after a session.</h2>
+        <p>Lime-washed walls, linen, and light. Every room opens to the sea air or the rooftop, where mornings start with coffee and end with sunset over the Atlantic.</p>
+        <p style="color:var(--text-strong);font-weight:600">From €59 / night</p>
+        <a href="#stay" class="link-u">View rooms &amp; suites
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- A DAY -->
+<section id="experiences" class="day">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">A day at Tifawave</span>
+      <h2 class="serif">From dawn patrol to rooftop dinner.</h2>
+    </div>
+    <div class="timeline">
+      <div class="tcard reveal" data-d="1"><div class="time">06:30</div><h4>Dawn patrol</h4><p>Offshore winds, empty lineup, coffee in hand.</p></div>
+      <div class="tcard reveal" data-d="1"><div class="time">09:00</div><h4>Slow breakfast</h4><p>Msemen, fruit, eggs and stories on the terrace.</p></div>
+      <div class="tcard reveal" data-d="2"><div class="time">11:00</div><h4>Video review</h4><p>See your session frame by frame with a coach.</p></div>
+      <div class="tcard reveal" data-d="2"><div class="time">15:00</div><h4>Free surf</h4><p>Guided to the break that suits the tide and you.</p></div>
+      <div class="tcard reveal" data-d="3"><div class="time">18:00</div><h4>Hammam</h4><p>Steam, scrub, and the best sleep you'll have.</p></div>
+      <div class="tcard reveal" data-d="3"><div class="time">20:00</div><h4>Rooftop tagine</h4><p>A long table, candlelight, and the swell forecast.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- PLACE split -->
+<section id="plan">
+  <div class="wrap">
+    <div class="split rev reveal">
+      <div class="split-media m2"></div>
+      <div class="split-text">
+        <span class="eyebrow">The Place</span>
+        <h2 class="serif">Tamraght — where the desert meets the sea.</h2>
+        <p>A fishing village wrapped in argan hills, 20 minutes from Agadir airport and steps from some of Morocco's best waves. Souks, Paradise Valley, and call-to-prayer dusks included.</p>
+        <a href="#plan" class="link-u">Getting here &amp; FAQ
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- REVIEWS -->
+<section class="reviews">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="star">★★★★★</div>
+      <p class="big serif">"Arrived a nervous beginner. Left riding green waves and already booking next year. The food, the people, the place — unreal."</p>
+      <div class="rev-meta">— Hannah M. · 🇬🇧 United Kingdom · Coached Surf Week</div>
+    </div>
+    <div class="rev-logos reveal" data-d="2">
+      <span><b>4.9</b>/5 Google</span><span><b>9.6</b> Booking</span><span><b>5.0</b> TripAdvisor</span>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section id="book" class="final">
+  <div class="wrap">
+    <div class="reveal">
+      <h2 class="serif">Your wave is waiting.</h2>
+      <p>Pick your dates and we'll show you what's open. Best price guaranteed when you book direct.</p>
+      <div class="booking-bar">
+        <div class="field"><small>Check in</small><span>Select dates</span></div>
+        <div class="field"><small>Guests</small><span>2 surfers</span></div>
+        <a href="#" class="btn btn-primary">See available dates</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="foot-top">
+      <div class="foot-brand">
+        <a href="#" class="logo">Tifawave<span style="color:var(--sun)">.</span></a>
+        <p>Boutique surf stays in Tamraght, Morocco. Coaching, design, and slow mornings by the sea.</p>
+        <form class="news" onsubmit="return false">
+          <input type="email" placeholder="Email for swell reports &amp; offers" aria-label="Email" />
+          <button type="submit">Join</button>
+        </form>
+      </div>
+      <div class="foot-col">
+        <h5>Explore</h5>
+        <a href="#packages">Surf Packages</a><a href="#stay">Rooms &amp; Suites</a><a href="#experiences">Experiences</a><a href="#story">Our Story</a>
+      </div>
+      <div class="foot-col">
+        <h5>Plan</h5>
+        <a href="#plan">Rates &amp; Availability</a><a href="#plan">Getting Here</a><a href="#plan">FAQ</a><a href="#">Reviews</a>
+      </div>
+      <div class="foot-col">
+        <h5>Contact</h5>
+        <a href="#">WhatsApp</a><a href="#">hello@tifawave.com</a><a href="#">Gift Cards</a><a href="#">EN · FR · DE · ES</a>
+      </div>
+    </div>
+    <div class="foot-bot">
+      <span>© 2026 Tifawave Surf Stay · Tamraght, Morocco</span>
+      <span>Privacy · Terms · Cancellation Policy</span>
+    </div>
+  </div>
+</footer>
+
+<!-- MOBILE STICKY BAR -->
+<div class="mobile-bar" id="mbar">
+  <a href="#book" class="btn btn-primary">Check Availability</a>
+  <a href="#" class="btn wa">WhatsApp</a>
+</div>
+
+<script>
+  // sticky nav + mobile bar
+  const nav=document.getElementById('nav'), mbar=document.getElementById('mbar');
+  const onScroll=()=>{const y=window.scrollY;nav.classList.toggle('scrolled',y>60);mbar.classList.toggle('show',y>window.innerHeight*0.7)};
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+  // reveal on scroll
+  const io=new IntersectionObserver((ents)=>{ents.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.15});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
