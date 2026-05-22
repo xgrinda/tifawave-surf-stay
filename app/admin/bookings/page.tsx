@@ -80,6 +80,9 @@ export default async function AdminBookingsPage({
             <p>Review pending booking requests and update their status.</p>
           </div>
           <div className="admin-header-actions">
+            <a className="admin-header-link" href="/admin/rooms">
+              Rooms
+            </a>
             <a className="admin-header-link" href="/admin/blocked-dates">
               Blocked dates
             </a>

@@ -104,6 +104,9 @@ export default async function AdminBlockedDatesPage({
             <a className="admin-header-link" href="/admin/bookings">
               Bookings
             </a>
+            <a className="admin-header-link" href="/admin/rooms">
+              Rooms
+            </a>
             <a className="admin-header-link" href="/admin/settings">
               Settings
             </a>
