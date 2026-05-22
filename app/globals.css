@@ -1469,6 +1469,26 @@ select {
   overflow-wrap: anywhere;
 }
 
+.booking-payment-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 2px;
+}
+
+.booking-payment-actions .btn {
+  background: var(--sun);
+  color: var(--ink);
+}
+
+.booking-payment-actions p {
+  flex: 1 1 220px;
+  margin: 0;
+  color: rgb(246 241 231 / 76%);
+  font-size: 0.875rem;
+}
+
 .site-header:has(+ .admin-page),
 .admin-page ~ .site-footer,
 .admin-page ~ .mobile-booking-bar {

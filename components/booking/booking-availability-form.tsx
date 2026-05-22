@@ -61,6 +61,16 @@ type PendingBookingResponse =
       message: string;
     };
 
+type CheckoutResponse =
+  | {
+      checkoutUrl: string;
+    }
+  | {
+      created: false;
+      reason: string;
+      message: string;
+    };
+
 type BookingState =
   | {
       status: "idle";
@@ -69,6 +79,15 @@ type BookingState =
       status: "confirmed";
       bookingId: string;
       bookingStatus: string;
+    }
+  | {
+      status: "error";
+      message: string;
+    };
+
+type PaymentState =
+  | {
+      status: "idle";
     }
   | {
       status: "error";
@@ -117,6 +136,12 @@ function isPendingBookingCreated(response: PendingBookingResponse): response is 
   status: string;
 } {
   return "bookingId" in response && "status" in response;
+}
+
+function isCheckoutCreated(response: CheckoutResponse): response is {
+  checkoutUrl: string;
+} {
+  return "checkoutUrl" in response;
 }
 
 async function readJson<TResponse>(response: Response): Promise<TResponse> {
@@ -184,6 +209,7 @@ export function BookingAvailabilityForm() {
   const [isChecking, setIsChecking] = useState(false);
   const [isHolding, setIsHolding] = useState(false);
   const [isCreatingBooking, setIsCreatingBooking] = useState(false);
+  const [isStartingCheckout, setIsStartingCheckout] = useState(false);
   const [roomLoadMessage, setRoomLoadMessage] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [guestErrors, setGuestErrors] = useState<GuestFieldErrors>({});
@@ -201,13 +227,17 @@ export function BookingAvailabilityForm() {
   const [booking, setBooking] = useState<BookingState>({
     status: "idle"
   });
+  const [payment, setPayment] = useState<PaymentState>({
+    status: "idle"
+  });
 
   const selectedRoom = useMemo(
     () => rooms.find((room) => room.id === roomId) ?? null,
     [roomId, rooms]
   );
   const today = useMemo(() => toDateInputValue(new Date()), []);
-  const isBusy = isChecking || isHolding || isCreatingBooking;
+  const isBusy =
+    isChecking || isHolding || isCreatingBooking || isStartingCheckout;
   const canUseFields =
     !isLoadingRooms && !isBusy && rooms.length > 0 && booking.status !== "confirmed";
   const checkOutMin = checkIn ? addDaysToDateInput(checkIn, 1) : today;
@@ -271,6 +301,9 @@ export function BookingAvailabilityForm() {
       status: "idle"
     });
     setBooking({
+      status: "idle"
+    });
+    setPayment({
       status: "idle"
     });
     setGuestErrors({});
@@ -524,6 +557,9 @@ export function BookingAvailabilityForm() {
           bookingId: result.bookingId,
           bookingStatus: result.status
         });
+        setPayment({
+          status: "idle"
+        });
         return;
       }
 
@@ -541,6 +577,48 @@ export function BookingAvailabilityForm() {
       });
     } finally {
       setIsCreatingBooking(false);
+    }
+  }
+
+  async function handleDepositCheckout() {
+    if (isStartingCheckout || booking.status !== "confirmed") {
+      return;
+    }
+
+    setIsStartingCheckout(true);
+    setPayment({ status: "idle" });
+
+    try {
+      const response = await fetch("/api/booking/checkout", {
+        body: JSON.stringify({
+          bookingId: booking.bookingId
+        }),
+        headers: {
+          "content-type": "application/json"
+        },
+        method: "POST"
+      });
+      const result = await readJson<CheckoutResponse>(response);
+
+      if (response.ok && isCheckoutCreated(result)) {
+        window.location.assign(result.checkoutUrl);
+        return;
+      }
+
+      setPayment({
+        status: "error",
+        message:
+          "message" in result
+            ? result.message
+            : "Stripe checkout could not be started."
+      });
+    } catch {
+      setPayment({
+        status: "error",
+        message: "Stripe checkout could not be started right now."
+      });
+    } finally {
+      setIsStartingCheckout(false);
     }
   }
 
@@ -891,8 +969,8 @@ export function BookingAvailabilityForm() {
             <p className="eyebrow">Pending booking created</p>
             <h2>Your request is pending.</h2>
             <p>
-              Tifawave has your booking request. Payment and final confirmation
-              are intentionally not part of this step.
+              Tifawave has your booking request. Pay the deposit next to confirm
+              the stay securely through Stripe.
             </p>
             <dl>
               <div>
@@ -904,6 +982,26 @@ export function BookingAvailabilityForm() {
                 <dd>{booking.bookingStatus}</dd>
               </div>
             </dl>
+            <div className="booking-payment-actions">
+              <button
+                className="btn btn-primary"
+                disabled={isStartingCheckout}
+                onClick={handleDepositCheckout}
+                type="button"
+              >
+                {isStartingCheckout ? "Opening Stripe..." : "Pay deposit"}
+              </button>
+              <p>Deposit checkout opens on Stripe. The booking confirms after payment succeeds.</p>
+            </div>
+          </div>
+        ) : null}
+
+        {payment.status === "error" ? (
+          <div className="booking-status booking-status-error" role="status">
+            <div className="booking-status-copy">
+              <span>Checkout not started</span>
+              <p>{payment.message}</p>
+            </div>
           </div>
         ) : null}
 

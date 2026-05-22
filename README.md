@@ -42,6 +42,10 @@ SUPABASE_SERVICE_ROLE_KEY=
 RESEND_API_KEY=
 BOOKING_EMAIL_FROM=
 BOOKING_NOTIFICATION_EMAIL=
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+STRIPE_DEPOSIT_AMOUNT_CENTS=
+STRIPE_DEPOSIT_CURRENCY=
 ADMIN_PASSWORD=
 ADMIN_SESSION_SECRET=
 ```
@@ -50,6 +54,9 @@ Notes:
 - `NEXT_PUBLIC_SITE_URL` should be the canonical production URL, for example `https://tifawave.com`.
 - `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are used by browser-safe room loading.
 - `SUPABASE_SERVICE_ROLE_KEY` is server-only. Never expose it in client components or public logs.
+- `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` are server-only. Never expose them in client components.
+- `STRIPE_DEPOSIT_AMOUNT_CENTS` is the fixed deposit amount, not the full booking amount.
+- `STRIPE_DEPOSIT_CURRENCY` should be lowercase, for example `usd`.
 - `ADMIN_SESSION_SECRET` should be a long random string.
 - `ADMIN_PASSWORD` is temporary password auth for the current protected admin area.
 
@@ -70,6 +77,7 @@ supabase/migrations/202605210001_initial_booking_schema.sql
 supabase/migrations/202605210002_add_booking_overlap_constraints.sql
 supabase/migrations/202605210003_enable_rls_policies.sql
 supabase/migrations/202605210004_seed_initial_rooms.sql
+supabase/migrations/202605220001_add_stripe_deposit_fields.sql
 ```
 
 SQL editor alternative:
@@ -124,6 +132,25 @@ Current email behavior:
 - A pending booking attempts to send one guest confirmation email.
 - Email failures are logged server-side and do not roll back booking creation.
 
+## Stripe Deposit Setup
+
+1. Create a Stripe secret key and save it as `STRIPE_SECRET_KEY`.
+2. Create a webhook endpoint in Stripe that points to:
+
+```text
+https://YOUR_DOMAIN/api/stripe/webhook
+```
+
+3. Save the webhook signing secret as `STRIPE_WEBHOOK_SECRET`.
+4. Set `STRIPE_DEPOSIT_AMOUNT_CENTS` to the fixed deposit amount.
+5. Set `STRIPE_DEPOSIT_CURRENCY` to the lowercase Stripe currency code.
+
+Current payment behavior:
+- Checkout collects a deposit only, not the full booking amount.
+- Checkout starts only after a pending booking exists.
+- A verified successful Stripe webhook updates the booking to `confirmed` and marks the deposit as `paid`.
+- Failed or expired payment events keep the booking pending and mark the payment attempt as `failed`.
+
 ## Admin Login Notes
 
 Admin pages are protected by the temporary password flow:
@@ -145,6 +172,8 @@ Before launch:
 - Confirm RLS is enabled and public reads are limited to active rooms.
 - Confirm `SUPABASE_SERVICE_ROLE_KEY` is only available server-side.
 - Confirm Resend sender domain is verified.
+- Confirm Stripe webhook signing is configured for `/api/stripe/webhook`.
+- Confirm Stripe test mode checkout succeeds before switching to live keys.
 - Confirm admin password and session secret are strong production-only values.
 - Confirm `/admin/*` and `/api/*` are excluded from `robots.txt`.
 - Run `npm run lint`, `npm run typecheck`, and `npm run build`.
@@ -155,7 +184,8 @@ Official references:
 - [Vercel environment variables](https://vercel.com/docs/environment-variables)
 - [Supabase CLI migrations](https://supabase.com/docs/guides/local-development/overview)
 - [Resend domain verification](https://resend.com/docs/dashboard/domains/introduction)
-# tifawave-surf-stay
+- [Stripe Checkout Sessions](https://docs.stripe.com/api/checkout/sessions/create)
+- [Stripe webhook signatures](https://docs.stripe.com/webhooks/signature?lang=node&locale=en-GB)
 # tifawave-surf-stay
 # tifawave-surf-stay
 # tifawave-surf-stay

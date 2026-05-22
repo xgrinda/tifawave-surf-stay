@@ -59,6 +59,12 @@ export type Database = {
           guest_email: string | null;
           guest_phone: string | null;
           notes: string | null;
+          stripe_checkout_session_id: string | null;
+          stripe_payment_intent_id: string | null;
+          deposit_amount_cents: number | null;
+          deposit_currency: string;
+          payment_status: "unpaid" | "checkout_open" | "paid" | "failed";
+          deposit_paid_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -74,6 +80,12 @@ export type Database = {
           guest_email?: string | null;
           guest_phone?: string | null;
           notes?: string | null;
+          stripe_checkout_session_id?: string | null;
+          stripe_payment_intent_id?: string | null;
+          deposit_amount_cents?: number | null;
+          deposit_currency?: string;
+          payment_status?: "unpaid" | "checkout_open" | "paid" | "failed";
+          deposit_paid_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -89,6 +101,12 @@ export type Database = {
           guest_email?: string | null;
           guest_phone?: string | null;
           notes?: string | null;
+          stripe_checkout_session_id?: string | null;
+          stripe_payment_intent_id?: string | null;
+          deposit_amount_cents?: number | null;
+          deposit_currency?: string;
+          payment_status?: "unpaid" | "checkout_open" | "paid" | "failed";
+          deposit_paid_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };

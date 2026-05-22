@@ -18,6 +18,13 @@ type AdminAuthEnv = {
   adminSessionSecret: string;
 };
 
+type StripeEnv = {
+  stripeSecretKey: string;
+  stripeWebhookSecret: string;
+  stripeDepositAmountCents: number;
+  stripeDepositCurrency: string;
+};
+
 function readRequiredValue(name: string, value: string | undefined): string {
   if (!value) {
     throw new Error(`Missing required environment variable: ${name}`);
@@ -28,6 +35,17 @@ function readRequiredValue(name: string, value: string | undefined): string {
 
 function readRequiredEnv(name: string): string {
   return readRequiredValue(name, process.env[name]);
+}
+
+function readPositiveIntegerEnv(name: string): number {
+  const value = readRequiredEnv(name);
+  const parsed = Number(value);
+
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error(`Environment variable ${name} must be a positive integer.`);
+  }
+
+  return parsed;
 }
 
 export function getSupabasePublicEnv(): SupabasePublicEnv {
@@ -62,5 +80,26 @@ export function getAdminAuthEnv(): AdminAuthEnv {
   return {
     adminPassword: readRequiredEnv("ADMIN_PASSWORD"),
     adminSessionSecret: readRequiredEnv("ADMIN_SESSION_SECRET")
+  };
+}
+
+export function getStripeEnv(): StripeEnv {
+  const stripeDepositCurrency = readRequiredEnv("STRIPE_DEPOSIT_CURRENCY")
+    .trim()
+    .toLowerCase();
+
+  if (!/^[a-z]{3,10}$/.test(stripeDepositCurrency)) {
+    throw new Error(
+      "Environment variable STRIPE_DEPOSIT_CURRENCY must be a lowercase currency code."
+    );
+  }
+
+  return {
+    stripeSecretKey: readRequiredEnv("STRIPE_SECRET_KEY"),
+    stripeWebhookSecret: readRequiredEnv("STRIPE_WEBHOOK_SECRET"),
+    stripeDepositAmountCents: readPositiveIntegerEnv(
+      "STRIPE_DEPOSIT_AMOUNT_CENTS"
+    ),
+    stripeDepositCurrency
   };
 }
