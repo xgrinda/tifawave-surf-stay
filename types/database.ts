@@ -207,6 +207,54 @@ export type Database = {
         };
         Relationships: [];
       };
+      settings: {
+        Row: {
+          id: boolean;
+          business_name: string;
+          contact_email: string;
+          whatsapp_number: string;
+          address: string;
+          google_maps_url: string;
+          instagram_url: string;
+          default_currency: string;
+          stripe_deposit_amount_display: string;
+          support_phone: string;
+          booking_notice_text: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: boolean;
+          business_name?: string;
+          contact_email?: string;
+          whatsapp_number?: string;
+          address?: string;
+          google_maps_url?: string;
+          instagram_url?: string;
+          default_currency?: string;
+          stripe_deposit_amount_display?: string;
+          support_phone?: string;
+          booking_notice_text?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: boolean;
+          business_name?: string;
+          contact_email?: string;
+          whatsapp_number?: string;
+          address?: string;
+          google_maps_url?: string;
+          instagram_url?: string;
+          default_currency?: string;
+          stripe_deposit_amount_display?: string;
+          support_phone?: string;
+          booking_notice_text?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

@@ -1164,6 +1164,41 @@ select {
   padding: 0.55rem 0.85rem;
 }
 
+.booking-contact-panel {
+  display: grid;
+  gap: 10px;
+  max-width: 36rem;
+  border-left: 3px solid var(--sun);
+  background: rgb(255 255 255 / 54%);
+  padding: 14px 16px;
+}
+
+.booking-contact-panel p {
+  margin: 0;
+  color: var(--ink-700);
+  font-size: 0.9375rem;
+}
+
+.booking-contact-panel > span {
+  color: var(--clay-deep);
+  font-size: 0.8125rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.booking-contact-panel div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.booking-contact-panel a {
+  color: var(--seaglass);
+  font-size: 0.875rem;
+  font-weight: 800;
+}
+
 .booking-panel {
   display: grid;
   gap: 18px;
@@ -1820,6 +1855,25 @@ select {
   align-items: end;
 }
 
+.admin-settings-form {
+  display: grid;
+  gap: 18px;
+}
+
+.admin-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.admin-field-wide {
+  grid-column: 1 / -1;
+}
+
+.admin-settings-submit {
+  justify-self: start;
+}
+
 .admin-field select {
   appearance: none;
   background-image:
@@ -2024,6 +2078,11 @@ select {
   transition: color 200ms var(--ease-lux);
 }
 
+.footer-contact span {
+  color: var(--muted-dark);
+  font-size: 0.9375rem;
+}
+
 .site-footer a:hover,
 .site-footer a:focus-visible {
   color: var(--sun);
@@ -2115,6 +2174,10 @@ select {
   }
 
   .admin-block-form {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-settings-grid {
     grid-template-columns: 1fr;
   }
 

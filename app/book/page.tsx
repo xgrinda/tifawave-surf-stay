@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import {
   BookingAvailabilityForm,
   BookingPaymentReturnPanel,
+  type BookingContactSettings,
   type BookingPaymentReturn
 } from "@/components/booking/booking-availability-form";
 import { Container } from "@/components/primitives/container";
+import { getWebsiteSettings, getWhatsappHref } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "Book | Tifawave Surf Stay",
@@ -43,8 +45,22 @@ function getPaymentReturn({
   return null;
 }
 
+function getBookingContactSettings(): Promise<BookingContactSettings> {
+  return getWebsiteSettings().then((settings) => ({
+    businessName: settings.businessName,
+    bookingNoticeText: settings.bookingNoticeText,
+    contactEmail: settings.contactEmail,
+    stripeDepositAmountDisplay: settings.stripeDepositAmountDisplay,
+    supportPhone: settings.supportPhone,
+    whatsappHref: getWhatsappHref(settings)
+  }));
+}
+
 export default async function BookPage({ searchParams }: BookPageProps) {
-  const params = await searchParams;
+  const [params, settings] = await Promise.all([
+    searchParams,
+    getBookingContactSettings()
+  ]);
   const paymentReturn = getPaymentReturn({
     bookingId: params?.bookingId,
     payment: params?.payment
@@ -54,9 +70,12 @@ export default async function BookPage({ searchParams }: BookPageProps) {
     <main className="booking-page">
       <Container>
         {paymentReturn ? (
-          <BookingPaymentReturnPanel paymentReturn={paymentReturn} />
+          <BookingPaymentReturnPanel
+            paymentReturn={paymentReturn}
+            settings={settings}
+          />
         ) : (
-          <BookingAvailabilityForm />
+          <BookingAvailabilityForm settings={settings} />
         )}
       </Container>
     </main>

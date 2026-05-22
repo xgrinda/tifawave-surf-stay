@@ -105,6 +105,15 @@ export type BookingPaymentReturn =
       bookingId?: string;
     };
 
+export type BookingContactSettings = {
+  businessName: string;
+  contactEmail: string;
+  whatsappHref: string;
+  supportPhone: string;
+  bookingNoticeText: string;
+  stripeDepositAmountDisplay: string;
+};
+
 type FieldErrors = {
   roomId?: string;
   checkIn?: string;
@@ -212,9 +221,11 @@ function statusLabel(
 }
 
 export function BookingPaymentReturnPanel({
-  paymentReturn
+  paymentReturn,
+  settings
 }: {
   paymentReturn: BookingPaymentReturn;
+  settings: BookingContactSettings;
 }) {
   if (paymentReturn.status === "success") {
     return (
@@ -239,15 +250,18 @@ export function BookingPaymentReturnPanel({
           </div>
           <div>
             <dt>Need a hand?</dt>
-            <dd>Message Tifawave on WhatsApp or email hello@tifawave.com.</dd>
+            <dd>
+              Message {settings.businessName} on WhatsApp or email{" "}
+              {settings.contactEmail}.
+            </dd>
           </div>
         </dl>
         <div className="booking-return-actions">
           <Link className="btn btn-primary" href="/">
             Back home
           </Link>
-          <a className="btn btn-secondary" href="#whatsapp">
-            Contact Tifawave
+          <a className="btn btn-secondary" href={settings.whatsappHref}>
+            Contact
           </a>
         </div>
       </section>
@@ -278,22 +292,28 @@ export function BookingPaymentReturnPanel({
         </div>
         <div>
           <dt>Support</dt>
-          <dd>WhatsApp or email hello@tifawave.com and we will help.</dd>
+          <dd>
+            WhatsApp or email {settings.contactEmail} and we will help.
+          </dd>
         </div>
       </dl>
       <div className="booking-return-actions">
         <Link className="btn btn-primary" href="/book">
           Try again
         </Link>
-        <a className="btn btn-secondary" href="#whatsapp">
-          Contact Tifawave
+        <a className="btn btn-secondary" href={settings.whatsappHref}>
+          Contact
         </a>
       </div>
     </section>
   );
 }
 
-export function BookingAvailabilityForm() {
+export function BookingAvailabilityForm({
+  settings
+}: {
+  settings: BookingContactSettings;
+}) {
   const [rooms, setRooms] = useState<RoomOption[]>([]);
   const [roomId, setRoomId] = useState("");
   const [checkIn, setCheckIn] = useState("");
@@ -731,6 +751,21 @@ export function BookingAvailabilityForm() {
             ))}
           </div>
         ) : null}
+        <div className="booking-contact-panel">
+          <p>{settings.bookingNoticeText}</p>
+          <span>{settings.stripeDepositAmountDisplay}</span>
+          <div>
+            <a href={settings.whatsappHref}>WhatsApp</a>
+            <a href={`mailto:${settings.contactEmail}`}>
+              {settings.contactEmail}
+            </a>
+            {settings.supportPhone ? (
+              <a href={`tel:${settings.supportPhone.replace(/\s+/g, "")}`}>
+                {settings.supportPhone}
+              </a>
+            ) : null}
+          </div>
+        </div>
       </div>
 
       <div className="booking-panel" aria-busy={isBusy || isLoadingRooms}>
@@ -1084,7 +1119,10 @@ export function BookingAvailabilityForm() {
               >
                 {isStartingCheckout ? "Opening Stripe..." : "Pay deposit"}
               </button>
-              <p>Deposit checkout opens on Stripe. The booking confirms after payment succeeds.</p>
+              <p>
+                {settings.stripeDepositAmountDisplay}. The booking confirms
+                after payment succeeds.
+              </p>
             </div>
           </div>
         ) : null}

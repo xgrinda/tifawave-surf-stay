@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Container } from "@/components/primitives/container";
+import { getWhatsappHref, type WebsiteSettings } from "@/lib/settings";
 
 const exploreLinks = [
   { href: "/surf/packages", label: "Surf Packages" },
@@ -8,13 +9,14 @@ const exploreLinks = [
   { href: "/about", label: "About" }
 ];
 
-const planLinks = [
-  { href: "/book", label: "Book" },
-  { href: "/faq", label: "FAQ" },
-  { href: "#whatsapp", label: "WhatsApp" }
-];
+export function SiteFooter({ settings }: { settings: WebsiteSettings }) {
+  const whatsappHref = getWhatsappHref(settings);
+  const planLinks = [
+    { href: "/book", label: "Book" },
+    { href: "/faq", label: "FAQ" },
+    { href: whatsappHref, label: "WhatsApp" }
+  ];
 
-export function SiteFooter() {
   return (
     <footer className="site-footer">
       <Container>
@@ -24,8 +26,8 @@ export function SiteFooter() {
               Tifawave<span>.</span>
             </Link>
             <p>
-              Boutique surf stays in Tamraght, Morocco. A calm foundation for
-              the public site is now in place.
+              Boutique surf stays in Tamraght, Morocco. Direct bookings,
+              practical support, and a calm base between surf sessions.
             </p>
           </div>
 
@@ -49,14 +51,29 @@ export function SiteFooter() {
 
           <div className="footer-contact" id="whatsapp">
             <h2>Contact</h2>
-            <a href="#whatsapp">WhatsApp placeholder</a>
-            <a href="mailto:hello@tifawave.com">hello@tifawave.com</a>
+            <a href={whatsappHref}>WhatsApp</a>
+            <a href={`mailto:${settings.contactEmail}`}>
+              {settings.contactEmail}
+            </a>
+            {settings.supportPhone ? (
+              <a href={`tel:${settings.supportPhone.replace(/\s+/g, "")}`}>
+                {settings.supportPhone}
+              </a>
+            ) : null}
+            {settings.googleMapsUrl ? (
+              <a href={settings.googleMapsUrl}>Map</a>
+            ) : (
+              <span>{settings.address}</span>
+            )}
+            {settings.instagramUrl ? (
+              <a href={settings.instagramUrl}>Instagram</a>
+            ) : null}
           </div>
         </div>
 
         <div className="footer-bottom">
-          <span>2026 Tifawave Surf Stay</span>
-          <span>Tamraght, Morocco</span>
+          <span>2026 {settings.businessName}</span>
+          <span>{settings.address}</span>
         </div>
       </Container>
     </footer>

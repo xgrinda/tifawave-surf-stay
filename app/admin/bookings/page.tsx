@@ -83,6 +83,9 @@ export default async function AdminBookingsPage({
             <a className="admin-header-link" href="/admin/blocked-dates">
               Blocked dates
             </a>
+            <a className="admin-header-link" href="/admin/settings">
+              Settings
+            </a>
             <form action={logoutAdminAction}>
               <button className="btn btn-secondary" type="submit">
                 Sign out
