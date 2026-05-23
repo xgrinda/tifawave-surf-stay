@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Container } from "@/components/primitives/container";
 
 export function HeroSection() {
@@ -38,9 +39,9 @@ export function HeroSection() {
               <path d="M5 12h14M13 6l6 6-6 6" />
             </svg>
           </a>
-          <a className="btn btn-ghost-dark" href="/surf/packages">
+          <Link className="btn btn-ghost-dark" href="/surf/packages">
             Explore Packages
-          </a>
+          </Link>
         </div>
         <div className="home-hero-trust" aria-label="Guest trust signals">
           <span>4.9/5 guest rating</span>

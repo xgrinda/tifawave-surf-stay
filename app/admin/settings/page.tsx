@@ -69,6 +69,9 @@ export default async function AdminSettingsPage({
             <a className="admin-header-link" href="/admin/packages">
               Packages
             </a>
+            <a className="admin-header-link" href="/admin/gallery">
+              Gallery
+            </a>
             <a className="admin-header-link" href="/admin/blocked-dates">
               Blocked dates
             </a>

@@ -18,6 +18,11 @@ const publicRoutes = [
     priority: 0.8
   },
   {
+    path: "/surf-camp-tamraght",
+    changeFrequency: "monthly",
+    priority: 0.85
+  },
+  {
     path: "/gallery",
     changeFrequency: "monthly",
     priority: 0.7

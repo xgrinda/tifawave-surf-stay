@@ -38,6 +38,71 @@ function rowToRoom(
   };
 }
 
+async function getRoomImages(
+  roomIds: string[]
+): Promise<Map<string, PublicRoomImage[]>> {
+  const imagesByRoomId = new Map<string, PublicRoomImage[]>();
+
+  if (roomIds.length === 0) {
+    return imagesByRoomId;
+  }
+
+  try {
+    const supabase = createSupabaseServerClient();
+    const { data: images, error } = await supabase
+      .from("room_images")
+      .select("id, room_id, image_url, alt_text, sort_order, is_primary")
+      .in("room_id", roomIds)
+      .order("is_primary", { ascending: false })
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      return imagesByRoomId;
+    }
+
+    for (const image of images) {
+      const roomImages = imagesByRoomId.get(image.room_id) ?? [];
+      roomImages.push({
+        id: image.id,
+        imageUrl: image.image_url,
+        altText: image.alt_text,
+        sortOrder: image.sort_order,
+        isPrimary: image.is_primary
+      });
+      imagesByRoomId.set(image.room_id, roomImages);
+    }
+  } catch {
+    return imagesByRoomId;
+  }
+
+  return imagesByRoomId;
+}
+
+export async function getActiveRooms(): Promise<PublicRoomDetail[]> {
+  noStore();
+
+  try {
+    const supabase = createSupabaseServerClient();
+    const { data: rooms, error } = await supabase
+      .from("rooms")
+      .select("id, slug, name, description, max_guests, base_price_cents")
+      .eq("is_active", true)
+      .order("base_price_cents", { ascending: true })
+      .order("name", { ascending: true });
+
+    if (error) {
+      return [];
+    }
+
+    const imagesByRoomId = await getRoomImages(rooms.map((room) => room.id));
+
+    return rooms.map((room) => rowToRoom(room, imagesByRoomId.get(room.id) ?? []));
+  } catch {
+    return [];
+  }
+}
+
 export async function getActiveRoomBySlug(
   slug: string
 ): Promise<PublicRoomDetail | null> {
@@ -61,30 +126,7 @@ export async function getActiveRoomBySlug(
     return null;
   }
 
-  try {
-    const { data: images, error: imagesError } = await supabase
-      .from("room_images")
-      .select("id, image_url, alt_text, sort_order, is_primary")
-      .eq("room_id", room.id)
-      .order("is_primary", { ascending: false })
-      .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: true });
+  const imagesByRoomId = await getRoomImages([room.id]);
 
-    if (imagesError) {
-      return rowToRoom(room, []);
-    }
-
-    return rowToRoom(
-      room,
-      images.map((image) => ({
-        id: image.id,
-        imageUrl: image.image_url,
-        altText: image.alt_text,
-        sortOrder: image.sort_order,
-        isPrimary: image.is_primary
-      }))
-    );
-  } catch {
-    return rowToRoom(room, []);
-  }
+  return rowToRoom(room, imagesByRoomId.get(room.id) ?? []);
 }

@@ -129,6 +129,42 @@ export type Database = {
         };
         Relationships: [];
       };
+      gallery_images: {
+        Row: {
+          id: string;
+          image_url: string;
+          caption: string;
+          alt_text: string;
+          category: string;
+          sort_order: number;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          image_url: string;
+          caption?: string;
+          alt_text?: string;
+          category?: string;
+          sort_order?: number;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          image_url?: string;
+          caption?: string;
+          alt_text?: string;
+          category?: string;
+          sort_order?: number;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       bookings: {
         Row: {
           id: string;

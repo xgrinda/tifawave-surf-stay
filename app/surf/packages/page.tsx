@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Container } from "@/components/primitives/container";
 import { getActiveSurfPackages } from "@/lib/surf-packages";
 
@@ -68,9 +69,17 @@ export default async function SurfPackagesPage() {
                     ))}
                   </ul>
 
-                  <a className="btn btn-primary" href="/book">
-                    Book
-                  </a>
+                  <div className="surf-package-card-actions">
+                    <Link
+                      className="btn btn-primary"
+                      href={`/surf/packages/${pkg.slug}`}
+                    >
+                      View details
+                    </Link>
+                    <Link className="surf-package-book-link" href="/book">
+                      Book
+                    </Link>
+                  </div>
                 </article>
               ))}
             </div>

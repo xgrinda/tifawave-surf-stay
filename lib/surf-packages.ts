@@ -104,3 +104,17 @@ export async function getActiveSurfPackages(): Promise<PublicSurfPackage[]> {
     return staticPackageFallback();
   }
 }
+
+export async function getActiveSurfPackageBySlug(
+  slug: string
+): Promise<PublicSurfPackage | null> {
+  const normalizedSlug = slug.trim().toLowerCase();
+
+  if (!normalizedSlug) {
+    return null;
+  }
+
+  const packages = await getActiveSurfPackages();
+
+  return packages.find((pkg) => pkg.slug === normalizedSlug) ?? null;
+}
