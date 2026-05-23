@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/admin/auth";
 import { getAdminRooms } from "@/lib/admin/rooms";
+import { focalPositionToCss } from "@/lib/image-position";
 import { logoutAdminAction } from "../login/actions";
 import {
   createRoomImageAction,
@@ -312,6 +313,15 @@ export default async function AdminRoomsPage({
                           type="number"
                         />
                       </label>
+                      <label className="admin-field">
+                        <span>Focal position</span>
+                        <select defaultValue="center" name="focalPosition">
+                          <option value="center">Center</option>
+                          <option value="top">Top</option>
+                          <option value="bottom">Bottom</option>
+                        </select>
+                        <small>Use top or bottom when the important detail is cropped.</small>
+                      </label>
                       <label className="admin-checkbox-field">
                         <input name="isPrimary" type="checkbox" value="true" />
                         <span>Primary image</span>
@@ -365,6 +375,15 @@ export default async function AdminRoomsPage({
                           type="number"
                         />
                       </label>
+                      <label className="admin-field">
+                        <span>Focal position</span>
+                        <select defaultValue="center" name="focalPosition">
+                          <option value="center">Center</option>
+                          <option value="top">Top</option>
+                          <option value="bottom">Bottom</option>
+                        </select>
+                        <small>Use top or bottom when the important detail is cropped.</small>
+                      </label>
                       <label className="admin-checkbox-field">
                         <input name="isPrimary" type="checkbox" value="true" />
                         <span>Primary image</span>
@@ -383,7 +402,10 @@ export default async function AdminRoomsPage({
                               className="admin-room-image-preview"
                               role="img"
                               style={{
-                                backgroundImage: `url("${image.imageUrl}")`
+                                backgroundImage: `url("${image.imageUrl}")`,
+                                backgroundPosition: focalPositionToCss(
+                                  image.focalPosition
+                                )
                               }}
                             />
                             <form
@@ -424,6 +446,17 @@ export default async function AdminRoomsPage({
                                   required
                                   type="number"
                                 />
+                              </label>
+                              <label className="admin-field">
+                                <span>Focal position</span>
+                                <select
+                                  defaultValue={image.focalPosition}
+                                  name="focalPosition"
+                                >
+                                  <option value="center">Center</option>
+                                  <option value="top">Top</option>
+                                  <option value="bottom">Bottom</option>
+                                </select>
                               </label>
                               <label className="admin-checkbox-field">
                                 <input

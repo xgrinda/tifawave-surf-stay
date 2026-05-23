@@ -52,6 +52,7 @@ function roomInputFromForm(formData: FormData) {
 function roomImageInputFromForm(formData: FormData) {
   return {
     altText: stringField(formData, "altText"),
+    focalPosition: stringField(formData, "focalPosition"),
     imageUrl: stringField(formData, "imageUrl"),
     isPrimary: stringField(formData, "isPrimary") === "true",
     roomId: stringField(formData, "roomId"),

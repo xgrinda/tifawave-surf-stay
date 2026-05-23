@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Container } from "@/components/primitives/container";
+import { focalPositionToCss } from "@/lib/image-position";
 import { getActiveRoomBySlug } from "@/lib/rooms";
 import { getSiteUrl } from "@/lib/site";
 
@@ -105,7 +106,10 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
               className="room-detail-primary-image"
               role="img"
               style={{
-                backgroundImage: `url("${primaryImage.imageUrl}")`
+                backgroundImage: `url("${primaryImage.imageUrl}")`,
+                backgroundPosition: focalPositionToCss(
+                  primaryImage.focalPosition
+                )
               }}
             />
           ) : (
@@ -131,7 +135,8 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
                   key={image.id}
                   role="img"
                   style={{
-                    backgroundImage: `url("${image.imageUrl}")`
+                    backgroundImage: `url("${image.imageUrl}")`,
+                    backgroundPosition: focalPositionToCss(image.focalPosition)
                   }}
                 />
               ))}

@@ -41,6 +41,7 @@ function galleryImageInputFromForm(formData: FormData) {
     altText: stringField(formData, "altText"),
     caption: stringField(formData, "caption"),
     category: stringField(formData, "category"),
+    focalPosition: stringField(formData, "focalPosition"),
     imageUrl: stringField(formData, "imageUrl"),
     isActive: stringField(formData, "isActive") === "true",
     sortOrder: stringField(formData, "sortOrder")

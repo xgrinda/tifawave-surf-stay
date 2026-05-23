@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { normalizeFocalPosition, type FocalPosition } from "@/lib/image-position";
 
 type AdminGalleryResult =
   | {
@@ -15,6 +16,7 @@ export type AdminGalleryImage = {
   caption: string;
   altText: string;
   category: string;
+  focalPosition: FocalPosition;
   sortOrder: number;
   isActive: boolean;
   updatedAt: string;
@@ -26,6 +28,7 @@ export type UpsertAdminGalleryImageInput = {
   caption: string;
   altText: string;
   category: string;
+  focalPosition?: string;
   sortOrder: string;
   isActive: boolean;
 };
@@ -78,6 +81,7 @@ function normalizeGalleryImageInput(input: UpsertAdminGalleryImageInput) {
   const caption = normalizeLongText(input.caption);
   const altText = normalizeText(input.altText);
   const category = normalizeCategory(input.category) || "general";
+  const focalPosition = normalizeFocalPosition(input.focalPosition);
   const sortOrder = parseNonNegativeInteger(input.sortOrder, "Sort order");
 
   if (!CATEGORY_PATTERN.test(category)) {
@@ -96,6 +100,7 @@ function normalizeGalleryImageInput(input: UpsertAdminGalleryImageInput) {
     altText,
     caption,
     category,
+    focalPosition,
     imageUrl,
     isActive: input.isActive,
     sortOrder
@@ -109,6 +114,7 @@ function galleryImagePayload(
     alt_text: input.altText,
     caption: input.caption,
     category: input.category,
+    focal_position: input.focalPosition,
     image_url: input.imageUrl,
     is_active: input.isActive,
     sort_order: input.sortOrder,
@@ -129,7 +135,7 @@ export async function getAdminGalleryImages(): Promise<AdminGalleryImage[]> {
   const { data, error } = await supabase
     .from("gallery_images")
     .select(
-      "id, image_url, caption, alt_text, category, sort_order, is_active, updated_at"
+      "id, image_url, caption, alt_text, category, focal_position, sort_order, is_active, updated_at"
     )
     .order("is_active", { ascending: false })
     .order("category", { ascending: true })
@@ -146,6 +152,7 @@ export async function getAdminGalleryImages(): Promise<AdminGalleryImage[]> {
     caption: image.caption,
     altText: image.alt_text,
     category: image.category,
+    focalPosition: normalizeFocalPosition(image.focal_position),
     sortOrder: image.sort_order,
     isActive: image.is_active,
     updatedAt: image.updated_at

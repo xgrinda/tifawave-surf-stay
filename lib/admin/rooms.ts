@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { normalizeFocalPosition, type FocalPosition } from "@/lib/image-position";
 
 type AdminRoomResult =
   | {
@@ -26,6 +27,7 @@ export type AdminRoomImage = {
   roomId: string;
   imageUrl: string;
   altText: string;
+  focalPosition: FocalPosition;
   sortOrder: number;
   isPrimary: boolean;
   updatedAt: string;
@@ -45,6 +47,7 @@ export type UpsertAdminRoomImageInput = {
   roomId: string;
   imageUrl: string;
   altText: string;
+  focalPosition?: string;
   sortOrder: string;
   isPrimary: boolean;
 };
@@ -142,6 +145,7 @@ function normalizeRoomImageInput(input: UpsertAdminRoomImageInput) {
   const roomId = input.roomId.trim();
   const imageUrl = normalizeImageUrl(input.imageUrl);
   const altText = normalizeText(input.altText);
+  const focalPosition = normalizeFocalPosition(input.focalPosition);
   const sortOrder = parseNonNegativeInteger(input.sortOrder, "Sort order");
 
   if (!roomId) {
@@ -154,6 +158,7 @@ function normalizeRoomImageInput(input: UpsertAdminRoomImageInput) {
 
   return {
     altText,
+    focalPosition,
     imageUrl,
     isPrimary: input.isPrimary,
     roomId,
@@ -175,6 +180,7 @@ function roomPayload(input: ReturnType<typeof normalizeRoomInput>) {
 function roomImagePayload(input: ReturnType<typeof normalizeRoomImageInput>) {
   return {
     alt_text: input.altText,
+    focal_position: input.focalPosition,
     image_url: input.imageUrl,
     sort_order: input.sortOrder,
     updated_at: new Date().toISOString()
@@ -207,7 +213,9 @@ export async function getAdminRooms(): Promise<AdminRoom[]> {
   if (roomIds.length > 0) {
     const { data: images, error: imagesError } = await supabase
       .from("room_images")
-      .select("id, room_id, image_url, alt_text, sort_order, is_primary, updated_at")
+      .select(
+        "id, room_id, image_url, alt_text, focal_position, sort_order, is_primary, updated_at"
+      )
       .in("room_id", roomIds)
       .order("is_primary", { ascending: false })
       .order("sort_order", { ascending: true })
@@ -224,6 +232,7 @@ export async function getAdminRooms(): Promise<AdminRoom[]> {
         roomId: image.room_id,
         imageUrl: image.image_url,
         altText: image.alt_text,
+        focalPosition: normalizeFocalPosition(image.focal_position),
         sortOrder: image.sort_order,
         isPrimary: image.is_primary,
         updatedAt: image.updated_at

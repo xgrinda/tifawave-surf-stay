@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/primitives/container";
+import { focalPositionToCss } from "@/lib/image-position";
 import { getActiveRooms } from "@/lib/rooms";
 import { getSiteUrl } from "@/lib/site";
 
@@ -92,10 +93,18 @@ export default async function StayPage() {
                         aria-label={primaryImage.altText || `${room.name} image`}
                         className="stay-room-card-media"
                         role="img"
-                        style={{
-                          backgroundImage: `url("${primaryImage.imageUrl}")`
-                        }}
-                      />
+                      >
+                        <span
+                          aria-hidden="true"
+                          className="stay-room-card-image"
+                          style={{
+                            backgroundImage: `url("${primaryImage.imageUrl}")`,
+                            backgroundPosition: focalPositionToCss(
+                              primaryImage.focalPosition
+                            )
+                          }}
+                        />
+                      </div>
                     ) : (
                       <div
                         aria-label={`${room.name} image placeholder`}

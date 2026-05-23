@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/admin/auth";
 import { getAdminGalleryImages } from "@/lib/admin/gallery";
+import { focalPositionToCss } from "@/lib/image-position";
 import { logoutAdminAction } from "../login/actions";
 import {
   createGalleryImageAction,
@@ -167,6 +168,15 @@ export default async function AdminGalleryPage({
                 <span>Sort order</span>
                 <input defaultValue="100" min="0" name="sortOrder" required type="number" />
               </label>
+              <label className="admin-field">
+                <span>Focal position</span>
+                <select defaultValue="center" name="focalPosition">
+                  <option value="center">Center</option>
+                  <option value="top">Top</option>
+                  <option value="bottom">Bottom</option>
+                </select>
+                <small>Use top or bottom when a portrait image crops awkwardly.</small>
+              </label>
               <label className="admin-checkbox-field">
                 <input defaultChecked name="isActive" type="checkbox" value="true" />
                 <span>Active</span>
@@ -229,6 +239,15 @@ export default async function AdminGalleryPage({
                 <span>Sort order</span>
                 <input defaultValue="100" min="0" name="sortOrder" required type="number" />
               </label>
+              <label className="admin-field">
+                <span>Focal position</span>
+                <select defaultValue="center" name="focalPosition">
+                  <option value="center">Center</option>
+                  <option value="top">Top</option>
+                  <option value="bottom">Bottom</option>
+                </select>
+                <small>Use top or bottom when a portrait image crops awkwardly.</small>
+              </label>
               <label className="admin-checkbox-field">
                 <input defaultChecked name="isActive" type="checkbox" value="true" />
                 <span>Active</span>
@@ -263,7 +282,8 @@ export default async function AdminGalleryPage({
                     className="admin-gallery-preview"
                     role="img"
                     style={{
-                      backgroundImage: `url("${image.imageUrl}")`
+                      backgroundImage: `url("${image.imageUrl}")`,
+                      backgroundPosition: focalPositionToCss(image.focalPosition)
                     }}
                   />
 
@@ -328,6 +348,17 @@ export default async function AdminGalleryPage({
                             required
                             type="number"
                           />
+                        </label>
+                        <label className="admin-field">
+                          <span>Focal position</span>
+                          <select
+                            defaultValue={image.focalPosition}
+                            name="focalPosition"
+                          >
+                            <option value="center">Center</option>
+                            <option value="top">Top</option>
+                            <option value="bottom">Bottom</option>
+                          </select>
                         </label>
                         <label className="admin-checkbox-field">
                           <input

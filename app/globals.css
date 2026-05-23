@@ -2020,10 +2020,20 @@ select {
 }
 
 .stay-room-card-media {
-  min-height: 280px;
+  position: relative;
+  min-height: 320px;
+  overflow: hidden;
   background:
     linear-gradient(135deg, rgb(11 31 42 / 10%), rgb(46 139 139 / 8%)),
     center / cover no-repeat;
+}
+
+.stay-room-card-image {
+  position: absolute;
+  inset: 0;
+  background: center / cover no-repeat;
+  transform: scale(1);
+  transition: transform 520ms var(--ease-lux);
 }
 
 .stay-room-card-placeholder {
@@ -2318,7 +2328,7 @@ select {
 .gallery-grid {
   display: grid;
   grid-auto-flow: dense;
-  grid-auto-rows: 10px;
+  grid-auto-rows: 11px;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
 }
@@ -2339,16 +2349,16 @@ select {
 
 .gallery-tile-1,
 .gallery-tile-4 {
-  grid-row: span 34;
+  grid-row: span 36;
 }
 
 .gallery-tile-2 {
-  grid-row: span 44;
+  grid-row: span 46;
 }
 
 .gallery-tile-3,
 .gallery-tile-5 {
-  grid-row: span 28;
+  grid-row: span 32;
 }
 
 .gallery-tile img {
@@ -2357,6 +2367,7 @@ select {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center center;
   transition: transform 500ms var(--ease-lux);
 }
 
@@ -2369,16 +2380,20 @@ select {
   opacity: 0.85;
 }
 
-.gallery-tile:hover img,
-.gallery-tile:focus-visible img {
-  transform: scale(1.05);
-}
-
 .gallery-tile:focus-visible {
   box-shadow:
     0 0 0 4px rgb(46 139 139 / 16%),
     0 24px 60px -46px rgb(11 31 42 / 70%);
   outline: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .stay-room-card:hover .stay-room-card-image,
+  .stay-room-card:focus-within .stay-room-card-image,
+  .gallery-tile:hover img,
+  .gallery-tile:focus-visible img {
+    transform: scale(1.035);
+  }
 }
 
 .gallery-tile span {
@@ -2632,7 +2647,7 @@ select {
 }
 
 .room-detail-gallery-image {
-  min-height: 300px;
+  min-height: 330px;
   border-radius: 18px;
   background: center / cover no-repeat var(--sand);
   box-shadow: 0 24px 60px -48px rgb(11 31 42 / 70%);
@@ -4313,7 +4328,7 @@ select {
   .gallery-tile-4,
   .gallery-tile-5 {
     grid-row: auto;
-    min-height: 320px;
+    min-height: 360px;
   }
 
   .stay-room-grid,
@@ -4426,6 +4441,10 @@ select {
     order: -1;
   }
 
+  .stay-room-card-media {
+    min-height: 360px;
+  }
+
   .room-detail-hero-inner {
     grid-template-columns: 1fr;
   }
@@ -4437,6 +4456,10 @@ select {
 
   .room-detail-gallery-grid {
     grid-template-columns: 1fr;
+  }
+
+  .room-detail-gallery-image {
+    min-height: 340px;
   }
 
   .room-detail-facts div {

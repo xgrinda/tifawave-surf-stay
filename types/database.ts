@@ -54,6 +54,7 @@ export type Database = {
           room_id: string;
           image_url: string;
           alt_text: string;
+          focal_position: "center" | "top" | "bottom";
           sort_order: number;
           is_primary: boolean;
           created_at: string;
@@ -64,6 +65,7 @@ export type Database = {
           room_id: string;
           image_url: string;
           alt_text?: string;
+          focal_position?: "center" | "top" | "bottom";
           sort_order?: number;
           is_primary?: boolean;
           created_at?: string;
@@ -74,6 +76,7 @@ export type Database = {
           room_id?: string;
           image_url?: string;
           alt_text?: string;
+          focal_position?: "center" | "top" | "bottom";
           sort_order?: number;
           is_primary?: boolean;
           created_at?: string;
@@ -136,6 +139,7 @@ export type Database = {
           caption: string;
           alt_text: string;
           category: string;
+          focal_position: "center" | "top" | "bottom";
           sort_order: number;
           is_active: boolean;
           created_at: string;
@@ -147,6 +151,7 @@ export type Database = {
           caption?: string;
           alt_text?: string;
           category?: string;
+          focal_position?: "center" | "top" | "bottom";
           sort_order?: number;
           is_active?: boolean;
           created_at?: string;
@@ -158,6 +163,7 @@ export type Database = {
           caption?: string;
           alt_text?: string;
           category?: string;
+          focal_position?: "center" | "top" | "bottom";
           sort_order?: number;
           is_active?: boolean;
           created_at?: string;

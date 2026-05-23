@@ -1,4 +1,5 @@
 import { unstable_noStore as noStore } from "next/cache";
+import { normalizeFocalPosition, type FocalPosition } from "@/lib/image-position";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Row } from "@/lib/supabase/types";
 
@@ -6,6 +7,7 @@ export type PublicRoomImage = {
   id: string;
   imageUrl: string;
   altText: string;
+  focalPosition: FocalPosition;
   sortOrder: number;
   isPrimary: boolean;
 };
@@ -51,7 +53,9 @@ async function getRoomImages(
     const supabase = createSupabaseServerClient();
     const { data: images, error } = await supabase
       .from("room_images")
-      .select("id, room_id, image_url, alt_text, sort_order, is_primary")
+      .select(
+        "id, room_id, image_url, alt_text, focal_position, sort_order, is_primary"
+      )
       .in("room_id", roomIds)
       .order("is_primary", { ascending: false })
       .order("sort_order", { ascending: true })
@@ -67,6 +71,7 @@ async function getRoomImages(
         id: image.id,
         imageUrl: image.image_url,
         altText: image.alt_text,
+        focalPosition: normalizeFocalPosition(image.focal_position),
         sortOrder: image.sort_order,
         isPrimary: image.is_primary
       });

@@ -5,6 +5,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { PublicGalleryImage } from "@/lib/gallery";
 import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n";
+import { focalPositionToCss } from "@/lib/image-position";
 
 type GalleryGridProps = {
   images: PublicGalleryImage[];
@@ -121,7 +122,15 @@ export function GalleryGrid({
             onClick={() => setSelectedImage(image)}
             type="button"
           >
-            <img alt={image.altText} src={image.imageUrl} />
+            <img
+              alt={image.altText}
+              decoding="async"
+              loading="lazy"
+              src={image.imageUrl}
+              style={{
+                objectPosition: focalPositionToCss(image.focalPosition)
+              }}
+            />
             <span>
               <strong>{image.caption || categoryLabel(image.category)}</strong>
               <small>{categoryLabel(image.category)}</small>
