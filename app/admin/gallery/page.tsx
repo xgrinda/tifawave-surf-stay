@@ -90,7 +90,10 @@ export default async function AdminGalleryPage({
           <div>
             <p className="eyebrow">Tifawave admin</p>
             <h1 id="admin-gallery-title">Gallery</h1>
-            <p>Manage URL images, captions, categories, ordering, and visibility.</p>
+            <p>
+              Manage direct image URLs, captions, categories, ordering, and
+              visibility. Use bright, real Tifawave images with clear alt text.
+            </p>
           </div>
           <div className="admin-header-actions">
             <a className="admin-header-link" href="/admin/bookings">
@@ -136,6 +139,10 @@ export default async function AdminGalleryPage({
                   required
                   type="url"
                 />
+                <small>
+                  Use a direct https image URL. Aim for at least 1800 px wide
+                  and compressed for fast loading.
+                </small>
               </label>
               <label className="admin-field">
                 <span>Alt text</span>
@@ -145,10 +152,15 @@ export default async function AdminGalleryPage({
                   required
                   type="text"
                 />
+                <small>
+                  Describe what is visible, not a slogan. Keep it under 180
+                  characters.
+                </small>
               </label>
               <label className="admin-field">
                 <span>Category / tag</span>
                 <input name="category" placeholder="surf" required type="text" />
+                <small>Use simple tags like surf, rooms, food, tamraght, or community.</small>
               </label>
               <label className="admin-field">
                 <span>Sort order</span>
@@ -221,6 +233,7 @@ export default async function AdminGalleryPage({
                             required
                             type="url"
                           />
+                          <small>Use a permanent direct image URL.</small>
                         </label>
                         <label className="admin-field">
                           <span>Alt text</span>
@@ -230,6 +243,9 @@ export default async function AdminGalleryPage({
                             required
                             type="text"
                           />
+                          <small>
+                            Describe the visible scene for accessibility and SEO.
+                          </small>
                         </label>
                         <label className="admin-field">
                           <span>Category / tag</span>
@@ -311,7 +327,11 @@ export default async function AdminGalleryPage({
             <div className="admin-empty-state">
               <p className="eyebrow">No gallery images</p>
               <h2>Add the first image URL.</h2>
-              <p>Active images added here will appear on the public gallery.</p>
+              <p>
+                Start with five strong images: surf, room, rooftop, breakfast,
+                and Tamraght street or sunset. Active images appear on the
+                public gallery.
+              </p>
             </div>
           )}
         </section>

@@ -93,7 +93,9 @@ export default async function StayPage() {
                         aria-label={`${room.name} image placeholder`}
                         className="stay-room-card-media stay-room-card-placeholder"
                         role="img"
-                      />
+                      >
+                        <span>Photos coming soon</span>
+                      </div>
                     )}
 
                     <div className="stay-room-card-body">
@@ -137,7 +139,10 @@ export default async function StayPage() {
             <div className="stay-empty-state">
               <p className="eyebrow">Rooms coming soon</p>
               <h2>Active rooms will appear here.</h2>
-              <p>Add or activate rooms from the protected admin Rooms page.</p>
+              <p>
+                The stay page is ready. Add active rooms and primary image URLs
+                from admin to publish the first room cards.
+              </p>
             </div>
           )}
         </Container>

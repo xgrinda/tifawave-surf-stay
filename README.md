@@ -12,6 +12,12 @@ npm run typecheck
 npm run build
 ```
 
+## Media & Content Checklist
+
+Use `docs/media-content-quality-checklist.md` before publishing room or gallery
+images. It covers recommended image sizes, direct URL requirements, alt text,
+caption quality, and fallback expectations for empty media states.
+
 ## Deployment: Vercel
 
 Recommended deployment target: Vercel with the existing Next.js project settings.

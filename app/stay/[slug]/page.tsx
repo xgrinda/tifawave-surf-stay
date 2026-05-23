@@ -97,7 +97,9 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
               aria-label={`${room.name} image placeholder`}
               className="room-detail-primary-image room-detail-image-placeholder"
               role="img"
-            />
+            >
+              <span>Room photos coming soon</span>
+            </div>
           )}
         </Container>
       </section>
@@ -123,8 +125,8 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
               <p className="eyebrow">Images coming soon</p>
               <h2>Room photos will appear here.</h2>
               <p>
-                The room details are ready, and image URLs can now be added from
-                the admin Rooms page.
+                Add a primary room photo plus a few supporting details from
+                admin: bed, bathroom, workspace, terrace, and view.
               </p>
             </div>
           )}

@@ -31,12 +31,20 @@ export default async function GalleryPage() {
             <GalleryGrid images={images} />
           ) : (
             <div className="gallery-empty-state">
-              <p className="eyebrow">Images coming soon</p>
-              <h2>The gallery is ready for its first images.</h2>
-              <p>
-                Add active image URLs from the protected admin gallery page to
-                publish them here.
-              </p>
+              <div className="gallery-empty-visual" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+                <span />
+              </div>
+              <div>
+                <p className="eyebrow">Images coming soon</p>
+                <h2>The gallery is ready for its first images.</h2>
+                <p>
+                  Add active image URLs from admin to publish surf, rooms, food,
+                  community, and Tamraght moments here.
+                </p>
+              </div>
             </div>
           )}
         </Container>

@@ -264,7 +264,8 @@ export default async function AdminRoomsPage({
                       <div>
                         <h4 id={`room-images-${room.id}`}>Images</h4>
                         <p>
-                          Add URL-based room images for the public detail page.
+                          Add direct image URLs for the public stay card and room detail
+                          gallery.
                         </p>
                       </div>
                       <span>{room.images.length} images</span>
@@ -283,6 +284,10 @@ export default async function AdminRoomsPage({
                           required
                           type="url"
                         />
+                        <small>
+                          Use a direct https image URL, ideally 2400 x 1600 px
+                          for a primary room photo.
+                        </small>
                       </label>
                       <label className="admin-field">
                         <span>Alt text</span>
@@ -291,6 +296,10 @@ export default async function AdminRoomsPage({
                           placeholder={`${room.name} in morning light`}
                           type="text"
                         />
+                        <small>
+                          Describe the visible room clearly. Keep it under 180
+                          characters.
+                        </small>
                       </label>
                       <label className="admin-field">
                         <span>Sort order</span>
@@ -337,6 +346,9 @@ export default async function AdminRoomsPage({
                                   required
                                   type="url"
                                 />
+                                <small>
+                                  Keep this as a permanent direct image URL.
+                                </small>
                               </label>
                               <label className="admin-field">
                                 <span>Alt text</span>
@@ -345,6 +357,9 @@ export default async function AdminRoomsPage({
                                   name="altText"
                                   type="text"
                                 />
+                                <small>
+                                  Describe the image for guests using screen readers.
+                                </small>
                               </label>
                               <label className="admin-field">
                                 <span>Sort order</span>
@@ -387,9 +402,13 @@ export default async function AdminRoomsPage({
                         ))}
                       </div>
                     ) : (
-                      <p className="admin-room-image-empty">
-                        No image URLs have been added for this room yet.
-                      </p>
+                      <div className="admin-room-image-empty">
+                        <strong>No room images yet.</strong>
+                        <span>
+                          Add a primary image first, then supporting details like
+                          bathroom, desk, terrace, or view.
+                        </span>
+                      </div>
                     )}
                   </section>
                 </article>

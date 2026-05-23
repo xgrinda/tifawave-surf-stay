@@ -1992,9 +1992,49 @@ select {
 }
 
 .stay-room-card-placeholder {
+  position: relative;
+  display: grid;
+  overflow: hidden;
+  place-items: end start;
   background:
     radial-gradient(90% 80% at 72% 12%, rgb(233 184 114 / 45%), transparent 58%),
     linear-gradient(150deg, var(--seaglass), var(--ink));
+}
+
+.stay-room-card-placeholder::before,
+.room-detail-image-placeholder::before {
+  position: absolute;
+  inset: 16%;
+  border: 1px solid rgb(255 255 255 / 20%);
+  border-radius: 999px 999px 24px 24px;
+  content: "";
+}
+
+.stay-room-card-placeholder::after,
+.room-detail-image-placeholder::after {
+  position: absolute;
+  inset: auto 22px 22px;
+  height: 34%;
+  border-radius: 999px 999px 18px 18px;
+  background: linear-gradient(180deg, rgb(246 241 231 / 30%), rgb(251 248 242 / 8%));
+  content: "";
+}
+
+.stay-room-card-placeholder span,
+.room-detail-image-placeholder span {
+  position: relative;
+  z-index: 1;
+  margin: 22px;
+  border: 1px solid rgb(255 255 255 / 20%);
+  border-radius: 999px;
+  background: rgb(11 31 42 / 28%);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  padding: 0.55rem 0.8rem;
+  text-transform: uppercase;
+  backdrop-filter: blur(10px);
 }
 
 .stay-room-card-body {
@@ -2407,9 +2447,40 @@ select {
 }
 
 .gallery-empty-state {
-  max-width: 720px;
+  display: grid;
+  max-width: 920px;
+  grid-template-columns: minmax(220px, 0.46fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(22px, 5vw, 42px);
   border-top: 1px solid var(--line);
   padding-top: 28px;
+}
+
+.gallery-empty-visual {
+  position: relative;
+  display: grid;
+  min-height: 280px;
+  overflow: hidden;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  border-radius: 22px;
+  background:
+    radial-gradient(90% 70% at 76% 8%, rgb(233 184 114 / 36%), transparent 58%),
+    linear-gradient(150deg, var(--ink), var(--seaglass));
+  padding: 14px;
+  box-shadow: 0 24px 60px -48px rgb(11 31 42 / 70%);
+}
+
+.gallery-empty-visual span {
+  min-height: 96px;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 16px;
+  background: rgb(255 255 255 / 8%);
+}
+
+.gallery-empty-visual span:nth-child(2),
+.gallery-empty-visual span:nth-child(3) {
+  background: rgb(233 184 114 / 18%);
 }
 
 .gallery-empty-state h2 {
@@ -2506,9 +2577,13 @@ select {
 }
 
 .room-detail-image-placeholder {
+  position: relative;
+  display: grid;
+  overflow: hidden;
+  place-items: end start;
   background:
     linear-gradient(135deg, rgb(11 31 42 / 18%), rgb(46 139 139 / 18%)),
-    linear-gradient(135deg, var(--linen), var(--sand));
+    linear-gradient(135deg, var(--linen), var(--sun));
 }
 
 .room-detail-gallery {
@@ -3471,6 +3546,12 @@ select {
   text-transform: uppercase;
 }
 
+.admin-field small {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
 .admin-field input,
 .admin-field select,
 .admin-field textarea {
@@ -3806,9 +3887,19 @@ select {
 }
 
 .admin-room-image-empty {
-  margin: 0;
+  display: grid;
+  gap: 4px;
+  border: 1px dashed rgb(11 31 42 / 18%);
+  border-radius: 16px;
+  background: rgb(246 241 231 / 54%);
   color: var(--muted);
   font-size: 0.875rem;
+  padding: 16px;
+}
+
+.admin-room-image-empty strong {
+  color: var(--ink);
+  font-size: 1rem;
 }
 
 .admin-gallery-list {
@@ -4118,6 +4209,14 @@ select {
   .gallery-grid {
     grid-auto-rows: auto;
     grid-template-columns: 1fr;
+  }
+
+  .gallery-empty-state {
+    grid-template-columns: 1fr;
+  }
+
+  .gallery-empty-visual {
+    min-height: 220px;
   }
 
   .gallery-tile,
