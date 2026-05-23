@@ -1,3 +1,5 @@
+/* eslint-disable react/no-unescaped-entities -- French prose uses apostrophes heavily. */
+
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/primitives/container";
@@ -5,11 +7,11 @@ import { getActiveRooms } from "@/lib/rooms";
 import { getSiteUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "Stay | Tifawave Surf Stay",
+  title: "Séjour | Tifawave Surf Stay",
   description:
-    "Explore active Tifawave rooms with capacity, starting price, room details, and direct booking.",
+    "Découvrez les chambres actives de Tifawave avec capacité, prix de départ, détails et réservation directe.",
   alternates: {
-    canonical: `${getSiteUrl()}/stay`,
+    canonical: `${getSiteUrl()}/fr/stay`,
     languages: {
       en: `${getSiteUrl()}/stay`,
       fr: `${getSiteUrl()}/fr/stay`
@@ -19,28 +21,28 @@ export const metadata: Metadata = {
 
 const stayReasons = [
   {
-    title: "Surf rhythm",
+    title: "Rythme surf",
     copy:
-      "Wake close to the lineup, rinse off slowly, and let the day move around tide, wind, and good coffee."
+      "Réveillez-vous près des spots, rincez le sel doucement et laissez la journée suivre la marée, le vent et le café."
   },
   {
-    title: "Workable calm",
+    title: "Calme pour travailler",
     copy:
-      "Fast wifi, quiet corners, and enough structure for guests who need to keep one foot in their work."
+      "Wifi rapide, coins tranquilles et assez de structure pour garder un pied dans le travail si besoin."
   },
   {
-    title: "Small community",
+    title: "Petite communauté",
     copy:
-      "Shared breakfasts, rooftop conversations, and a house pace that makes solo travel feel easy."
+      "Petits-déjeuners partagés, conversations sur le rooftop et une maison où voyager solo devient simple."
   },
   {
-    title: "Tamraght lifestyle",
+    title: "Vie à Tamraght",
     copy:
-      "Simple rooms, sea air, local textures, and evenings that drift naturally toward sunset."
+      "Chambres simples, air marin, textures locales et soirées qui glissent naturellement vers le coucher de soleil."
   }
 ] as const;
 
-const currencyFormatter = new Intl.NumberFormat("en-US", {
+const currencyFormatter = new Intl.NumberFormat("fr-FR", {
   currency: "USD",
   maximumFractionDigits: 0,
   style: "currency"
@@ -53,22 +55,23 @@ function formatPrice(cents: number): string {
 function roomDescription(description: string | null): string {
   return (
     description ??
-    "A quiet Tifawave room designed for rest, surf mornings, and slow evenings in Tamraght."
+    "Une chambre calme à Tifawave, pensée pour le repos, les matins surf et les soirées lentes à Tamraght."
   );
 }
 
-export default async function StayPage() {
+export default async function FrenchStayPage() {
   const rooms = await getActiveRooms();
 
   return (
     <main className="stay-page">
       <section className="stay-page-hero" aria-labelledby="stay-page-title">
         <Container>
-          <p className="eyebrow">Stay</p>
-          <h1 id="stay-page-title">Rooms for the calm after the session.</h1>
+          <p className="eyebrow">Séjour</p>
+          <h1 id="stay-page-title">Des chambres pour le calme d'après-session.</h1>
           <p>
-            Design-led rooms, rooftop air, and direct booking for surf stays
-            that balance progression, work, community, and quiet recovery.
+            Chambres soignées, air de rooftop et réservation directe pour des
+            séjours surf entre progression, travail, communauté et vraie
+            récupération.
           </p>
         </Container>
       </section>
@@ -76,8 +79,8 @@ export default async function StayPage() {
       <section className="stay-room-section" aria-labelledby="stay-rooms-title">
         <Container>
           <div className="stay-section-heading">
-            <p className="eyebrow">Rooms</p>
-            <h2 id="stay-rooms-title">Choose your base.</h2>
+            <p className="eyebrow">Chambres</p>
+            <h2 id="stay-rooms-title">Choisissez votre base.</h2>
           </div>
 
           {rooms.length > 0 ? (
@@ -89,7 +92,7 @@ export default async function StayPage() {
                   <article className="stay-room-card" key={room.id}>
                     {primaryImage ? (
                       <div
-                        aria-label={primaryImage.altText || `${room.name} image`}
+                        aria-label={primaryImage.altText || `Image ${room.name}`}
                         className="stay-room-card-media"
                         role="img"
                         style={{
@@ -98,34 +101,34 @@ export default async function StayPage() {
                       />
                     ) : (
                       <div
-                        aria-label={`${room.name} image placeholder`}
+                        aria-label={`Image temporaire ${room.name}`}
                         className="stay-room-card-media stay-room-card-placeholder"
                         role="img"
                       >
-                        <span>Photos coming soon</span>
+                        <span>Photos bientôt</span>
                       </div>
                     )}
 
                     <div className="stay-room-card-body">
                       <div>
-                        <p className="eyebrow">Tifawave room</p>
+                        <p className="eyebrow">Chambre Tifawave</p>
                         <h3>{room.name}</h3>
                         <p>{roomDescription(room.description)}</p>
                       </div>
 
                       <dl className="stay-room-facts">
                         <div>
-                          <dt>Capacity</dt>
-                          <dd>Up to {room.maxGuests} guests</dd>
+                          <dt>Capacité</dt>
+                          <dd>Jusqu'à {room.maxGuests} personnes</dd>
                         </div>
                         <div>
-                          <dt>From</dt>
-                          <dd>{formatPrice(room.basePriceCents)} / night</dd>
+                          <dt>À partir de</dt>
+                          <dd>{formatPrice(room.basePriceCents)} / nuit</dd>
                         </div>
                       </dl>
 
-                      <Link className="stay-room-link" href={`/stay/${room.slug}`}>
-                        View room
+                      <Link className="stay-room-link" href={`/fr/stay/${room.slug}`}>
+                        Voir la chambre
                         <svg
                           aria-hidden="true"
                           width="16"
@@ -145,11 +148,11 @@ export default async function StayPage() {
             </div>
           ) : (
             <div className="stay-empty-state">
-              <p className="eyebrow">Rooms coming soon</p>
-              <h2>Active rooms will appear here.</h2>
+              <p className="eyebrow">Chambres bientôt disponibles</p>
+              <h2>Les chambres actives apparaîtront ici.</h2>
               <p>
-                The stay page is ready. Add active rooms and primary image URLs
-                from admin to publish the first room cards.
+                La page séjour est prête. Ajoutez des chambres actives et une
+                image principale depuis l'admin pour publier les premières cartes.
               </p>
             </div>
           )}
@@ -159,12 +162,14 @@ export default async function StayPage() {
       <section className="stay-why-section" aria-labelledby="stay-why-title">
         <Container className="stay-why-inner">
           <div className="stay-why-copy">
-            <p className="eyebrow">Why stay at Tifawave</p>
-            <h2 id="stay-why-title">Built for surf weeks with real life inside them.</h2>
+            <p className="eyebrow">Pourquoi séjourner à Tifawave</p>
+            <h2 id="stay-why-title">
+              Pensé pour des semaines surf avec la vraie vie dedans.
+            </h2>
             <p>
-              Tifawave is made for travelers who want the surf trip and the
-              human rhythm around it: a place to progress, work, rest, and meet
-              people without losing the softness of a small stay.
+              Tifawave s'adresse aux voyageurs qui veulent le voyage surf et le
+              rythme humain autour: progresser, travailler, se reposer et
+              rencontrer du monde sans perdre la douceur d'un petit séjour.
             </p>
           </div>
 
@@ -182,15 +187,15 @@ export default async function StayPage() {
       <section className="stay-booking-cta" aria-labelledby="stay-booking-title">
         <Container className="stay-booking-cta-inner">
           <div>
-            <p className="eyebrow">Direct booking</p>
-            <h2 id="stay-booking-title">Check your dates with Tifawave.</h2>
+            <p className="eyebrow">Réservation directe</p>
+            <h2 id="stay-booking-title">Vérifiez vos dates avec Tifawave.</h2>
             <p>
-              Start with a room and travel window, then place a short hold while
-              the team confirms the details.
+              Commencez par une chambre et une fenêtre de voyage, puis posez une
+              courte option pendant que l'équipe confirme les détails.
             </p>
           </div>
-          <Link className="btn btn-primary" href="/book">
-            Book your stay
+          <Link className="btn btn-primary" href="/fr/book">
+            Réserver votre séjour
           </Link>
         </Container>
       </section>

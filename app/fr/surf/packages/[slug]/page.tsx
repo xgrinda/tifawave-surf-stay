@@ -1,3 +1,5 @@
+/* eslint-disable react/no-unescaped-entities -- French prose uses apostrophes heavily. */
+
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -7,7 +9,7 @@ import { getActiveSurfPackageBySlug } from "@/lib/surf-packages";
 
 export const dynamic = "force-dynamic";
 
-type SurfPackageDetailPageProps = {
+type FrenchSurfPackageDetailPageProps = {
   params: Promise<{
     slug: string;
   }>;
@@ -16,43 +18,43 @@ type SurfPackageDetailPageProps = {
 function getTypicalDay(name: string) {
   return [
     {
-      time: "Morning",
-      title: "Spot check and surf session",
-      copy: `Start with conditions, level matching, and a ${name.toLowerCase()} session built around the best window of the day.`
+      time: "Matin",
+      title: "Lecture des spots et session surf",
+      copy: `On commence par les conditions, le niveau du groupe et une session ${name.toLowerCase()} calée sur la meilleure fenêtre du jour.`
     },
     {
-      time: "Midday",
-      title: "Breakfast, reset, and review",
+      time: "Midi",
+      title: "Petit-déjeuner, pause et retour",
       copy:
-        "Refuel at the house, stretch out, catch up on work, or review feedback while the sun is high."
+        "Rechargez à la maison, étirez-vous, travaillez un peu ou revoyez les conseils pendant les heures chaudes."
     },
     {
-      time: "Afternoon",
-      title: "Progress or explore",
+      time: "Après-midi",
+      title: "Progression ou exploration",
       copy:
-        "Head back to the water when conditions allow, or keep it softer with Tamraght time, rooftop rest, and local rhythm."
+        "Retour à l'eau si les conditions suivent, ou rythme plus doux entre Tamraght, rooftop et repos."
     },
     {
-      time: "Evening",
-      title: "Community pace",
+      time: "Soir",
+      title: "Rythme communautaire",
       copy:
-        "Ease into dinner plans, sunset, and simple conversation with the people sharing the week."
+        "Dîner, coucher de soleil et conversations simples avec les personnes qui partagent la semaine."
     }
   ];
 }
 
 export async function generateMetadata({
   params
-}: SurfPackageDetailPageProps): Promise<Metadata> {
+}: FrenchSurfPackageDetailPageProps): Promise<Metadata> {
   const { slug } = await params;
   const pkg = await getActiveSurfPackageBySlug(slug);
   const siteUrl = getSiteUrl();
 
   if (!pkg) {
     return {
-      title: "Surf Package | Tifawave Surf Stay",
+      title: "Séjour surf | Tifawave Surf Stay",
       alternates: {
-        canonical: `${siteUrl}/surf/packages/${slug}`,
+        canonical: `${siteUrl}/fr/surf/packages/${slug}`,
         languages: {
           en: `${siteUrl}/surf/packages/${slug}`,
           fr: `${siteUrl}/fr/surf/packages/${slug}`
@@ -65,7 +67,7 @@ export async function generateMetadata({
     title: `${pkg.name} | Tifawave Surf Stay`,
     description: pkg.fullDescription || pkg.shortDescription,
     alternates: {
-      canonical: `${siteUrl}/surf/packages/${pkg.slug}`,
+      canonical: `${siteUrl}/fr/surf/packages/${pkg.slug}`,
       languages: {
         en: `${siteUrl}/surf/packages/${pkg.slug}`,
         fr: `${siteUrl}/fr/surf/packages/${pkg.slug}`
@@ -74,9 +76,9 @@ export async function generateMetadata({
   };
 }
 
-export default async function SurfPackageDetailPage({
+export default async function FrenchSurfPackageDetailPage({
   params
-}: SurfPackageDetailPageProps) {
+}: FrenchSurfPackageDetailPageProps) {
   const { slug } = await params;
   const pkg = await getActiveSurfPackageBySlug(slug);
 
@@ -94,31 +96,31 @@ export default async function SurfPackageDetailPage({
       >
         <Container className="surf-package-detail-hero-inner">
           <div>
-            <p className="eyebrow">Surf Package</p>
+            <p className="eyebrow">Séjour surf</p>
             <h1 id="surf-package-detail-title">{pkg.name}</h1>
             <p>{pkg.fullDescription}</p>
             <div className="surf-package-detail-actions">
-              <Link className="btn btn-primary" href="/book">
-                Book this package
+              <Link className="btn btn-primary" href="/fr/book">
+                Réserver ce séjour
               </Link>
-              <Link className="btn btn-secondary" href="/surf/packages">
-                Back to packages
+              <Link className="btn btn-secondary" href="/fr/surf/packages">
+                Retour aux séjours
               </Link>
             </div>
           </div>
 
-          <aside className="surf-package-summary" aria-label="Package summary">
+          <aside className="surf-package-summary" aria-label="Résumé du séjour">
             <dl>
               <div>
-                <dt>Level</dt>
+                <dt>Niveau</dt>
                 <dd>{pkg.surfLevel}</dd>
               </div>
               <div>
-                <dt>Duration</dt>
+                <dt>Durée</dt>
                 <dd>{pkg.unitLabel}</dd>
               </div>
               <div>
-                <dt>Price</dt>
+                <dt>Prix</dt>
                 <dd>
                   {pkg.priceLabel} / {pkg.unitLabel}
                 </dd>
@@ -131,12 +133,12 @@ export default async function SurfPackageDetailPage({
       <section className="surf-package-detail-body">
         <Container className="surf-package-detail-grid">
           <section aria-labelledby="package-fit-title" className="surf-package-fit">
-            <p className="eyebrow">Who it is for</p>
+            <p className="eyebrow">Pour qui</p>
             <h2 id="package-fit-title">{pkg.shortDescription}</h2>
             <p>
-              This package works best when you want the surf to shape the day,
-              while Tifawave keeps the stay simple, social, and easy to settle
-              into.
+              Ce séjour fonctionne surtout si vous voulez laisser le surf guider
+              la journée, pendant que Tifawave garde l'expérience simple,
+              sociale et facile à vivre.
             </p>
           </section>
 
@@ -144,8 +146,8 @@ export default async function SurfPackageDetailPage({
             aria-labelledby="package-inclusions-title"
             className="surf-package-inclusions"
           >
-            <p className="eyebrow">Included</p>
-            <h2 id="package-inclusions-title">What is included.</h2>
+            <p className="eyebrow">Inclus</p>
+            <h2 id="package-inclusions-title">Ce qui est inclus.</h2>
             <ul>
               {pkg.inclusions.map((inclusion) => (
                 <li key={inclusion}>
@@ -170,8 +172,8 @@ export default async function SurfPackageDetailPage({
             aria-labelledby="package-day-title"
             className="surf-package-day"
           >
-            <p className="eyebrow">Typical day</p>
-            <h2 id="package-day-title">A day at Tifawave.</h2>
+            <p className="eyebrow">Journée type</p>
+            <h2 id="package-day-title">Une journée à Tifawave.</h2>
             <div className="surf-package-day-list">
               {typicalDay.map((item) => (
                 <article key={item.time}>
@@ -191,15 +193,17 @@ export default async function SurfPackageDetailPage({
       >
         <Container className="surf-package-detail-cta-inner">
           <div>
-            <p className="eyebrow">Ready when you are</p>
-            <h2 id="package-booking-title">Check dates and start the booking.</h2>
+            <p className="eyebrow">Quand vous êtes prêt</p>
+            <h2 id="package-booking-title">
+              Vérifiez les dates et démarrez la réservation.
+            </h2>
             <p>
-              Choose your room and dates first. The Tifawave team can match the
-              package details around your stay.
+              Choisissez d'abord une chambre et vos dates. L'équipe Tifawave
+              pourra ajuster les détails du séjour autour de votre voyage.
             </p>
           </div>
-          <Link className="btn btn-primary" href="/book">
-            Book now
+          <Link className="btn btn-primary" href="/fr/book">
+            Réserver maintenant
           </Link>
         </Container>
       </section>

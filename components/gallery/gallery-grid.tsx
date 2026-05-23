@@ -4,10 +4,38 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { PublicGalleryImage } from "@/lib/gallery";
+import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n";
 
 type GalleryGridProps = {
   images: PublicGalleryImage[];
+  locale?: Locale;
 };
+
+const galleryCopy = {
+  en: {
+    all: "All",
+    categoriesLabel: "Gallery categories",
+    close: "Close",
+    closeImage: "Close gallery image",
+    openImage: (altText: string) => `Open ${altText}`
+  },
+  fr: {
+    all: "Tout",
+    categoriesLabel: "Catégories de galerie",
+    close: "Fermer",
+    closeImage: "Fermer l'image de galerie",
+    openImage: (altText: string) => `Ouvrir ${altText}`
+  }
+} satisfies Record<
+  Locale,
+  {
+    all: string;
+    categoriesLabel: string;
+    close: string;
+    closeImage: string;
+    openImage: (altText: string) => string;
+  }
+>;
 
 function categoryLabel(category: string): string {
   return category
@@ -17,11 +45,15 @@ function categoryLabel(category: string): string {
     .join(" ");
 }
 
-export function GalleryGrid({ images }: GalleryGridProps) {
+export function GalleryGrid({
+  images,
+  locale = DEFAULT_LOCALE
+}: GalleryGridProps) {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedImage, setSelectedImage] = useState<PublicGalleryImage | null>(
     null
   );
+  const copy = galleryCopy[locale];
 
   const categories = useMemo(
     () => Array.from(new Set(images.map((image) => image.category))).sort(),
@@ -59,13 +91,13 @@ export function GalleryGrid({ images }: GalleryGridProps) {
   return (
     <div className="gallery-browser">
       {categories.length > 1 ? (
-        <div className="gallery-filters" aria-label="Gallery categories">
+        <div className="gallery-filters" aria-label={copy.categoriesLabel}>
           <button
             aria-pressed={selectedCategory === "all"}
             onClick={() => setSelectedCategory("all")}
             type="button"
           >
-            All
+            {copy.all}
           </button>
           {categories.map((category) => (
             <button
@@ -83,7 +115,7 @@ export function GalleryGrid({ images }: GalleryGridProps) {
       <div className="gallery-grid">
         {visibleImages.map((image, index) => (
           <button
-            aria-label={`Open ${image.altText}`}
+            aria-label={copy.openImage(image.altText)}
             className={`gallery-tile gallery-tile-${(index % 5) + 1}`}
             key={image.id}
             onClick={() => setSelectedImage(image)}
@@ -106,19 +138,19 @@ export function GalleryGrid({ images }: GalleryGridProps) {
           role="dialog"
         >
           <button
-            aria-label="Close gallery image"
+            aria-label={copy.closeImage}
             className="gallery-lightbox-backdrop"
             onClick={() => setSelectedImage(null)}
             type="button"
           />
           <div className="gallery-lightbox-panel">
             <button
-              aria-label="Close gallery image"
+              aria-label={copy.closeImage}
               className="gallery-lightbox-close"
               onClick={() => setSelectedImage(null)}
               type="button"
             >
-              Close
+              {copy.close}
             </button>
             <img alt={selectedImage.altText} src={selectedImage.imageUrl} />
             <div className="gallery-lightbox-copy">

@@ -5,11 +5,11 @@ import { getSiteUrl } from "@/lib/site";
 import { getActiveSurfPackages } from "@/lib/surf-packages";
 
 export const metadata: Metadata = {
-  title: "Surf Packages | Tifawave Surf Stay",
+  title: "Séjours surf | Tifawave Surf Stay",
   description:
-    "Explore active Tifawave surf packages with pricing, duration, level guidance, and inclusions.",
+    "Découvrez les séjours surf actifs de Tifawave avec prix, durée, niveau et inclusions.",
   alternates: {
-    canonical: `${getSiteUrl()}/surf/packages`,
+    canonical: `${getSiteUrl()}/fr/surf/packages`,
     languages: {
       en: `${getSiteUrl()}/surf/packages`,
       fr: `${getSiteUrl()}/fr/surf/packages`
@@ -17,23 +17,23 @@ export const metadata: Metadata = {
   }
 };
 
-export default async function SurfPackagesPage() {
+export default async function FrenchSurfPackagesPage() {
   const packages = await getActiveSurfPackages();
 
   return (
     <main className="surf-packages-page">
       <section className="surf-packages-hero" aria-labelledby="surf-packages-title">
         <Container>
-          <p className="eyebrow">Surf Packages</p>
-          <h1 id="surf-packages-title">Choose the surf rhythm that fits.</h1>
+          <p className="eyebrow">Séjours surf</p>
+          <h1 id="surf-packages-title">Choisissez le rythme surf qui vous va.</h1>
           <p>
-            Active Tifawave packages with clear pricing, duration, surf level,
-            and what is included before you book.
+            Les séjours actifs de Tifawave avec prix clairs, durée, niveau de
+            surf et inclusions avant de réserver.
           </p>
         </Container>
       </section>
 
-      <section className="surf-packages-list" aria-label="Available packages">
+      <section className="surf-packages-list" aria-label="Séjours disponibles">
         <Container>
           {packages.length > 0 ? (
             <div className="surf-packages-grid">
@@ -47,13 +47,13 @@ export default async function SurfPackagesPage() {
 
                   <dl className="surf-package-facts">
                     <div>
-                      <dt>Price</dt>
+                      <dt>Prix</dt>
                       <dd>
                         {pkg.priceLabel} / {pkg.unitLabel}
                       </dd>
                     </div>
                     <div>
-                      <dt>Duration</dt>
+                      <dt>Durée</dt>
                       <dd>{pkg.unitLabel}</dd>
                     </div>
                   </dl>
@@ -80,12 +80,12 @@ export default async function SurfPackagesPage() {
                   <div className="surf-package-card-actions">
                     <Link
                       className="btn btn-primary"
-                      href={`/surf/packages/${pkg.slug}`}
+                      href={`/fr/surf/packages/${pkg.slug}`}
                     >
-                      View details
+                      Voir les détails
                     </Link>
-                    <Link className="surf-package-book-link" href="/book">
-                      Book
+                    <Link className="surf-package-book-link" href="/fr/book">
+                      Réserver
                     </Link>
                   </div>
                 </article>
@@ -93,9 +93,11 @@ export default async function SurfPackagesPage() {
             </div>
           ) : (
             <div className="admin-empty-state">
-              <p className="eyebrow">Packages unavailable</p>
-              <h2>Active surf packages will appear here.</h2>
-              <p>Check back soon or contact Tifawave for current options.</p>
+              <p className="eyebrow">Séjours indisponibles</p>
+              <h2>Les séjours surf actifs apparaîtront ici.</h2>
+              <p>
+                Revenez bientôt ou contactez Tifawave pour les options du moment.
+              </p>
             </div>
           )}
         </Container>

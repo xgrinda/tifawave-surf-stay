@@ -1,3 +1,5 @@
+/* eslint-disable react/no-unescaped-entities -- French prose uses apostrophes heavily. */
+
 import type { Metadata } from "next";
 import { GalleryGrid } from "@/components/gallery/gallery-grid";
 import { Container } from "@/components/primitives/container";
@@ -5,11 +7,11 @@ import { getActiveGalleryImages } from "@/lib/gallery";
 import { getSiteUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "Gallery | Tifawave Surf Stay",
+  title: "Galerie | Tifawave Surf Stay",
   description:
-    "Browse the Tifawave gallery of surf, rooms, food, sunsets, and Tamraght.",
+    "Parcourez la galerie Tifawave: surf, chambres, cuisine, couchers de soleil et Tamraght.",
   alternates: {
-    canonical: `${getSiteUrl()}/gallery`,
+    canonical: `${getSiteUrl()}/fr/gallery`,
     languages: {
       en: `${getSiteUrl()}/gallery`,
       fr: `${getSiteUrl()}/fr/gallery`
@@ -17,26 +19,26 @@ export const metadata: Metadata = {
   }
 };
 
-export default async function GalleryPage() {
+export default async function FrenchGalleryPage() {
   const images = await getActiveGalleryImages();
 
   return (
     <main className="gallery-page">
       <section className="gallery-hero" aria-labelledby="gallery-title">
         <Container>
-          <p className="eyebrow">Gallery</p>
-          <h1 id="gallery-title">Surf, stay, and the quiet in between.</h1>
+          <p className="eyebrow">Galerie</p>
+          <h1 id="gallery-title">Surf, séjour et les instants calmes entre les deux.</h1>
           <p>
-            A living gallery of the house, the coast, the food, and the small
-            moments that make Tifawave feel like more than a place to sleep.
+            Une galerie vivante de la maison, de la côte, de la cuisine et des
+            petits moments qui donnent à Tifawave plus qu'une simple adresse.
           </p>
         </Container>
       </section>
 
-      <section className="gallery-section" aria-label="Tifawave image gallery">
+      <section className="gallery-section" aria-label="Galerie d'images Tifawave">
         <Container>
           {images.length > 0 ? (
-            <GalleryGrid images={images} />
+            <GalleryGrid images={images} locale="fr" />
           ) : (
             <div className="gallery-empty-state">
               <div className="gallery-empty-visual" aria-hidden="true">
@@ -46,11 +48,11 @@ export default async function GalleryPage() {
                 <span />
               </div>
               <div>
-                <p className="eyebrow">Images coming soon</p>
-                <h2>The gallery is ready for its first images.</h2>
+                <p className="eyebrow">Images bientôt disponibles</p>
+                <h2>La galerie est prête pour ses premières images.</h2>
                 <p>
-                  Add active image URLs from admin to publish surf, rooms, food,
-                  community, and Tamraght moments here.
+                  Ajoutez des URLs d'images actives depuis l'admin pour publier
+                  les moments surf, chambres, cuisine, communauté et Tamraght.
                 </p>
               </div>
             </div>

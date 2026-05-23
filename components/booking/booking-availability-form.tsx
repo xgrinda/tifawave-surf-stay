@@ -9,6 +9,7 @@ import {
   trackStripeCheckoutStart,
   trackStripePaymentSuccessReturn
 } from "@/lib/analytics/events";
+import { DEFAULT_LOCALE, localizedPath, type Locale } from "@/lib/i18n";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Row } from "@/lib/supabase/types";
 
@@ -115,6 +116,7 @@ export type BookingPaymentReturn =
 export type BookingContactSettings = {
   businessName: string;
   contactEmail: string;
+  depositsEnabled: boolean;
   whatsappHref: string;
   supportPhone: string;
   bookingNoticeText: string;
@@ -137,18 +139,298 @@ type GuestFieldErrors = {
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_PATTERN = /^[+()\-\s\d]{6,40}$/;
 
-const currencyFormatter = new Intl.NumberFormat("en-US", {
-  currency: "USD",
-  maximumFractionDigits: 0,
-  style: "currency"
-});
+const bookingCopy = {
+  en: {
+    paymentReturn: {
+      successEyebrow: "Deposit received",
+      successTitle: "Your booking request is confirmed.",
+      successCopy:
+        "Thank you. The deposit has been received, and the Tifawave team will review the details and follow up with arrival notes.",
+      bookingId: "Booking ID",
+      nextSteps: "Next steps",
+      nextStepsCopy: "Watch your email for the booking confirmation and trip details.",
+      needHelp: "Need a hand?",
+      needHelpCopy: (businessName: string, contactEmail: string) =>
+        `Message ${businessName} on WhatsApp or email ${contactEmail}.`,
+      backHome: "Back home",
+      contact: "Contact",
+      cancelledEyebrow: "Payment cancelled",
+      cancelledTitle: "No deposit was collected.",
+      cancelledCopy:
+        "That is okay. You can retry the booking flow when ready, or contact Tifawave if you need help completing the deposit.",
+      status: "Status",
+      cancelledStatusCopy: "Your booking is not confirmed until the deposit succeeds.",
+      support: "Support",
+      supportCopy: (contactEmail: string) =>
+        `WhatsApp or email ${contactEmail} and we will help.`,
+      tryAgain: "Try again"
+    },
+    availability: {
+      initial: "Select a room and dates to check availability.",
+      fixFields: "Please fix the highlighted fields.",
+      checking: "Checking these dates...",
+      available: "These dates are available. You can place a short hold now.",
+      notAvailable: "These dates are not available.",
+      requestFailed: "Availability could not be checked right now.",
+      holdSuccess: "Your dates are temporarily held. Add guest details next."
+    },
+    status: {
+      checking: "Checking dates",
+      available: "Dates available",
+      unavailable: "Dates unavailable",
+      error: "Check details",
+      ready: "Ready to check"
+    },
+    validation: {
+      chooseRoom: "Choose a room.",
+      chooseCheckIn: "Choose a check-in date.",
+      checkInPast: "Check-in cannot be before today.",
+      chooseCheckOut: "Choose a check-out date.",
+      checkOutAfter: "Check-out must be after check-in.",
+      guestName: "Enter a guest name between 2 and 120 characters.",
+      guestEmail: "Enter a valid email address.",
+      guestPhone: "Enter a valid phone or WhatsApp number.",
+      guestMessage: "Message must be 1000 characters or fewer."
+    },
+    roomLoad: {
+      noActiveRooms: "No active rooms are available yet. Seed rooms before checking dates.",
+      envMissing: "Room options need Supabase public env vars and seeded active rooms."
+    },
+    flow: {
+      eyebrow: "Direct booking",
+      title: "Check your Tifawave stay dates.",
+      copy:
+        "Start with a room and travel window. If the dates are free, Tifawave can place a short temporary hold for your stay.",
+      roomPreviewAria: "Room options preview",
+      room: "Room",
+      loadingRooms: "Loading rooms...",
+      noActiveRooms: "No active rooms",
+      checkIn: "Check-in",
+      checkOut: "Check-out",
+      loadingRoomOptions: "Loading room options...",
+      checkAvailability: "Check availability",
+      checking: "Checking...",
+      manualConfirmationBadge: "Manual confirmation",
+      manualConfirmationNotice:
+        "Your reservation request stays pending until the Tifawave team confirms it by email or WhatsApp.",
+      night: "night",
+      guests: (count: number) => `Up to ${count} guests`
+    },
+    hold: {
+      checkBeforeHold: "Check the room and dates before holding them.",
+      checkAvailabilityFirst: "Check availability before holding dates.",
+      couldNotHold: "These dates could not be held.",
+      noLongerAvailable: "These dates are no longer available.",
+      requestFailed: "The hold could not be created right now.",
+      holdDates: "Hold these dates",
+      holdingDates: "Holding dates...",
+      eyebrow: "Temporary hold confirmed",
+      title: "Your dates are held.",
+      copy:
+        "Add your contact details next so Tifawave can create a pending booking request. No payment is collected yet.",
+      room: "Room",
+      dates: "Dates",
+      to: "to",
+      nightlyRate: "Nightly rate",
+      selectedRoom: "Selected room",
+      pending: "Pending",
+      holdId: "Hold ID",
+      expires: "Expires"
+    },
+    guest: {
+      fixFields: "Please fix the highlighted guest details.",
+      pendingCouldNotCreate: "The pending booking could not be created.",
+      pendingCouldNotCreateNow: "The pending booking could not be created right now.",
+      eyebrow: "Guest details",
+      title: "Create a pending booking.",
+      name: "Name",
+      namePlaceholder: "Your full name",
+      email: "Email",
+      phone: "Phone / WhatsApp",
+      message: "Message",
+      messagePlaceholder: "Optional note for the Tifawave team",
+      create: "Create pending booking",
+      creating: "Creating pending booking..."
+    },
+    pending: {
+      depositEyebrow: "Pending booking created",
+      depositTitle: "Your request is pending.",
+      depositBody:
+        "Tifawave has your booking request. Pay the deposit next to confirm the stay securely through Stripe.",
+      manualEyebrow: "Reservation request received",
+      manualTitle: "Reservation request received",
+      manualCopy:
+        "Tifawave has your request. It stays pending until the team reviews it and confirms by email or WhatsApp.",
+      bookingId: "Booking ID",
+      status: "Status",
+      manualStatusNote:
+        "No payment is due now. Admin can confirm or cancel this request from the dashboard.",
+      payDeposit: "Pay deposit",
+      openingStripe: "Opening Stripe...",
+      depositPaymentNote: (depositText: string) =>
+        `${depositText}. The booking confirms after payment succeeds.`
+    },
+    errors: {
+      checkoutCouldNotStart: "Stripe checkout could not be started.",
+      checkoutCouldNotStartNow: "Stripe checkout could not be started right now.",
+      checkoutNotStarted: "Checkout not started",
+      pendingNotCreated: "Pending booking not created",
+      holdNotCreated: "Hold not created"
+    }
+  },
+  fr: {
+    paymentReturn: {
+      successEyebrow: "Acompte reçu",
+      successTitle: "Votre demande de réservation est confirmée.",
+      successCopy:
+        "Merci. L'acompte a bien été reçu et l'équipe Tifawave vérifiera les détails avant de vous envoyer les notes d'arrivée.",
+      bookingId: "ID de réservation",
+      nextSteps: "Prochaines étapes",
+      nextStepsCopy: "Surveillez votre email pour la confirmation et les détails du voyage.",
+      needHelp: "Besoin d'aide?",
+      needHelpCopy: (businessName: string, contactEmail: string) =>
+        `Contactez ${businessName} sur WhatsApp ou par email à ${contactEmail}.`,
+      backHome: "Accueil",
+      contact: "Contact",
+      cancelledEyebrow: "Paiement annulé",
+      cancelledTitle: "Aucun acompte n'a été prélevé.",
+      cancelledCopy:
+        "Pas de souci. Vous pouvez relancer le parcours quand vous êtes prêt ou contacter Tifawave si vous avez besoin d'aide pour finaliser l'acompte.",
+      status: "Statut",
+      cancelledStatusCopy: "Votre réservation n'est confirmée qu'après paiement de l'acompte.",
+      support: "Aide",
+      supportCopy: (contactEmail: string) =>
+        `WhatsApp ou email ${contactEmail}: nous vous aiderons.`,
+      tryAgain: "Réessayer"
+    },
+    availability: {
+      initial: "Choisissez une chambre et des dates pour vérifier les disponibilités.",
+      fixFields: "Corrigez les champs indiqués.",
+      checking: "Vérification des dates...",
+      available: "Ces dates sont disponibles. Vous pouvez poser une courte option.",
+      notAvailable: "Ces dates ne sont pas disponibles.",
+      requestFailed: "Impossible de vérifier les disponibilités pour le moment.",
+      holdSuccess: "Vos dates sont temporairement bloquées. Ajoutez vos coordonnées."
+    },
+    status: {
+      checking: "Vérification des dates",
+      available: "Dates disponibles",
+      unavailable: "Dates indisponibles",
+      error: "Vérifier les détails",
+      ready: "Prêt à vérifier"
+    },
+    validation: {
+      chooseRoom: "Choisissez une chambre.",
+      chooseCheckIn: "Choisissez une date d'arrivée.",
+      checkInPast: "L'arrivée ne peut pas être avant aujourd'hui.",
+      chooseCheckOut: "Choisissez une date de départ.",
+      checkOutAfter: "Le départ doit être après l'arrivée.",
+      guestName: "Indiquez un nom entre 2 et 120 caractères.",
+      guestEmail: "Indiquez une adresse email valide.",
+      guestPhone: "Indiquez un téléphone ou WhatsApp valide.",
+      guestMessage: "Le message doit contenir 1000 caractères maximum."
+    },
+    roomLoad: {
+      noActiveRooms:
+        "Aucune chambre active n'est disponible pour le moment. Ajoutez les chambres avant de vérifier les dates.",
+      envMissing:
+        "Les chambres nécessitent les variables publiques Supabase et des chambres actives."
+    },
+    flow: {
+      eyebrow: "Réservation directe",
+      title: "Vérifiez vos dates de séjour Tifawave.",
+      copy:
+        "Commencez par une chambre et une fenêtre de voyage. Si les dates sont libres, Tifawave peut poser une courte option temporaire.",
+      roomPreviewAria: "Aperçu des chambres",
+      room: "Chambre",
+      loadingRooms: "Chargement des chambres...",
+      noActiveRooms: "Aucune chambre active",
+      checkIn: "Arrivée",
+      checkOut: "Départ",
+      loadingRoomOptions: "Chargement des options de chambre...",
+      checkAvailability: "Vérifier les disponibilités",
+      checking: "Vérification...",
+      manualConfirmationBadge: "Confirmation manuelle",
+      manualConfirmationNotice:
+        "Votre demande reste en attente jusqu'à confirmation par l'équipe Tifawave par email ou WhatsApp.",
+      night: "nuit",
+      guests: (count: number) => `Jusqu'à ${count} personnes`
+    },
+    hold: {
+      checkBeforeHold: "Vérifiez la chambre et les dates avant de les bloquer.",
+      checkAvailabilityFirst: "Vérifiez les disponibilités avant de bloquer les dates.",
+      couldNotHold: "Ces dates n'ont pas pu être bloquées.",
+      noLongerAvailable: "Ces dates ne sont plus disponibles.",
+      requestFailed: "Impossible de créer l'option pour le moment.",
+      holdDates: "Bloquer ces dates",
+      holdingDates: "Blocage des dates...",
+      eyebrow: "Option temporaire confirmée",
+      title: "Vos dates sont bloquées.",
+      copy:
+        "Ajoutez vos coordonnées pour que Tifawave crée une demande de réservation en attente. Aucun paiement n'est encore prélevé.",
+      room: "Chambre",
+      dates: "Dates",
+      to: "au",
+      nightlyRate: "Tarif par nuit",
+      selectedRoom: "Chambre sélectionnée",
+      pending: "En attente",
+      holdId: "ID d'option",
+      expires: "Expire"
+    },
+    guest: {
+      fixFields: "Corrigez les coordonnées indiquées.",
+      pendingCouldNotCreate: "La réservation en attente n'a pas pu être créée.",
+      pendingCouldNotCreateNow:
+        "La réservation en attente n'a pas pu être créée pour le moment.",
+      eyebrow: "Coordonnées",
+      title: "Créer une réservation en attente.",
+      name: "Nom",
+      namePlaceholder: "Votre nom complet",
+      email: "Email",
+      phone: "Téléphone / WhatsApp",
+      message: "Message",
+      messagePlaceholder: "Note optionnelle pour l'équipe Tifawave",
+      create: "Créer la réservation en attente",
+      creating: "Création de la réservation..."
+    },
+    pending: {
+      depositEyebrow: "Réservation en attente créée",
+      depositTitle: "Votre demande est en attente.",
+      depositBody:
+        "Tifawave a reçu votre demande. Réglez l'acompte pour confirmer le séjour en toute sécurité via Stripe.",
+      manualEyebrow: "Demande de réservation reçue",
+      manualTitle: "Demande de réservation reçue",
+      manualCopy:
+        "Tifawave a reçu votre demande. Elle reste en attente jusqu'à vérification et confirmation par email ou WhatsApp.",
+      bookingId: "ID de réservation",
+      status: "Statut",
+      manualStatusNote:
+        "Aucun paiement n'est dû maintenant. L'admin peut confirmer ou annuler cette demande depuis le tableau de bord.",
+      payDeposit: "Payer l'acompte",
+      openingStripe: "Ouverture de Stripe...",
+      depositPaymentNote: (depositText: string) =>
+        `${depositText}. La réservation est confirmée après paiement.`
+    },
+    errors: {
+      checkoutCouldNotStart: "Le paiement Stripe n'a pas pu démarrer.",
+      checkoutCouldNotStartNow: "Le paiement Stripe n'a pas pu démarrer pour le moment.",
+      checkoutNotStarted: "Paiement non démarré",
+      pendingNotCreated: "Réservation en attente non créée",
+      holdNotCreated: "Option non créée"
+    }
+  }
+} as const;
 
-const displayDateFormatter = new Intl.DateTimeFormat("en-US", {
-  dateStyle: "medium"
-});
+function localeTag(locale: Locale): string {
+  return locale === "fr" ? "fr-FR" : "en-US";
+}
 
-function formatPrice(cents: number): string {
-  return currencyFormatter.format(cents / 100);
+function formatPrice(cents: number, locale: Locale): string {
+  return new Intl.NumberFormat(localeTag(locale), {
+    currency: "USD",
+    maximumFractionDigits: 0,
+    style: "currency"
+  }).format(cents / 100);
 }
 
 function isHoldCreated(response: HoldResponse): response is {
@@ -193,12 +475,14 @@ function addDaysToDateInput(value: string, days: number): string {
   return toDateInputValue(date);
 }
 
-function formatDateInput(value: string): string {
-  return displayDateFormatter.format(new Date(`${value}T00:00:00`));
+function formatDateInput(value: string, locale: Locale): string {
+  return new Intl.DateTimeFormat(localeTag(locale), {
+    dateStyle: "medium"
+  }).format(new Date(`${value}T00:00:00`));
 }
 
-function formatHoldDate(value: string): string {
-  return new Intl.DateTimeFormat("en-US", {
+function formatHoldDate(value: string, locale: Locale): string {
+  return new Intl.DateTimeFormat(localeTag(locale), {
     dateStyle: "medium",
     timeStyle: "short"
   }).format(new Date(value));
@@ -206,34 +490,39 @@ function formatHoldDate(value: string): string {
 
 function statusLabel(
   availability: AvailabilityState,
-  isChecking: boolean
+  isChecking: boolean,
+  copy: (typeof bookingCopy)[Locale]["status"]
 ): string {
   if (isChecking) {
-    return "Checking dates";
+    return copy.checking;
   }
 
   if (availability.status === "available") {
-    return "Dates available";
+    return copy.available;
   }
 
   if (availability.status === "unavailable") {
-    return "Dates unavailable";
+    return copy.unavailable;
   }
 
   if (availability.status === "error") {
-    return "Check details";
+    return copy.error;
   }
 
-  return "Ready to check";
+  return copy.ready;
 }
 
 export function BookingPaymentReturnPanel({
+  locale = DEFAULT_LOCALE,
   paymentReturn,
   settings
 }: {
+  locale?: Locale;
   paymentReturn: BookingPaymentReturn;
   settings: BookingContactSettings;
 }) {
+  const copy = bookingCopy[locale].paymentReturn;
+
   useEffect(() => {
     if (paymentReturn.status === "success") {
       trackStripePaymentSuccessReturn({
@@ -248,35 +537,31 @@ export function BookingPaymentReturnPanel({
         className="booking-return-shell booking-return-success"
         aria-labelledby="booking-return-title"
       >
-        <p className="eyebrow">Deposit received</p>
-        <h1 id="booking-return-title">Your booking request is confirmed.</h1>
-        <p>
-          Thank you. The deposit has been received, and the Tifawave team will
-          review the details and follow up with arrival notes.
-        </p>
+        <p className="eyebrow">{copy.successEyebrow}</p>
+        <h1 id="booking-return-title">{copy.successTitle}</h1>
+        <p>{copy.successCopy}</p>
         <dl>
           <div>
-            <dt>Booking ID</dt>
+            <dt>{copy.bookingId}</dt>
             <dd>{paymentReturn.bookingId}</dd>
           </div>
           <div>
-            <dt>Next steps</dt>
-            <dd>Watch your email for the booking confirmation and trip details.</dd>
+            <dt>{copy.nextSteps}</dt>
+            <dd>{copy.nextStepsCopy}</dd>
           </div>
           <div>
-            <dt>Need a hand?</dt>
+            <dt>{copy.needHelp}</dt>
             <dd>
-              Message {settings.businessName} on WhatsApp or email{" "}
-              {settings.contactEmail}.
+              {copy.needHelpCopy(settings.businessName, settings.contactEmail)}
             </dd>
           </div>
         </dl>
         <div className="booking-return-actions">
-          <Link className="btn btn-primary" href="/">
-            Back home
+          <Link className="btn btn-primary" href={localizedPath(locale, "/")}>
+            {copy.backHome}
           </Link>
           <a className="btn btn-secondary" href={settings.whatsappHref}>
-            Contact
+            {copy.contact}
           </a>
         </div>
       </section>
@@ -288,36 +573,31 @@ export function BookingPaymentReturnPanel({
       className="booking-return-shell booking-return-cancelled"
       aria-labelledby="booking-return-title"
     >
-      <p className="eyebrow">Payment cancelled</p>
-      <h1 id="booking-return-title">No deposit was collected.</h1>
-      <p>
-        That is okay. You can retry the booking flow when ready, or contact
-        Tifawave if you need help completing the deposit.
-      </p>
+      <p className="eyebrow">{copy.cancelledEyebrow}</p>
+      <h1 id="booking-return-title">{copy.cancelledTitle}</h1>
+      <p>{copy.cancelledCopy}</p>
       <dl>
         {paymentReturn.bookingId ? (
           <div>
-            <dt>Booking ID</dt>
+            <dt>{copy.bookingId}</dt>
             <dd>{paymentReturn.bookingId}</dd>
           </div>
         ) : null}
         <div>
-          <dt>Status</dt>
-          <dd>Your booking is not confirmed until the deposit succeeds.</dd>
+          <dt>{copy.status}</dt>
+          <dd>{copy.cancelledStatusCopy}</dd>
         </div>
         <div>
-          <dt>Support</dt>
-          <dd>
-            WhatsApp or email {settings.contactEmail} and we will help.
-          </dd>
+          <dt>{copy.support}</dt>
+          <dd>{copy.supportCopy(settings.contactEmail)}</dd>
         </div>
       </dl>
       <div className="booking-return-actions">
-        <Link className="btn btn-primary" href="/book">
-          Try again
+        <Link className="btn btn-primary" href={localizedPath(locale, "/book")}>
+          {copy.tryAgain}
         </Link>
         <a className="btn btn-secondary" href={settings.whatsappHref}>
-          Contact
+          {copy.contact}
         </a>
       </div>
     </section>
@@ -325,10 +605,13 @@ export function BookingPaymentReturnPanel({
 }
 
 export function BookingAvailabilityForm({
+  locale = DEFAULT_LOCALE,
   settings
 }: {
+  locale?: Locale;
   settings: BookingContactSettings;
 }) {
+  const copy = bookingCopy[locale];
   const [rooms, setRooms] = useState<RoomOption[]>([]);
   const [roomId, setRoomId] = useState("");
   const [checkIn, setCheckIn] = useState("");
@@ -347,7 +630,7 @@ export function BookingAvailabilityForm({
   const [message, setMessage] = useState("");
   const [availability, setAvailability] = useState<AvailabilityState>({
     status: "idle",
-    message: "Select a room and dates to check availability."
+    message: copy.availability.initial
   });
   const [hold, setHold] = useState<HoldState>({
     status: "idle"
@@ -394,18 +677,14 @@ export function BookingAvailabilityForm({
         setRooms(activeRooms);
         setRoomId(activeRooms[0]?.id ?? "");
         setRoomLoadMessage(
-          activeRooms.length > 0
-            ? ""
-            : "No active rooms are available yet. Seed rooms before checking dates."
+          activeRooms.length > 0 ? "" : copy.roomLoad.noActiveRooms
         );
       } catch {
         if (!isMounted) {
           return;
         }
 
-        setRoomLoadMessage(
-          "Room options need Supabase public env vars and seeded active rooms."
-        );
+        setRoomLoadMessage(copy.roomLoad.envMissing);
       } finally {
         if (isMounted) {
           setIsLoadingRooms(false);
@@ -418,12 +697,12 @@ export function BookingAvailabilityForm({
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [copy.roomLoad.envMissing, copy.roomLoad.noActiveRooms]);
 
   function resetResultState() {
     setAvailability({
       status: "idle",
-      message: "Select a room and dates to check availability."
+      message: copy.availability.initial
     });
     setHold({
       status: "idle"
@@ -441,19 +720,19 @@ export function BookingAvailabilityForm({
     const errors: FieldErrors = {};
 
     if (!roomId) {
-      errors.roomId = "Choose a room.";
+      errors.roomId = copy.validation.chooseRoom;
     }
 
     if (!checkIn) {
-      errors.checkIn = "Choose a check-in date.";
+      errors.checkIn = copy.validation.chooseCheckIn;
     } else if (today && checkIn < today) {
-      errors.checkIn = "Check-in cannot be before today.";
+      errors.checkIn = copy.validation.checkInPast;
     }
 
     if (!checkOut) {
-      errors.checkOut = "Choose a check-out date.";
+      errors.checkOut = copy.validation.chooseCheckOut;
     } else if (checkIn && checkOut <= checkIn) {
-      errors.checkOut = "Check-out must be after check-in.";
+      errors.checkOut = copy.validation.checkOutAfter;
     }
 
     return errors;
@@ -480,19 +759,19 @@ export function BookingAvailabilityForm({
     const normalizedMessage = message.trim();
 
     if (normalizedName.length < 2 || normalizedName.length > 120) {
-      errors.guestName = "Enter a guest name between 2 and 120 characters.";
+      errors.guestName = copy.validation.guestName;
     }
 
     if (!EMAIL_PATTERN.test(normalizedEmail) || normalizedEmail.length > 254) {
-      errors.guestEmail = "Enter a valid email address.";
+      errors.guestEmail = copy.validation.guestEmail;
     }
 
     if (!PHONE_PATTERN.test(normalizedPhone)) {
-      errors.guestPhone = "Enter a valid phone or WhatsApp number.";
+      errors.guestPhone = copy.validation.guestPhone;
     }
 
     if (normalizedMessage.length > 1000) {
-      errors.message = "Message must be 1000 characters or fewer.";
+      errors.message = copy.validation.guestMessage;
     }
 
     return errors;
@@ -521,7 +800,7 @@ export function BookingAvailabilityForm({
     if (Object.keys(errors).length > 0) {
       setAvailability({
         status: "error",
-        message: "Please fix the highlighted fields."
+        message: copy.availability.fixFields
       });
       return;
     }
@@ -529,7 +808,7 @@ export function BookingAvailabilityForm({
     setIsChecking(true);
     setAvailability({
       status: "idle",
-      message: "Checking these dates..."
+      message: copy.availability.checking
     });
 
     try {
@@ -550,7 +829,7 @@ export function BookingAvailabilityForm({
         });
         setAvailability({
           status: "available",
-          message: "These dates are available. You can place a short hold now."
+          message: copy.availability.available
         });
         return;
       }
@@ -564,7 +843,7 @@ export function BookingAvailabilityForm({
       });
       setAvailability({
         status: response.status === 400 ? "error" : "unavailable",
-        message: result.message ?? "These dates are not available."
+        message: result.message ?? copy.availability.notAvailable
       });
     } catch {
       trackAvailabilityCheck({
@@ -576,7 +855,7 @@ export function BookingAvailabilityForm({
       });
       setAvailability({
         status: "error",
-        message: "Availability could not be checked right now."
+        message: copy.availability.requestFailed
       });
     } finally {
       setIsChecking(false);
@@ -594,7 +873,7 @@ export function BookingAvailabilityForm({
     if (Object.keys(errors).length > 0) {
       setHold({
         status: "error",
-        message: "Check the room and dates before holding them."
+        message: copy.hold.checkBeforeHold
       });
       return;
     }
@@ -602,7 +881,7 @@ export function BookingAvailabilityForm({
     if (availability.status !== "available") {
       setHold({
         status: "error",
-        message: "Check availability before holding dates."
+        message: copy.hold.checkAvailabilityFirst
       });
       return;
     }
@@ -638,7 +917,7 @@ export function BookingAvailabilityForm({
         setBooking({ status: "idle" });
         setAvailability({
           status: "available",
-          message: "Your dates are temporarily held. Add guest details next."
+          message: copy.availability.holdSuccess
         });
         return;
       }
@@ -648,19 +927,19 @@ export function BookingAvailabilityForm({
         message:
           "message" in result
             ? result.message
-            : "These dates could not be held."
+            : copy.hold.couldNotHold
       });
       setAvailability({
         status: "unavailable",
         message:
           "message" in result
             ? result.message
-            : "These dates are no longer available."
+            : copy.hold.noLongerAvailable
       });
     } catch {
       setHold({
         status: "error",
-        message: "The hold could not be created right now."
+        message: copy.hold.requestFailed
       });
     } finally {
       setIsHolding(false);
@@ -680,7 +959,7 @@ export function BookingAvailabilityForm({
     if (Object.keys(errors).length > 0) {
       setBooking({
         status: "error",
-        message: "Please fix the highlighted guest details."
+        message: copy.guest.fixFields
       });
       return;
     }
@@ -725,12 +1004,12 @@ export function BookingAvailabilityForm({
         message:
           "message" in result
             ? result.message
-            : "The pending booking could not be created."
+            : copy.guest.pendingCouldNotCreate
       });
     } catch {
       setBooking({
         status: "error",
-        message: "The pending booking could not be created right now."
+        message: copy.guest.pendingCouldNotCreateNow
       });
     } finally {
       setIsCreatingBooking(false);
@@ -738,7 +1017,11 @@ export function BookingAvailabilityForm({
   }
 
   async function handleDepositCheckout() {
-    if (isStartingCheckout || booking.status !== "confirmed") {
+    if (
+      !settings.depositsEnabled ||
+      isStartingCheckout ||
+      booking.status !== "confirmed"
+    ) {
       return;
     }
 
@@ -748,7 +1031,8 @@ export function BookingAvailabilityForm({
     try {
       const response = await fetch("/api/booking/checkout", {
         body: JSON.stringify({
-          bookingId: booking.bookingId
+          bookingId: booking.bookingId,
+          locale
         }),
         headers: {
           "content-type": "application/json"
@@ -770,12 +1054,12 @@ export function BookingAvailabilityForm({
         message:
           "message" in result
             ? result.message
-            : "Stripe checkout could not be started."
+            : copy.errors.checkoutCouldNotStart
       });
     } catch {
       setPayment({
         status: "error",
-        message: "Stripe checkout could not be started right now."
+        message: copy.errors.checkoutCouldNotStartNow
       });
     } finally {
       setIsStartingCheckout(false);
@@ -785,22 +1069,27 @@ export function BookingAvailabilityForm({
   return (
     <section className="booking-flow" aria-labelledby="booking-flow-title">
       <div className="booking-flow-copy">
-        <p className="eyebrow">Direct booking</p>
-        <h1 id="booking-flow-title">Check your Tifawave stay dates.</h1>
-        <p>
-          Start with a room and travel window. If the dates are free, Tifawave
-          can place a short temporary hold for your stay.
-        </p>
+        <p className="eyebrow">{copy.flow.eyebrow}</p>
+        <h1 id="booking-flow-title">{copy.flow.title}</h1>
+        <p>{copy.flow.copy}</p>
         {rooms.length > 0 ? (
-          <div className="booking-room-preview" aria-label="Room options preview">
+          <div className="booking-room-preview" aria-label={copy.flow.roomPreviewAria}>
             {rooms.map((room) => (
               <span key={room.id}>{room.name}</span>
             ))}
           </div>
         ) : null}
         <div className="booking-contact-panel">
-          <p>{settings.bookingNoticeText}</p>
-          <span>{settings.stripeDepositAmountDisplay}</span>
+          <p>
+            {settings.depositsEnabled
+              ? settings.bookingNoticeText
+              : copy.flow.manualConfirmationNotice}
+          </p>
+          <span>
+            {settings.depositsEnabled
+              ? settings.stripeDepositAmountDisplay
+              : copy.flow.manualConfirmationBadge}
+          </span>
           <div>
             <a href={settings.whatsappHref}>WhatsApp</a>
             <a href={`mailto:${settings.contactEmail}`}>
@@ -818,7 +1107,7 @@ export function BookingAvailabilityForm({
       <div className="booking-panel" aria-busy={isBusy || isLoadingRooms}>
         <form className="booking-form" noValidate onSubmit={handleAvailabilitySubmit}>
           <label className="booking-field" htmlFor="booking-room">
-            <span>Room</span>
+            <span>{copy.flow.room}</span>
             <select
               aria-describedby={
                 fieldErrors.roomId ? "booking-room-error" : undefined
@@ -835,15 +1124,16 @@ export function BookingAvailabilityForm({
               value={roomId}
             >
               {isLoadingRooms ? (
-                <option value="">Loading rooms...</option>
+                <option value="">{copy.flow.loadingRooms}</option>
               ) : rooms.length > 0 ? (
                 rooms.map((room) => (
                   <option key={room.id} value={room.id}>
-                    {room.name} - {formatPrice(room.base_price_cents)} / night
+                    {room.name} - {formatPrice(room.base_price_cents, locale)} /{" "}
+                    {copy.flow.night}
                   </option>
                 ))
               ) : (
-                <option value="">No active rooms</option>
+                <option value="">{copy.flow.noActiveRooms}</option>
               )}
             </select>
             {fieldErrors.roomId ? (
@@ -855,7 +1145,7 @@ export function BookingAvailabilityForm({
 
           <div className="booking-date-grid">
             <label className="booking-field" htmlFor="booking-check-in">
-              <span>Check-in</span>
+              <span>{copy.flow.checkIn}</span>
               <input
                 aria-describedby={
                   fieldErrors.checkIn ? "booking-check-in-error" : undefined
@@ -884,7 +1174,7 @@ export function BookingAvailabilityForm({
             </label>
 
             <label className="booking-field" htmlFor="booking-check-out">
-              <span>Check-out</span>
+              <span>{copy.flow.checkOut}</span>
               <input
                 aria-describedby={
                   fieldErrors.checkOut ? "booking-check-out-error" : undefined
@@ -917,15 +1207,18 @@ export function BookingAvailabilityForm({
             <div className="booking-room-summary">
               <div className="booking-room-summary-heading">
                 <strong>{selectedRoom.name}</strong>
-                <span>{formatPrice(selectedRoom.base_price_cents)} / night</span>
+                <span>
+                  {formatPrice(selectedRoom.base_price_cents, locale)} /{" "}
+                  {copy.flow.night}
+                </span>
               </div>
               <p>{selectedRoom.description}</p>
-              <span>Up to {selectedRoom.max_guests} guests</span>
+              <span>{copy.flow.guests(selectedRoom.max_guests)}</span>
             </div>
           ) : null}
 
           {isLoadingRooms ? (
-            <p className="booking-muted-note">Loading room options...</p>
+            <p className="booking-muted-note">{copy.flow.loadingRoomOptions}</p>
           ) : null}
 
           {roomLoadMessage ? (
@@ -937,7 +1230,7 @@ export function BookingAvailabilityForm({
             disabled={!canUseFields}
             type="submit"
           >
-            {isChecking ? "Checking..." : "Check availability"}
+            {isChecking ? copy.flow.checking : copy.flow.checkAvailability}
           </button>
         </form>
 
@@ -949,7 +1242,7 @@ export function BookingAvailabilityForm({
           aria-live="polite"
         >
           <div className="booking-status-copy">
-            <span>{statusLabel(availability, isChecking)}</span>
+            <span>{statusLabel(availability, isChecking, copy.status)}</span>
             <p>{availability.message}</p>
           </div>
           {availability.status === "available" && hold.status !== "confirmed" ? (
@@ -959,45 +1252,45 @@ export function BookingAvailabilityForm({
               onClick={handleHoldDates}
               type="button"
             >
-              {isHolding ? "Holding dates..." : "Hold these dates"}
+              {isHolding ? copy.hold.holdingDates : copy.hold.holdDates}
             </button>
           ) : null}
         </div>
 
         {hold.status === "confirmed" ? (
           <div className="booking-confirmation" aria-live="polite">
-            <p className="eyebrow">Temporary hold confirmed</p>
-            <h2>Your dates are held.</h2>
-            <p>
-              Add your contact details next so Tifawave can create a pending
-              booking request. No payment is collected yet.
-            </p>
+            <p className="eyebrow">{copy.hold.eyebrow}</p>
+            <h2>{copy.hold.title}</h2>
+            <p>{copy.hold.copy}</p>
             <dl>
               <div>
-                <dt>Room</dt>
-                <dd>{selectedRoom?.name ?? "Selected room"}</dd>
+                <dt>{copy.hold.room}</dt>
+                <dd>{selectedRoom?.name ?? copy.hold.selectedRoom}</dd>
               </div>
               <div>
-                <dt>Dates</dt>
+                <dt>{copy.hold.dates}</dt>
                 <dd>
-                  {formatDateInput(checkIn)} to {formatDateInput(checkOut)}
+                  {formatDateInput(checkIn, locale)} {copy.hold.to}{" "}
+                  {formatDateInput(checkOut, locale)}
                 </dd>
               </div>
               <div>
-                <dt>Nightly rate</dt>
+                <dt>{copy.hold.nightlyRate}</dt>
                 <dd>
                   {selectedRoom
-                    ? `${formatPrice(selectedRoom.base_price_cents)} / night`
-                    : "Pending"}
+                    ? `${formatPrice(selectedRoom.base_price_cents, locale)} / ${
+                        copy.flow.night
+                      }`
+                    : copy.hold.pending}
                 </dd>
               </div>
               <div>
-                <dt>Hold ID</dt>
+                <dt>{copy.hold.holdId}</dt>
                 <dd>{hold.holdId}</dd>
               </div>
               <div>
-                <dt>Expires</dt>
-                <dd>{formatHoldDate(hold.expiresAt)}</dd>
+                <dt>{copy.hold.expires}</dt>
+                <dd>{formatHoldDate(hold.expiresAt, locale)}</dd>
               </div>
             </dl>
           </div>
@@ -1010,12 +1303,12 @@ export function BookingAvailabilityForm({
             onSubmit={handlePendingBookingSubmit}
           >
             <div className="booking-guest-heading">
-              <p className="eyebrow">Guest details</p>
-              <h2>Create a pending booking.</h2>
+              <p className="eyebrow">{copy.guest.eyebrow}</p>
+              <h2>{copy.guest.title}</h2>
             </div>
 
             <label className="booking-field" htmlFor="booking-guest-name">
-              <span>Name</span>
+              <span>{copy.guest.name}</span>
               <input
                 aria-describedby={
                   guestErrors.guestName ? "booking-guest-name-error" : undefined
@@ -1027,7 +1320,7 @@ export function BookingAvailabilityForm({
                   setGuestName(event.target.value);
                   clearGuestError("guestName");
                 }}
-                placeholder="Your full name"
+                placeholder={copy.guest.namePlaceholder}
                 required
                 type="text"
                 value={guestName}
@@ -1043,7 +1336,7 @@ export function BookingAvailabilityForm({
             </label>
 
             <label className="booking-field" htmlFor="booking-guest-email">
-              <span>Email</span>
+              <span>{copy.guest.email}</span>
               <input
                 aria-describedby={
                   guestErrors.guestEmail
@@ -1073,7 +1366,7 @@ export function BookingAvailabilityForm({
             </label>
 
             <label className="booking-field" htmlFor="booking-guest-phone">
-              <span>Phone / WhatsApp</span>
+              <span>{copy.guest.phone}</span>
               <input
                 aria-describedby={
                   guestErrors.guestPhone
@@ -1103,7 +1396,7 @@ export function BookingAvailabilityForm({
             </label>
 
             <label className="booking-field" htmlFor="booking-guest-message">
-              <span>Message</span>
+              <span>{copy.guest.message}</span>
               <textarea
                 aria-describedby={
                   guestErrors.message ? "booking-guest-message-error" : undefined
@@ -1115,7 +1408,7 @@ export function BookingAvailabilityForm({
                   setMessage(event.target.value);
                   clearGuestError("message");
                 }}
-                placeholder="Optional note for the Tifawave team"
+                placeholder={copy.guest.messagePlaceholder}
                 rows={4}
                 value={message}
               />
@@ -1134,50 +1427,66 @@ export function BookingAvailabilityForm({
               disabled={isCreatingBooking}
               type="submit"
             >
-              {isCreatingBooking ? "Creating pending booking..." : "Create pending booking"}
+              {isCreatingBooking ? copy.guest.creating : copy.guest.create}
             </button>
           </form>
         ) : null}
 
         {booking.status === "confirmed" ? (
           <div className="booking-pending-confirmation" aria-live="polite">
-            <p className="eyebrow">Pending booking created</p>
-            <h2>Your request is pending.</h2>
+            <p className="eyebrow">
+              {settings.depositsEnabled
+                ? copy.pending.depositEyebrow
+                : copy.pending.manualEyebrow}
+            </p>
+            <h2>
+              {settings.depositsEnabled
+                ? copy.pending.depositTitle
+                : copy.pending.manualTitle}
+            </h2>
             <p>
-              Tifawave has your booking request. Pay the deposit next to confirm
-              the stay securely through Stripe.
+              {settings.depositsEnabled
+                ? copy.pending.depositBody
+                : copy.pending.manualCopy}
             </p>
             <dl>
               <div>
-                <dt>Booking ID</dt>
+                <dt>{copy.pending.bookingId}</dt>
                 <dd>{booking.bookingId}</dd>
               </div>
               <div>
-                <dt>Status</dt>
+                <dt>{copy.pending.status}</dt>
                 <dd>{booking.bookingStatus}</dd>
               </div>
             </dl>
-            <div className="booking-payment-actions">
-              <button
-                className="btn btn-primary"
-                disabled={isStartingCheckout}
-                onClick={handleDepositCheckout}
-                type="button"
-              >
-                {isStartingCheckout ? "Opening Stripe..." : "Pay deposit"}
-              </button>
-              <p>
-                {settings.stripeDepositAmountDisplay}. The booking confirms
-                after payment succeeds.
-              </p>
-            </div>
+            {settings.depositsEnabled ? (
+              <div className="booking-payment-actions">
+                <button
+                  className="btn btn-primary"
+                  disabled={isStartingCheckout}
+                  onClick={handleDepositCheckout}
+                  type="button"
+                >
+                  {isStartingCheckout
+                    ? copy.pending.openingStripe
+                    : copy.pending.payDeposit}
+                </button>
+                <p>
+                  {copy.pending.depositPaymentNote(
+                    settings.stripeDepositAmountDisplay
+                  )}
+                </p>
+              </div>
+            ) : (
+              <p className="booking-muted-note">{copy.pending.manualStatusNote}</p>
+            )}
           </div>
         ) : null}
 
         {payment.status === "error" ? (
           <div className="booking-status booking-status-error" role="status">
             <div className="booking-status-copy">
-              <span>Checkout not started</span>
+              <span>{copy.errors.checkoutNotStarted}</span>
               <p>{payment.message}</p>
             </div>
           </div>
@@ -1186,7 +1495,7 @@ export function BookingAvailabilityForm({
         {booking.status === "error" ? (
           <div className="booking-status booking-status-error" role="status">
             <div className="booking-status-copy">
-              <span>Pending booking not created</span>
+              <span>{copy.errors.pendingNotCreated}</span>
               <p>{booking.message}</p>
             </div>
           </div>
@@ -1195,7 +1504,7 @@ export function BookingAvailabilityForm({
         {hold.status === "error" ? (
           <div className="booking-status booking-status-error" role="status">
             <div className="booking-status-copy">
-              <span>Hold not created</span>
+              <span>{copy.errors.holdNotCreated}</span>
               <p>{hold.message}</p>
             </div>
           </div>

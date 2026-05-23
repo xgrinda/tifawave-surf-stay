@@ -10,11 +10,11 @@ import { TrustStrip } from "@/components/home/trust-strip";
 import { getSiteUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "Tifawave Surf Stay",
+  title: "Tifawave Surf Stay | Séjour surf à Tamraght",
   description:
-    "Stay, surf, and slow down in Tamraght with Tifawave rooms, packages, local rhythm, and direct booking.",
+    "Séjournez, surfez et ralentissez à Tamraght avec les chambres, séjours surf et réservations directes de Tifawave.",
   alternates: {
-    canonical: getSiteUrl(),
+    canonical: `${getSiteUrl()}/fr`,
     languages: {
       en: getSiteUrl(),
       fr: `${getSiteUrl()}/fr`
@@ -22,17 +22,17 @@ export const metadata: Metadata = {
   }
 };
 
-export default function Home() {
+export default function FrenchHome() {
   return (
     <main>
-      <HeroSection />
-      <TrustStrip />
-      <PackagesPreview />
-      <StayPreview />
-      <DayTimeline />
-      <PlaceSection />
-      <ReviewsSection />
-      <FinalCta />
+      <HeroSection locale="fr" />
+      <TrustStrip locale="fr" />
+      <PackagesPreview locale="fr" />
+      <StayPreview locale="fr" />
+      <DayTimeline locale="fr" />
+      <PlaceSection locale="fr" />
+      <ReviewsSection locale="fr" />
+      <FinalCta locale="fr" />
     </main>
   );
 }

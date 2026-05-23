@@ -1,18 +1,17 @@
-export function ReviewsSection() {
+import { DEFAULT_LOCALE, i18n, type Locale } from "@/lib/i18n";
+
+export function ReviewsSection({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
+  const copy = i18n[locale].home.reviews;
+
   return (
     <section className="reviews-section" aria-labelledby="reviews-section-title">
       <div className="container-shell reviews-section-inner">
-        <p className="reviews-stars" aria-label="Five star review">
+        <p className="reviews-stars" aria-label={copy.ariaLabel}>
           ★★★★★
         </p>
-        <h2 id="reviews-section-title">
-          &quot;Arrived a nervous beginner. Left riding green waves and already
-          booking next year. The food, the people, the place — unreal.&quot;
-        </h2>
-        <p className="reviews-meta">
-          Hannah M. · United Kingdom · Coached Surf Week
-        </p>
-        <div className="reviews-logos" aria-label="Review scores">
+        <h2 id="reviews-section-title">{copy.quote}</h2>
+        <p className="reviews-meta">{copy.meta}</p>
+        <div className="reviews-logos" aria-label={copy.logosLabel}>
           <span>
             <strong>4.9</strong>/5 Google
           </span>

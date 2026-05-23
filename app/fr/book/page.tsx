@@ -11,11 +11,11 @@ import { getWebsiteSettings, getWhatsappHref } from "@/lib/settings";
 import { getSiteUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "Book | Tifawave Surf Stay",
+  title: "Réserver | Tifawave Surf Stay",
   description:
-    "Check Tifawave room availability and place a temporary direct booking hold.",
+    "Vérifiez les disponibilités des chambres Tifawave et posez une option temporaire en réservation directe.",
   alternates: {
-    canonical: `${getSiteUrl()}/book`,
+    canonical: `${getSiteUrl()}/fr/book`,
     languages: {
       en: `${getSiteUrl()}/book`,
       fr: `${getSiteUrl()}/fr/book`
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   }
 };
 
-type BookPageProps = {
+type FrenchBookPageProps = {
   searchParams?: Promise<{
     bookingId?: string;
     payment?: string;
@@ -68,7 +68,7 @@ function getBookingContactSettings(): Promise<BookingContactSettings> {
   }));
 }
 
-export default async function BookPage({ searchParams }: BookPageProps) {
+export default async function FrenchBookPage({ searchParams }: FrenchBookPageProps) {
   const [params, settings] = await Promise.all([
     searchParams,
     getBookingContactSettings()
@@ -84,11 +84,12 @@ export default async function BookPage({ searchParams }: BookPageProps) {
       <Container>
         {visiblePaymentReturn ? (
           <BookingPaymentReturnPanel
+            locale="fr"
             paymentReturn={visiblePaymentReturn}
             settings={settings}
           />
         ) : (
-          <BookingAvailabilityForm settings={settings} />
+          <BookingAvailabilityForm locale="fr" settings={settings} />
         )}
       </Container>
     </main>

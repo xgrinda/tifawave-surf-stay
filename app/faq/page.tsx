@@ -3,11 +3,19 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Container } from "@/components/primitives/container";
 import { getWebsiteSettings, getWhatsappHref } from "@/lib/settings";
+import { getSiteUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "FAQ | Tifawave Surf Stay",
   description:
-    "Helpful answers for Tifawave booking, deposits, rooms, surf packages, Tamraght, transfers, meals, cancellations, Wi-Fi, and packing."
+    "Helpful answers for Tifawave booking, deposits, rooms, surf packages, Tamraght, transfers, meals, cancellations, Wi-Fi, and packing.",
+  alternates: {
+    canonical: `${getSiteUrl()}/faq`,
+    languages: {
+      en: `${getSiteUrl()}/faq`,
+      fr: `${getSiteUrl()}/fr/faq`
+    }
+  }
 };
 
 type FaqItem = {

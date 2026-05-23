@@ -226,6 +226,41 @@ select {
   gap: 12px;
 }
 
+.language-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 8%);
+  padding: 4px;
+}
+
+.language-switcher a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  border-radius: 999px;
+  color: rgb(246 241 231 / 76%);
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1;
+  padding: 0.45rem 0.65rem;
+}
+
+.language-switcher small {
+  display: none;
+}
+
+.language-switcher a:hover,
+.language-switcher a:focus-visible,
+.language-switcher a[aria-current="true"] {
+  background: rgb(255 255 255 / 14%);
+  color: white;
+  outline: none;
+}
+
 .nav-book {
   min-height: 42px;
   padding: 0.625rem 1.25rem;
@@ -4184,6 +4219,13 @@ select {
   color: var(--sun);
 }
 
+.site-footer .language-switcher {
+  width: fit-content;
+  margin-top: 18px;
+  border-color: var(--line-dark);
+  background: rgb(255 255 255 / 4%);
+}
+
 .footer-bottom {
   display: flex;
   flex-wrap: wrap;
@@ -4233,6 +4275,14 @@ select {
 
   .site-header-inner {
     min-height: 66px;
+  }
+
+  .site-header-actions {
+    gap: 8px;
+  }
+
+  .site-header-actions .nav-book {
+    display: none;
   }
 
   .home-hero {

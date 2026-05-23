@@ -1,20 +1,33 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { Container } from "@/components/primitives/container";
-import { getWhatsappHref, type WebsiteSettings } from "@/lib/settings";
+import { getLocaleFromPathname, i18n, localizedPath } from "@/lib/i18n";
+import type { WebsiteSettings } from "@/lib/settings";
 
-const exploreLinks = [
-  { href: "/surf/packages", label: "Surf Packages" },
-  { href: "/stay", label: "Rooms & Stay" },
-  { href: "/gallery", label: "Gallery" },
-  { href: "/about", label: "About" }
-];
+export function SiteFooter({
+  settings,
+  whatsappHref
+}: {
+  settings: WebsiteSettings;
+  whatsappHref: string;
+}) {
+  const pathname = usePathname();
+  const locale = getLocaleFromPathname(pathname);
+  const copy = i18n[locale];
 
-export function SiteFooter({ settings }: { settings: WebsiteSettings }) {
-  const whatsappHref = getWhatsappHref(settings);
   const planLinks = [
-    { href: "/book", label: "Book" },
-    { href: "/faq", label: "FAQ" },
-    { href: whatsappHref, label: "WhatsApp" }
+    { href: localizedPath(locale, "/book"), label: copy.nav.book },
+    { href: localizedPath(locale, "/faq"), label: copy.nav.faq },
+    { href: whatsappHref, label: copy.common.whatsapp }
+  ];
+  const exploreLinks = [
+    { href: localizedPath(locale, "/surf/packages"), label: copy.footer.surfPackages },
+    { href: localizedPath(locale, "/stay"), label: copy.footer.roomsStay },
+    { href: localizedPath(locale, "/gallery"), label: copy.nav.gallery },
+    { href: localizedPath(locale, "/about"), label: copy.nav.about }
   ];
 
   return (
@@ -22,17 +35,19 @@ export function SiteFooter({ settings }: { settings: WebsiteSettings }) {
       <Container>
         <div className="footer-grid">
           <div className="footer-brand">
-            <Link className="brand-mark" href="/" aria-label="Tifawave home">
+            <Link
+              className="brand-mark"
+              href={localizedPath(locale, "/")}
+              aria-label={copy.aria.tifawaveHome}
+            >
               Tifawave<span>.</span>
             </Link>
-            <p>
-              Boutique surf stays in Tamraght, Morocco. Direct bookings,
-              practical support, and a calm base between surf sessions.
-            </p>
+            <p>{copy.footer.brand}</p>
+            <LanguageSwitcher />
           </div>
 
-          <nav aria-label="Explore">
-            <h2>Explore</h2>
+          <nav aria-label={copy.footer.explore}>
+            <h2>{copy.footer.explore}</h2>
             {exploreLinks.map((link) => (
               <a key={link.href} href={link.href}>
                 {link.label}
@@ -40,8 +55,8 @@ export function SiteFooter({ settings }: { settings: WebsiteSettings }) {
             ))}
           </nav>
 
-          <nav aria-label="Plan">
-            <h2>Plan</h2>
+          <nav aria-label={copy.footer.plan}>
+            <h2>{copy.footer.plan}</h2>
             {planLinks.map((link) => (
               <a key={link.href} href={link.href}>
                 {link.label}
@@ -50,8 +65,8 @@ export function SiteFooter({ settings }: { settings: WebsiteSettings }) {
           </nav>
 
           <div className="footer-contact" id="whatsapp">
-            <h2>Contact</h2>
-            <a href={whatsappHref}>WhatsApp</a>
+            <h2>{copy.common.contact}</h2>
+            <a href={whatsappHref}>{copy.common.whatsapp}</a>
             <a href={`mailto:${settings.contactEmail}`}>
               {settings.contactEmail}
             </a>
@@ -61,12 +76,12 @@ export function SiteFooter({ settings }: { settings: WebsiteSettings }) {
               </a>
             ) : null}
             {settings.googleMapsUrl ? (
-              <a href={settings.googleMapsUrl}>Map</a>
+              <a href={settings.googleMapsUrl}>{copy.common.map}</a>
             ) : (
               <span>{settings.address}</span>
             )}
             {settings.instagramUrl ? (
-              <a href={settings.instagramUrl}>Instagram</a>
+              <a href={settings.instagramUrl}>{copy.common.instagram}</a>
             ) : null}
           </div>
         </div>

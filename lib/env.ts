@@ -29,6 +29,10 @@ type AnalyticsEnv = {
   gaMeasurementId: string;
 };
 
+type BookingFlowEnv = {
+  depositsEnabled: boolean;
+};
+
 function readRequiredValue(name: string, value: string | undefined): string {
   if (!value) {
     throw new Error(`Missing required environment variable: ${name}`);
@@ -50,6 +54,26 @@ function readPositiveIntegerEnv(name: string): number {
   }
 
   return parsed;
+}
+
+function readBooleanEnv(name: string, defaultValue: boolean): boolean {
+  const value = process.env[name]?.trim().toLowerCase();
+
+  if (!value) {
+    return defaultValue;
+  }
+
+  if (["1", "true", "yes", "on"].includes(value)) {
+    return true;
+  }
+
+  if (["0", "false", "no", "off"].includes(value)) {
+    return false;
+  }
+
+  throw new Error(
+    `Environment variable ${name} must be true or false when set.`
+  );
 }
 
 export function getSupabasePublicEnv(): SupabasePublicEnv {
@@ -111,5 +135,11 @@ export function getStripeEnv(): StripeEnv {
 export function getAnalyticsEnv(): AnalyticsEnv {
   return {
     gaMeasurementId: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim() ?? ""
+  };
+}
+
+export function getBookingFlowEnv(): BookingFlowEnv {
+  return {
+    depositsEnabled: readBooleanEnv("ENABLE_DEPOSITS", false)
   };
 }

@@ -1,7 +1,9 @@
-import { homeStayPreview } from "@/data/home-stay";
 import { Container } from "@/components/primitives/container";
+import { DEFAULT_LOCALE, i18n, localizedPath, type Locale } from "@/lib/i18n";
 
-export function StayPreview() {
+export function StayPreview({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
+  const copy = i18n[locale].home.stayPreview;
+
   return (
     <section className="stay-preview" aria-labelledby="stay-preview-title">
       <Container className="stay-preview-inner">
@@ -10,17 +12,17 @@ export function StayPreview() {
         </div>
 
         <div className="stay-preview-copy">
-          <p className="eyebrow">{homeStayPreview.eyebrow}</p>
-          <h2 id="stay-preview-title">{homeStayPreview.title}</h2>
-          <p>{homeStayPreview.description}</p>
-          <p className="stay-preview-price">{homeStayPreview.price}</p>
-          <ul aria-label="Stay highlights">
-            {homeStayPreview.highlights.map((highlight) => (
+          <p className="eyebrow">{copy.eyebrow}</p>
+          <h2 id="stay-preview-title">{copy.title}</h2>
+          <p>{copy.description}</p>
+          <p className="stay-preview-price">{copy.price}</p>
+          <ul aria-label={copy.highlightsLabel}>
+            {copy.highlights.map((highlight) => (
               <li key={highlight}>{highlight}</li>
             ))}
           </ul>
-          <a className="stay-preview-link" href={homeStayPreview.href}>
-            {homeStayPreview.ctaLabel}
+          <a className="stay-preview-link" href={localizedPath(locale, "/stay")}>
+            {copy.ctaLabel}
             <svg
               aria-hidden="true"
               width="16"

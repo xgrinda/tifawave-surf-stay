@@ -2,11 +2,19 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/primitives/container";
 import { getWebsiteSettings, getWhatsappHref } from "@/lib/settings";
+import { getSiteUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "About | Tifawave Surf Stay",
   description:
-    "Meet Tifawave: a design-led surf stay in Tamraght shaped by Moroccan hospitality, surf rhythm, and slow coastal living."
+    "Meet Tifawave: a design-led surf stay in Tamraght shaped by Moroccan hospitality, surf rhythm, and slow coastal living.",
+  alternates: {
+    canonical: `${getSiteUrl()}/about`,
+    languages: {
+      en: `${getSiteUrl()}/about`,
+      fr: `${getSiteUrl()}/fr/about`
+    }
+  }
 };
 
 const philosophy = [

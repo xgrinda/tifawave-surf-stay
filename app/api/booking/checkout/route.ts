@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createDepositCheckoutSession } from "@/lib/booking/payments";
+import { getBookingFlowEnv } from "@/lib/env";
+import { DEFAULT_LOCALE, isLocale } from "@/lib/i18n";
 
 type CheckoutResponse =
   | {
@@ -31,6 +33,11 @@ function stringField(body: Record<string, unknown>, key: string): string {
   return typeof value === "string" ? value : "";
 }
 
+function localeField(body: Record<string, unknown>) {
+  const value = stringField(body, "locale");
+  return isLocale(value) ? value : DEFAULT_LOCALE;
+}
+
 function errorResponse(reason: string, message: string, status = 400) {
   return NextResponse.json<CheckoutResponse>(
     {
@@ -43,6 +50,14 @@ function errorResponse(reason: string, message: string, status = 400) {
 }
 
 export async function POST(request: Request) {
+  if (!getBookingFlowEnv().depositsEnabled) {
+    return errorResponse(
+      "deposits_disabled",
+      "Deposit checkout is disabled.",
+      409
+    );
+  }
+
   const body = await readJsonBody(request);
 
   if (!body) {
@@ -50,7 +65,8 @@ export async function POST(request: Request) {
   }
 
   const result = await createDepositCheckoutSession(
-    stringField(body, "bookingId")
+    stringField(body, "bookingId"),
+    localeField(body)
   );
 
   if (!result.ok) {

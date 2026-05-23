@@ -1,5 +1,6 @@
 import type Stripe from "stripe";
 import { getStripeEnv } from "@/lib/env";
+import { DEFAULT_LOCALE, localizedPath, type Locale } from "@/lib/i18n";
 import { getSiteUrl } from "@/lib/site";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getStripeClient } from "@/lib/stripe/client";
@@ -125,7 +126,8 @@ async function getPaymentRoom(roomId: string): Promise<PaymentRoom | null> {
 }
 
 export async function createDepositCheckoutSession(
-  bookingId: string
+  bookingId: string,
+  locale: Locale = DEFAULT_LOCALE
 ): Promise<CreateDepositCheckoutResult> {
   if (!UUID_PATTERN.test(bookingId)) {
     return {
@@ -195,6 +197,7 @@ export async function createDepositCheckoutSession(
     stripeDepositCurrency
   } = getStripeEnv();
   const siteUrl = getSiteUrl();
+  const returnPath = localizedPath(locale, "/book");
   const metadata = checkoutBookingMetadata(booking.id);
 
   try {
@@ -218,8 +221,8 @@ export async function createDepositCheckoutSession(
       payment_intent_data: {
         metadata
       },
-      success_url: `${siteUrl}/book?payment=success&bookingId=${booking.id}`,
-      cancel_url: `${siteUrl}/book?payment=cancelled&bookingId=${booking.id}`
+      success_url: `${siteUrl}${returnPath}?payment=success&bookingId=${booking.id}`,
+      cancel_url: `${siteUrl}${returnPath}?payment=cancelled&bookingId=${booking.id}`
     });
 
     if (!session.url) {

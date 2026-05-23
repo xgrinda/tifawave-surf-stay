@@ -1,6 +1,9 @@
 import { Container } from "@/components/primitives/container";
+import { DEFAULT_LOCALE, i18n, localizedPath, type Locale } from "@/lib/i18n";
 
-export function PlaceSection() {
+export function PlaceSection({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
+  const copy = i18n[locale].home.place;
+
   return (
     <section className="place-section" aria-labelledby="place-section-title">
       <Container className="place-section-inner">
@@ -9,17 +12,11 @@ export function PlaceSection() {
         </div>
 
         <div className="place-section-copy">
-          <p className="eyebrow">The Place</p>
-          <h2 id="place-section-title">
-            Tamraght — where the desert meets the sea.
-          </h2>
-          <p>
-            A fishing village wrapped in argan hills, 20 minutes from Agadir
-            airport and steps from some of Morocco&apos;s best waves. Souks,
-            Paradise Valley, and call-to-prayer dusks included.
-          </p>
-          <a className="place-section-link" href="/faq">
-            Getting here & FAQ
+          <p className="eyebrow">{copy.eyebrow}</p>
+          <h2 id="place-section-title">{copy.title}</h2>
+          <p>{copy.copy}</p>
+          <a className="place-section-link" href={localizedPath(locale, "/faq")}>
+            {copy.cta}
             <svg
               aria-hidden="true"
               width="16"
