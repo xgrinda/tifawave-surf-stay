@@ -9,6 +9,7 @@ import {
   setAdminGalleryImageActive,
   updateAdminGalleryImage
 } from "@/lib/admin/gallery";
+import { removeAdminUploadedImage, uploadAdminImage } from "@/lib/admin/media";
 
 function redirectWithMessage(params: Record<string, string>): never {
   const searchParams = new URLSearchParams(params);
@@ -17,6 +18,22 @@ function redirectWithMessage(params: Record<string, string>): never {
 
 function stringField(formData: FormData, key: string): string {
   return String(formData.get(key) ?? "");
+}
+
+function fileField(formData: FormData, key: string): File | null {
+  const value = formData.get(key);
+
+  if (
+    value &&
+    typeof value === "object" &&
+    "arrayBuffer" in value &&
+    "size" in value &&
+    "type" in value
+  ) {
+    return value as File;
+  }
+
+  return null;
 }
 
 function galleryImageInputFromForm(formData: FormData) {
@@ -41,6 +58,38 @@ export async function createGalleryImageAction(formData: FormData) {
   const result = await createAdminGalleryImage(galleryImageInputFromForm(formData));
 
   if (!result.ok) {
+    redirectWithMessage({
+      error: result.message
+    });
+  }
+
+  revalidateGallery();
+  redirectWithMessage({
+    created: "1"
+  });
+}
+
+export async function uploadGalleryImageAction(formData: FormData) {
+  await requireAdmin();
+
+  const upload = await uploadAdminImage({
+    file: fileField(formData, "imageFile"),
+    folder: "gallery"
+  });
+
+  if (!upload.ok) {
+    redirectWithMessage({
+      error: upload.message
+    });
+  }
+
+  const result = await createAdminGalleryImage({
+    ...galleryImageInputFromForm(formData),
+    imageUrl: upload.publicUrl
+  });
+
+  if (!result.ok) {
+    await removeAdminUploadedImage(upload.path);
     redirectWithMessage({
       error: result.message
     });

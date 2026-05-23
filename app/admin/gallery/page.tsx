@@ -6,7 +6,8 @@ import {
   createGalleryImageAction,
   removeGalleryImageAction,
   toggleGalleryImageActiveAction,
-  updateGalleryImageAction
+  updateGalleryImageAction,
+  uploadGalleryImageAction
 } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -181,6 +182,68 @@ export default async function AdminGalleryPage({
             </div>
             <button className="btn btn-primary admin-settings-submit" type="submit">
               Add image
+            </button>
+          </form>
+
+          <form
+            className="admin-upload-form"
+            action={uploadGalleryImageAction}
+            encType="multipart/form-data"
+          >
+            <div className="admin-upload-heading">
+              <h3>Upload image</h3>
+              <p>
+                Upload JPG, PNG, WebP, or AVIF. Max 5 MB. The generated public
+                Storage URL will be saved into the gallery library.
+              </p>
+            </div>
+            <div className="admin-settings-grid">
+              <label className="admin-field admin-field-wide">
+                <span>Image file</span>
+                <input
+                  accept="image/jpeg,image/png,image/webp,image/avif"
+                  name="imageFile"
+                  required
+                  type="file"
+                />
+              </label>
+              <label className="admin-field">
+                <span>Alt text</span>
+                <input
+                  name="altText"
+                  placeholder="Breakfast on the Tifawave rooftop"
+                  required
+                  type="text"
+                />
+                <small>
+                  Describe what is visible, not a slogan. Keep it under 180
+                  characters.
+                </small>
+              </label>
+              <label className="admin-field">
+                <span>Category / tag</span>
+                <input name="category" placeholder="food" required type="text" />
+                <small>Use simple tags like surf, rooms, food, tamraght, or community.</small>
+              </label>
+              <label className="admin-field">
+                <span>Sort order</span>
+                <input defaultValue="100" min="0" name="sortOrder" required type="number" />
+              </label>
+              <label className="admin-checkbox-field">
+                <input defaultChecked name="isActive" type="checkbox" value="true" />
+                <span>Active</span>
+              </label>
+              <label className="admin-field admin-field-wide">
+                <span>Caption</span>
+                <input
+                  name="caption"
+                  placeholder="Optional short caption for the public lightbox"
+                  type="text"
+                />
+              </label>
+            </div>
+            <button className="btn btn-primary admin-settings-submit" type="submit">
+              Upload image
             </button>
           </form>
         </section>

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/admin/auth";
+import { removeAdminUploadedImage, uploadAdminImage } from "@/lib/admin/media";
 import {
   createAdminRoomImage,
   createAdminRoom,
@@ -20,6 +21,22 @@ function redirectWithMessage(params: Record<string, string>): never {
 
 function stringField(formData: FormData, key: string): string {
   return String(formData.get(key) ?? "");
+}
+
+function fileField(formData: FormData, key: string): File | null {
+  const value = formData.get(key);
+
+  if (
+    value &&
+    typeof value === "object" &&
+    "arrayBuffer" in value &&
+    "size" in value &&
+    "type" in value
+  ) {
+    return value as File;
+  }
+
+  return null;
 }
 
 function roomInputFromForm(formData: FormData) {
@@ -111,6 +128,38 @@ export async function createRoomImageAction(formData: FormData) {
   const result = await createAdminRoomImage(roomImageInputFromForm(formData));
 
   if (!result.ok) {
+    redirectWithMessage({
+      error: result.message
+    });
+  }
+
+  revalidateRooms();
+  redirectWithMessage({
+    image: "1"
+  });
+}
+
+export async function uploadRoomImageAction(formData: FormData) {
+  await requireAdmin();
+
+  const upload = await uploadAdminImage({
+    file: fileField(formData, "imageFile"),
+    folder: "rooms"
+  });
+
+  if (!upload.ok) {
+    redirectWithMessage({
+      error: upload.message
+    });
+  }
+
+  const result = await createAdminRoomImage({
+    ...roomImageInputFromForm(formData),
+    imageUrl: upload.publicUrl
+  });
+
+  if (!result.ok) {
+    await removeAdminUploadedImage(upload.path);
     redirectWithMessage({
       error: result.message
     });

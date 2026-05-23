@@ -18,6 +18,10 @@ Use `docs/media-content-quality-checklist.md` before publishing room or gallery
 images. It covers recommended image sizes, direct URL requirements, alt text,
 caption quality, and fallback expectations for empty media states.
 
+Admin image uploads use the public Supabase Storage bucket `tifawave-media`.
+Manual image URLs are still supported. Upload validation currently allows JPG,
+PNG, WebP, and AVIF images up to 5 MB.
+
 ## Deployment: Vercel
 
 Recommended deployment target: Vercel with the existing Next.js project settings.
@@ -84,6 +88,12 @@ supabase/migrations/202605210002_add_booking_overlap_constraints.sql
 supabase/migrations/202605210003_enable_rls_policies.sql
 supabase/migrations/202605210004_seed_initial_rooms.sql
 supabase/migrations/202605220001_add_stripe_deposit_fields.sql
+supabase/migrations/202605220002_add_ical_sync_foundation.sql
+supabase/migrations/202605220003_add_website_settings.sql
+supabase/migrations/202605220004_add_surf_packages.sql
+supabase/migrations/202605220005_add_room_images.sql
+supabase/migrations/202605220006_add_gallery_images.sql
+supabase/migrations/202605230001_add_media_storage_bucket.sql
 ```
 
 SQL editor alternative:
@@ -91,6 +101,7 @@ SQL editor alternative:
 2. Run each migration file above manually in exact order.
 3. Do not skip the RLS migration.
 4. Confirm the room seed runs after the `rooms` table and `base_price_cents` column exist.
+5. Confirm the `tifawave-media` Storage bucket exists and is public for image rendering.
 
 Verify rooms were seeded:
 

@@ -8,7 +8,8 @@ import {
   removeRoomImageAction,
   toggleRoomActiveAction,
   updateRoomImageAction,
-  updateRoomAction
+  updateRoomAction,
+  uploadRoomImageAction
 } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -317,6 +318,59 @@ export default async function AdminRoomsPage({
                       </label>
                       <button className="admin-status-button" type="submit">
                         Add image
+                      </button>
+                    </form>
+
+                    <form
+                      className="admin-upload-form"
+                      action={uploadRoomImageAction}
+                      encType="multipart/form-data"
+                    >
+                      <input name="roomId" type="hidden" value={room.id} />
+                      <div className="admin-upload-heading">
+                        <h5>Upload room image</h5>
+                        <p>
+                          Upload JPG, PNG, WebP, or AVIF. Max 5 MB. The public
+                          Storage URL is saved automatically.
+                        </p>
+                      </div>
+                      <label className="admin-field admin-field-wide">
+                        <span>Image file</span>
+                        <input
+                          accept="image/jpeg,image/png,image/webp,image/avif"
+                          name="imageFile"
+                          required
+                          type="file"
+                        />
+                      </label>
+                      <label className="admin-field">
+                        <span>Alt text</span>
+                        <input
+                          name="altText"
+                          placeholder={`${room.name} with natural light`}
+                          type="text"
+                        />
+                        <small>
+                          Describe the visible room clearly. Keep it under 180
+                          characters.
+                        </small>
+                      </label>
+                      <label className="admin-field">
+                        <span>Sort order</span>
+                        <input
+                          defaultValue={room.images.length * 10 + 10}
+                          min="0"
+                          name="sortOrder"
+                          required
+                          type="number"
+                        />
+                      </label>
+                      <label className="admin-checkbox-field">
+                        <input name="isPrimary" type="checkbox" value="true" />
+                        <span>Primary image</span>
+                      </label>
+                      <button className="admin-status-button" type="submit">
+                        Upload image
                       </button>
                     </form>
 

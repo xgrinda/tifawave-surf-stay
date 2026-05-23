@@ -3564,6 +3564,12 @@ select {
   padding: 0 1rem;
 }
 
+.admin-field input[type="file"] {
+  display: flex;
+  align-items: center;
+  padding-block: 0.9rem;
+}
+
 .admin-field textarea {
   min-height: 112px;
   padding-block: 0.875rem;
@@ -3743,6 +3749,37 @@ select {
 .admin-room-form {
   display: grid;
   gap: 18px;
+}
+
+.admin-upload-form {
+  display: grid;
+  gap: 16px;
+  border: 1px dashed rgb(11 31 42 / 18%);
+  border-radius: 18px;
+  background: rgb(246 241 231 / 48%);
+  padding: clamp(16px, 3vw, 22px);
+}
+
+.admin-upload-heading {
+  display: grid;
+  gap: 6px;
+}
+
+.admin-upload-heading h3,
+.admin-upload-heading h5 {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(1.35rem, 3vw, 1.8rem);
+  font-weight: 400;
+  line-height: 1.08;
+}
+
+.admin-upload-heading p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.90625rem;
+  line-height: 1.6;
 }
 
 .admin-room-list {

@@ -9,6 +9,7 @@ Use this before publishing room or gallery images.
 - Public gallery images: 1800 px wide minimum; mix landscape and portrait crops.
 - Hero or wide editorial images: 2400 px wide minimum.
 - Keep files below 500 KB when practical; use compression before adding URLs.
+- Admin uploads accept JPG, PNG, WebP, and AVIF up to 5 MB.
 
 ## Content Quality
 
@@ -31,5 +32,6 @@ Use this before publishing room or gallery images.
 - Use a direct `https://` image URL.
 - Confirm the URL opens the image without a login.
 - Avoid temporary signed URLs that expire.
+- For admin uploads, confirm the `tifawave-media` Supabase Storage bucket exists.
 - Replace broken URLs immediately; public pages will show a fallback visual.
 - Do not upload guest-identifiable images without permission.
