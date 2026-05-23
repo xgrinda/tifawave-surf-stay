@@ -2,6 +2,13 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import {
+  trackAvailabilityCheck,
+  trackHoldCreated,
+  trackPendingBookingCreated,
+  trackStripeCheckoutStart,
+  trackStripePaymentSuccessReturn
+} from "@/lib/analytics/events";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Row } from "@/lib/supabase/types";
 
@@ -227,6 +234,14 @@ export function BookingPaymentReturnPanel({
   paymentReturn: BookingPaymentReturn;
   settings: BookingContactSettings;
 }) {
+  useEffect(() => {
+    if (paymentReturn.status === "success") {
+      trackStripePaymentSuccessReturn({
+        bookingId: paymentReturn.bookingId
+      });
+    }
+  }, [paymentReturn]);
+
   if (paymentReturn.status === "success") {
     return (
       <section
@@ -527,6 +542,12 @@ export function BookingAvailabilityForm({
       const result = await readJson<AvailabilityResponse>(response);
 
       if (result.available) {
+        trackAvailabilityCheck({
+          checkIn,
+          checkOut,
+          roomSlug: selectedRoom?.slug,
+          status: "available"
+        });
         setAvailability({
           status: "available",
           message: "These dates are available. You can place a short hold now."
@@ -534,11 +555,25 @@ export function BookingAvailabilityForm({
         return;
       }
 
+      trackAvailabilityCheck({
+        checkIn,
+        checkOut,
+        reason: result.reason,
+        roomSlug: selectedRoom?.slug,
+        status: response.status === 400 ? "error" : "unavailable"
+      });
       setAvailability({
         status: response.status === 400 ? "error" : "unavailable",
         message: result.message ?? "These dates are not available."
       });
     } catch {
+      trackAvailabilityCheck({
+        checkIn,
+        checkOut,
+        reason: "request_failed",
+        roomSlug: selectedRoom?.slug,
+        status: "error"
+      });
       setAvailability({
         status: "error",
         message: "Availability could not be checked right now."
@@ -590,6 +625,11 @@ export function BookingAvailabilityForm({
       const result = await readJson<HoldResponse>(response);
 
       if (response.ok && isHoldCreated(result)) {
+        trackHoldCreated({
+          checkIn,
+          checkOut,
+          roomSlug: selectedRoom?.slug
+        });
         setHold({
           status: "confirmed",
           holdId: result.holdId,
@@ -665,6 +705,10 @@ export function BookingAvailabilityForm({
       const result = await readJson<PendingBookingResponse>(response);
 
       if (response.ok && isPendingBookingCreated(result)) {
+        trackPendingBookingCreated({
+          bookingStatus: result.status,
+          roomSlug: selectedRoom?.slug
+        });
         setBooking({
           status: "confirmed",
           bookingId: result.bookingId,
@@ -714,6 +758,9 @@ export function BookingAvailabilityForm({
       const result = await readJson<CheckoutResponse>(response);
 
       if (response.ok && isCheckoutCreated(result)) {
+        trackStripeCheckoutStart({
+          roomSlug: selectedRoom?.slug
+        });
         window.location.assign(result.checkoutUrl);
         return;
       }

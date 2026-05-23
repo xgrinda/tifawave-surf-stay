@@ -25,6 +25,10 @@ type StripeEnv = {
   stripeDepositCurrency: string;
 };
 
+type AnalyticsEnv = {
+  gaMeasurementId: string;
+};
+
 function readRequiredValue(name: string, value: string | undefined): string {
   if (!value) {
     throw new Error(`Missing required environment variable: ${name}`);
@@ -101,5 +105,11 @@ export function getStripeEnv(): StripeEnv {
       "STRIPE_DEPOSIT_AMOUNT_CENTS"
     ),
     stripeDepositCurrency
+  };
+}
+
+export function getAnalyticsEnv(): AnalyticsEnv {
+  return {
+    gaMeasurementId: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim() ?? ""
   };
 }

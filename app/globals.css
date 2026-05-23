@@ -4090,6 +4090,15 @@ select {
     display: none;
   }
 
+  .site-header .brand-mark {
+    min-height: 44px;
+    align-items: center;
+  }
+
+  .nav-book {
+    min-height: 44px;
+  }
+
   .mobile-menu {
     display: block;
   }
@@ -4325,6 +4334,53 @@ select {
 
   .footer-brand {
     grid-column: 1 / -1;
+  }
+
+  .site-footer a,
+  .footer-contact span,
+  .stay-preview-link,
+  .place-section-link,
+  .stay-room-link,
+  .surf-package-book-link,
+  .about-contact-card a,
+  .about-cta-link,
+  .faq-contact-card a,
+  .booking-contact-panel a {
+    min-height: 44px;
+    align-items: center;
+  }
+
+  .site-footer a,
+  .footer-contact span,
+  .about-contact-card a,
+  .faq-contact-card a,
+  .booking-contact-panel a {
+    display: flex;
+  }
+
+  .stay-preview-link,
+  .place-section-link,
+  .stay-room-link,
+  .surf-package-book-link,
+  .about-cta-link,
+  .faq-nav a {
+    display: inline-flex;
+  }
+
+  .faq-nav a,
+  .gallery-filters button,
+  .gallery-lightbox-close {
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .gallery-lightbox-panel {
+    max-height: calc(100svh - 32px);
+    overflow-y: auto;
+  }
+
+  .gallery-lightbox-panel img {
+    max-height: 62svh;
   }
 
   .mobile-booking-bar {
