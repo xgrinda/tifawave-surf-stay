@@ -118,11 +118,11 @@ export default async function FrenchRoomDetailPage({
             />
           ) : (
             <div
-              aria-label={`Image temporaire ${room.name}`}
+              aria-label={`Aperçu image ${room.name}`}
               className="room-detail-primary-image room-detail-image-placeholder"
               role="img"
             >
-              <span>Photos bientôt</span>
+              <span>Photos en mise à jour</span>
             </div>
           )}
         </Container>
@@ -147,11 +147,11 @@ export default async function FrenchRoomDetailPage({
             </div>
           ) : (
             <div className="room-detail-empty-gallery">
-              <p className="eyebrow">Images bientôt disponibles</p>
-              <h2>Les photos de la chambre apparaîtront ici.</h2>
+              <p className="eyebrow">Photos en mise à jour</p>
+              <h2>D'autres photos de la chambre arrivent.</h2>
               <p>
-                Ajoutez une photo principale et quelques détails depuis l'admin:
-                lit, salle de bain, espace de travail, terrasse et vue.
+                Contactez Tifawave si vous souhaitez voir plus de détails avant
+                d'envoyer une demande de réservation.
               </p>
             </div>
           )}

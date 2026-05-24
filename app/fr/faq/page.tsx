@@ -10,7 +10,7 @@ import { getSiteUrl } from "@/lib/site";
 export const metadata: Metadata = {
   title: "FAQ | Tifawave Surf Stay",
   description:
-    "Réponses utiles sur les réservations Tifawave, acomptes, chambres, séjours surf, Tamraght, transferts, repas, annulations, Wi-Fi et bagages.",
+    "Réponses utiles sur les réservations Tifawave, chambres, séjours surf, Tamraght, transferts, repas, annulations, Wi-Fi et bagages.",
   alternates: {
     canonical: `${getSiteUrl()}/fr/faq`,
     languages: {
@@ -57,27 +57,27 @@ function buildFaqSections({
 
   return [
     {
-      id: "reservation-acompte",
-      title: "Réservation et acompte",
+      id: "reservation-confirmation",
+      title: "Réservation et confirmation",
       intro: "Comment une réservation directe passe des dates à la confirmation.",
       items: [
         {
           question: "Comment fonctionne la réservation?",
           answer:
-            "Commencez par choisir une chambre et des dates. Si elles sont disponibles, Tifawave pose une option temporaire, recueille vos coordonnées, puis demande l'acompte via Stripe."
+            "Commencez par choisir une chambre et des dates. Si elles sont disponibles, Tifawave pose une option temporaire, recueille vos coordonnées, puis vérifie la demande manuellement."
         },
         {
           question: "Quand ma réservation est-elle confirmée?",
           answer:
-            "Votre demande est confirmée quand le paiement de l'acompte réussit. Vous verrez un écran de confirmation et l'équipe vous enverra les informations d'arrivée."
+            "Votre demande reste en attente jusqu'à confirmation par l'équipe Tifawave, par email ou WhatsApp. Les informations d'arrivée sont partagées une fois la demande acceptée."
         },
         {
-          question: "Puis-je poser une question avant de payer?",
+          question: "Puis-je poser une question avant d'envoyer la demande?",
           answer: (
             <>
               Oui. Si vous hésitez sur les dates, la chambre, le niveau surf ou
-              les transferts, contactez-nous {contactLink} avant de régler
-              l'acompte.
+              les transferts, contactez-nous {contactLink} avant d'envoyer la
+              demande.
             </>
           )
         }
@@ -195,7 +195,7 @@ function buildFaqSections({
         {
           question: "Quelle est la politique d'annulation?",
           answer:
-            "Les conditions dépendent du timing, du séjour et des informations écrites au moment de la confirmation. Demandez avant de payer l'acompte si vous avez besoin de flexibilité."
+            "Les conditions dépendent du timing, du séjour et des informations écrites au moment de la confirmation. Demandez avant de confirmer si vous avez besoin de flexibilité."
         },
         {
           question: "Puis-je changer de dates après réservation?",
@@ -276,7 +276,7 @@ export default async function FrenchFaqPage() {
             <h2>Demandez avant de vous engager.</h2>
             <p>
               Si votre question concerne les dates, les vols, le niveau surf ou
-              le choix de chambre, contactez Tifawave avant l'acompte.
+              le choix de chambre, contactez Tifawave avant d'envoyer la demande.
             </p>
             <div>
               <a href={`mailto:${settings.contactEmail}`}>

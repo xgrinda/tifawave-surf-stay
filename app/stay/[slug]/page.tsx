@@ -114,11 +114,11 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
             />
           ) : (
             <div
-              aria-label={`${room.name} image placeholder`}
+              aria-label={`${room.name} image preview`}
               className="room-detail-primary-image room-detail-image-placeholder"
               role="img"
             >
-              <span>Room photos coming soon</span>
+              <span>Photos being updated</span>
             </div>
           )}
         </Container>
@@ -143,11 +143,11 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
             </div>
           ) : (
             <div className="room-detail-empty-gallery">
-              <p className="eyebrow">Images coming soon</p>
-              <h2>Room photos will appear here.</h2>
+              <p className="eyebrow">Photos being updated</p>
+              <h2>More room photos are on the way.</h2>
               <p>
-                Add a primary room photo plus a few supporting details from
-                admin: bed, bathroom, workspace, terrace, and view.
+                Contact Tifawave if you would like to see more details before
+                sending a reservation request.
               </p>
             </div>
           )}

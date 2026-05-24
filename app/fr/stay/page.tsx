@@ -110,11 +110,11 @@ export default async function FrenchStayPage() {
                       </div>
                     ) : (
                       <div
-                        aria-label={`Image temporaire ${room.name}`}
+                        aria-label={`Aperçu image ${room.name}`}
                         className="stay-room-card-media stay-room-card-placeholder"
                         role="img"
                       >
-                        <span>Photos bientôt</span>
+                        <span>Photos en mise à jour</span>
                       </div>
                     )}
 
@@ -157,11 +157,11 @@ export default async function FrenchStayPage() {
             </div>
           ) : (
             <div className="stay-empty-state">
-              <p className="eyebrow">Chambres bientôt disponibles</p>
-              <h2>Les chambres actives apparaîtront ici.</h2>
+              <p className="eyebrow">Chambres en mise à jour</p>
+              <h2>Les options de chambres sont en cours d'actualisation.</h2>
               <p>
-                La page séjour est prête. Ajoutez des chambres actives et une
-                image principale depuis l'admin pour publier les premières cartes.
+                Contactez Tifawave pour connaître les chambres disponibles
+                pendant la mise à jour de la liste en ligne.
               </p>
             </div>
           )}

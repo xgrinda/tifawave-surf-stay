@@ -49,7 +49,7 @@ const levels = [
 ] as const;
 
 const trustPoints = [
-  "Direct booking with clear deposit steps",
+  "Direct booking with clear manual confirmation",
   "Small-scale stay in Tamraght, not a generic resort feel",
   "Room and package pages with transparent inclusions",
   "Local help with surf rhythm, arrivals, and practical questions"
@@ -373,7 +373,7 @@ export default async function SurfCampTamraghtPage() {
             <h2 id="surf-camp-cta-title">Check rooms first, then shape the surf week.</h2>
             <p>
               Start with dates and a room. If you need help matching a package
-              to your level, contact the team before placing the deposit.
+              to your level, contact the team before sending the request.
             </p>
             <div className="surf-camp-contact-links">
               <a href={`mailto:${settings.contactEmail}`}>{settings.contactEmail}</a>

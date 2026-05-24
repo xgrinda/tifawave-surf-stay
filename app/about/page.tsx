@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/primitives/container";
+import { getActiveGalleryImages } from "@/lib/gallery";
+import { getTaggedGalleryHomeImage } from "@/lib/home-media";
+import { focalPositionToCss } from "@/lib/image-position";
 import { getWebsiteSettings, getWhatsappHref } from "@/lib/settings";
 import { getSiteUrl } from "@/lib/site";
 
@@ -43,9 +46,20 @@ const values = [
 ] as const;
 
 export default async function AboutPage() {
-  const settings = await getWebsiteSettings();
+  const [settings, galleryImages] = await Promise.all([
+    getWebsiteSettings(),
+    getActiveGalleryImages()
+  ]);
   const whatsappHref = getWhatsappHref(settings);
   const hasWhatsapp = whatsappHref !== "#whatsapp";
+  const storyImage = getTaggedGalleryHomeImage(galleryImages, [
+    "community",
+    "house",
+    "rooms",
+    "tamraght",
+    "place",
+    "sunset"
+  ]);
 
   return (
     <main className="about-page">
@@ -77,8 +91,22 @@ export default async function AboutPage() {
 
       <section className="about-story" aria-labelledby="about-story-title">
         <Container className="about-story-inner">
-          <div className="about-story-visual" aria-hidden="true">
-            <div />
+          <div
+            className={`about-story-visual${storyImage ? " has-image" : ""}`}
+            aria-hidden="true"
+          >
+            <div
+              style={
+                storyImage
+                  ? {
+                      backgroundImage: `url("${storyImage.imageUrl}")`,
+                      backgroundPosition: focalPositionToCss(
+                        storyImage.focalPosition
+                      )
+                    }
+                  : undefined
+              }
+            />
           </div>
           <div className="about-story-copy">
             <p className="eyebrow">The story</p>

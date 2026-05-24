@@ -8,7 +8,7 @@ import { getSiteUrl } from "@/lib/site";
 export const metadata: Metadata = {
   title: "FAQ | Tifawave Surf Stay",
   description:
-    "Helpful answers for Tifawave booking, deposits, rooms, surf packages, Tamraght, transfers, meals, cancellations, Wi-Fi, and packing.",
+    "Helpful answers for Tifawave booking, rooms, surf packages, Tamraght, transfers, meals, cancellations, Wi-Fi, and packing.",
   alternates: {
     canonical: `${getSiteUrl()}/faq`,
     languages: {
@@ -54,25 +54,25 @@ function buildFaqSections({
 
   return [
     {
-      title: "Booking and deposits",
+      title: "Booking and confirmation",
       intro: "How direct bookings move from date check to confirmed stay.",
       items: [
         {
           question: "How does booking work?",
           answer:
-            "Start on the booking page by choosing a room and dates. If the dates are available, Tifawave places a short temporary hold, collects your guest details, then asks for the deposit through Stripe."
+            "Start on the booking page by choosing a room and dates. If the dates are available, Tifawave places a short temporary hold, collects your guest details, then reviews the request manually."
         },
         {
           question: "When is my booking confirmed?",
           answer:
-            "Your booking request is confirmed after the deposit payment succeeds. You will see a confirmation screen and the team will follow up with arrival notes."
+            "Your request stays pending until the Tifawave team confirms it by email or WhatsApp. Arrival notes are shared after the request is accepted."
         },
         {
-          question: "Can I ask a question before paying?",
+          question: "Can I ask a question before submitting?",
           answer: (
             <>
               Yes. If you are unsure about dates, room choice, surf level, or
-              transfers, {contactLink} before completing the deposit.
+              transfers, {contactLink} before submitting the request.
             </>
           )
         }
@@ -184,7 +184,7 @@ function buildFaqSections({
         {
           question: "What is the cancellation policy?",
           answer:
-            "Cancellation terms depend on the booking timing, package, and any written conditions shared during confirmation. Ask before paying the deposit if you need flexibility."
+            "Cancellation terms depend on the booking timing, package, and any written conditions shared during confirmation. Ask before confirming if you need flexibility."
         },
         {
           question: "Can I change dates after booking?",
@@ -262,7 +262,7 @@ export default async function FaqPage() {
             <h2>Ask before you commit.</h2>
             <p>
               If your question affects dates, flights, surf level, or room
-              choice, message Tifawave before paying the deposit.
+              choice, message Tifawave before submitting the request.
             </p>
             <div>
               <a href={`mailto:${settings.contactEmail}`}>

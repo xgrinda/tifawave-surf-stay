@@ -92,10 +92,10 @@ export default async function SurfPackagesPage() {
               ))}
             </div>
           ) : (
-            <div className="admin-empty-state">
-              <p className="eyebrow">Packages unavailable</p>
-              <h2>Active surf packages will appear here.</h2>
-              <p>Check back soon or contact Tifawave for current options.</p>
+            <div className="public-empty-state">
+              <p className="eyebrow">Packages being updated</p>
+              <h2>Surf package options are being refreshed.</h2>
+              <p>Contact Tifawave for the current options while this page is updated.</p>
             </div>
           )}
         </Container>

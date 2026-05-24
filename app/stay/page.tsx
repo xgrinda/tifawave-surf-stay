@@ -107,11 +107,11 @@ export default async function StayPage() {
                       </div>
                     ) : (
                       <div
-                        aria-label={`${room.name} image placeholder`}
+                        aria-label={`${room.name} image preview`}
                         className="stay-room-card-media stay-room-card-placeholder"
                         role="img"
                       >
-                        <span>Photos coming soon</span>
+                        <span>Photo update pending</span>
                       </div>
                     )}
 
@@ -154,11 +154,11 @@ export default async function StayPage() {
             </div>
           ) : (
             <div className="stay-empty-state">
-              <p className="eyebrow">Rooms coming soon</p>
-              <h2>Active rooms will appear here.</h2>
+              <p className="eyebrow">Rooms being updated</p>
+              <h2>Room options are being refreshed.</h2>
               <p>
-                The stay page is ready. Add active rooms and primary image URLs
-                from admin to publish the first room cards.
+                Contact Tifawave for the current room options while the online
+                room list is being updated.
               </p>
             </div>
           )}

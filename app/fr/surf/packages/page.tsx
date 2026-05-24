@@ -92,11 +92,12 @@ export default async function FrenchSurfPackagesPage() {
               ))}
             </div>
           ) : (
-            <div className="admin-empty-state">
-              <p className="eyebrow">Séjours indisponibles</p>
-              <h2>Les séjours surf actifs apparaîtront ici.</h2>
+            <div className="public-empty-state">
+              <p className="eyebrow">Séjours en mise à jour</p>
+              <h2>Les options de séjours surf sont en cours d&apos;actualisation.</h2>
               <p>
-                Revenez bientôt ou contactez Tifawave pour les options du moment.
+                Contactez Tifawave pour connaître les options actuelles pendant
+                la mise à jour de cette page.
               </p>
             </div>
           )}

@@ -46,11 +46,11 @@ export default async function GalleryPage() {
                 <span />
               </div>
               <div>
-                <p className="eyebrow">Images coming soon</p>
-                <h2>The gallery is ready for its first images.</h2>
+                <p className="eyebrow">Gallery being updated</p>
+                <h2>The first public gallery is being curated.</h2>
                 <p>
-                  Add active image URLs from admin to publish surf, rooms, food,
-                  community, and Tamraght moments here.
+                  Check back for surf, rooms, food, community, and Tamraght
+                  moments from Tifawave.
                 </p>
               </div>
             </div>

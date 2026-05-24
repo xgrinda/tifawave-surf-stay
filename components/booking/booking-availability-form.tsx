@@ -199,8 +199,10 @@ const bookingCopy = {
       guestMessage: "Message must be 1000 characters or fewer."
     },
     roomLoad: {
-      noActiveRooms: "No active rooms are available yet. Seed rooms before checking dates.",
-      envMissing: "Room options need Supabase public env vars and seeded active rooms."
+      noActiveRooms:
+        "No rooms are available for online date checks right now. Contact Tifawave for current options.",
+      envMissing:
+        "Room options could not load right now. Contact Tifawave if you need help checking dates."
     },
     flow: {
       eyebrow: "Direct booking",
@@ -338,9 +340,9 @@ const bookingCopy = {
     },
     roomLoad: {
       noActiveRooms:
-        "Aucune chambre active n'est disponible pour le moment. Ajoutez les chambres avant de vérifier les dates.",
+        "Aucune chambre n'est disponible pour la vérification en ligne pour le moment. Contactez Tifawave pour les options actuelles.",
       envMissing:
-        "Les chambres nécessitent les variables publiques Supabase et des chambres actives."
+        "Les chambres n'ont pas pu charger pour le moment. Contactez Tifawave si vous avez besoin d'aide pour vérifier les dates."
     },
     flow: {
       eyebrow: "Réservation directe",

@@ -48,11 +48,11 @@ export default async function FrenchGalleryPage() {
                 <span />
               </div>
               <div>
-                <p className="eyebrow">Images bientôt disponibles</p>
-                <h2>La galerie est prête pour ses premières images.</h2>
+                <p className="eyebrow">Galerie en mise à jour</p>
+                <h2>La première galerie publique est en préparation.</h2>
                 <p>
-                  Ajoutez des URLs d'images actives depuis l'admin pour publier
-                  les moments surf, chambres, cuisine, communauté et Tamraght.
+                  Revenez bientôt pour découvrir les moments surf, chambres,
+                  cuisine, communauté et Tamraght de Tifawave.
                 </p>
               </div>
             </div>
