@@ -4,7 +4,7 @@ import {
   getAdminBookings,
   type AdminBookingFilter
 } from "@/lib/admin/bookings";
-import { logoutAdminAction } from "../login/actions";
+import { AdminShell } from "../_components/admin-shell";
 import { updateBookingStatusAction } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -71,38 +71,12 @@ export default async function AdminBookingsPage({
   const bookings = await getAdminBookings(activeFilter);
 
   return (
-    <main className="admin-page admin-bookings-page">
-      <section className="admin-bookings-shell" aria-labelledby="admin-bookings-title">
-        <header className="admin-bookings-header">
-          <div>
-            <p className="eyebrow">Tifawave admin</p>
-            <h1 id="admin-bookings-title">{filterTitle(activeFilter)}</h1>
-            <p>Review pending booking requests and update their status.</p>
-          </div>
-          <div className="admin-header-actions">
-            <a className="admin-header-link" href="/admin/rooms">
-              Rooms
-            </a>
-            <a className="admin-header-link" href="/admin/packages">
-              Packages
-            </a>
-            <a className="admin-header-link" href="/admin/gallery">
-              Gallery
-            </a>
-            <a className="admin-header-link" href="/admin/blocked-dates">
-              Blocked dates
-            </a>
-            <a className="admin-header-link" href="/admin/settings">
-              Settings
-            </a>
-            <form action={logoutAdminAction}>
-              <button className="btn btn-secondary" type="submit">
-                Sign out
-              </button>
-            </form>
-          </div>
-        </header>
-
+    <AdminShell
+      active="bookings"
+      className="admin-bookings-page"
+      description="Review pending booking requests and update their status."
+      title={filterTitle(activeFilter)}
+    >
         <nav className="admin-booking-tabs" aria-label="Booking status filters">
           {bookingFilters.map((filter) => (
             <a
@@ -196,7 +170,6 @@ export default async function AdminBookingsPage({
             </div>
           )}
         </div>
-      </section>
-    </main>
+    </AdminShell>
   );
 }

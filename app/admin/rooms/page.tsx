@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/admin/auth";
 import { getAdminRooms } from "@/lib/admin/rooms";
 import { focalPositionToCss } from "@/lib/image-position";
-import { logoutAdminAction } from "../login/actions";
+import { AdminShell } from "../_components/admin-shell";
 import {
   createRoomImageAction,
   createRoomAction,
@@ -85,38 +85,12 @@ export default async function AdminRoomsPage({
   const message = getMessage(params);
 
   return (
-    <main className="admin-page admin-rooms-page">
-      <section className="admin-bookings-shell" aria-labelledby="admin-rooms-title">
-        <header className="admin-bookings-header">
-          <div>
-            <p className="eyebrow">Tifawave admin</p>
-            <h1 id="admin-rooms-title">Rooms</h1>
-            <p>Manage room names, slugs, capacity, pricing, and active status.</p>
-          </div>
-          <div className="admin-header-actions">
-            <a className="admin-header-link" href="/admin/bookings">
-              Bookings
-            </a>
-            <a className="admin-header-link" href="/admin/packages">
-              Packages
-            </a>
-            <a className="admin-header-link" href="/admin/gallery">
-              Gallery
-            </a>
-            <a className="admin-header-link" href="/admin/blocked-dates">
-              Blocked dates
-            </a>
-            <a className="admin-header-link" href="/admin/settings">
-              Settings
-            </a>
-            <form action={logoutAdminAction}>
-              <button className="btn btn-secondary" type="submit">
-                Sign out
-              </button>
-            </form>
-          </div>
-        </header>
-
+    <AdminShell
+      active="rooms"
+      className="admin-rooms-page"
+      description="Manage room names, slugs, capacity, pricing, and active status."
+      title="Rooms"
+    >
         <section className="admin-panel-section" aria-labelledby="add-room-title">
           <div className="admin-section-heading">
             <h2 id="add-room-title">Add room</h2>
@@ -164,24 +138,35 @@ export default async function AdminRoomsPage({
 
           {rooms.length > 0 ? (
             <div className="admin-room-list">
-              {rooms.map((room) => (
-                <article className="admin-room-card" key={room.id}>
-                  <header className="admin-room-card-header">
+              {rooms.map((room, index) => (
+                <details
+                  className="admin-room-card admin-collapsible-card"
+                  key={room.id}
+                  open={index === 0}
+                >
+                  <summary className="admin-room-card-header admin-collapsible-summary">
                     <div>
                       <h3>{room.name}</h3>
                       <p>{room.slug}</p>
-                      <a className="admin-inline-link" href={`/stay/${room.slug}`}>
-                        View public detail page
-                      </a>
                     </div>
-                    <span
-                      className={`admin-status-pill ${
-                        room.isActive ? "" : "admin-status-muted"
-                      }`}
-                    >
-                      {room.isActive ? "active" : "inactive"}
-                    </span>
-                  </header>
+                    <div className="admin-collapsible-summary-meta">
+                      <span
+                        className={`admin-status-pill ${
+                          room.isActive ? "" : "admin-status-muted"
+                        }`}
+                      >
+                        {room.isActive ? "active" : "inactive"}
+                      </span>
+                      <span className="admin-collapsible-cue">Edit room</span>
+                    </div>
+                  </summary>
+
+                  <a
+                    className="admin-inline-link admin-collapsible-body-link"
+                    href={`/stay/${room.slug}`}
+                  >
+                    View public detail page
+                  </a>
 
                   <form className="admin-room-form" action={updateRoomAction}>
                     <input name="roomId" type="hidden" value={room.id} />
@@ -498,7 +483,7 @@ export default async function AdminRoomsPage({
                       </div>
                     )}
                   </section>
-                </article>
+                </details>
               ))}
             </div>
           ) : (
@@ -509,7 +494,6 @@ export default async function AdminRoomsPage({
             </div>
           )}
         </section>
-      </section>
-    </main>
+    </AdminShell>
   );
 }

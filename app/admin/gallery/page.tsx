@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/admin/auth";
 import { getAdminGalleryImages } from "@/lib/admin/gallery";
 import { focalPositionToCss } from "@/lib/image-position";
-import { logoutAdminAction } from "../login/actions";
+import { AdminShell } from "../_components/admin-shell";
 import {
   createGalleryImageAction,
   removeGalleryImageAction,
@@ -86,41 +86,12 @@ export default async function AdminGalleryPage({
   const message = getMessage(params);
 
   return (
-    <main className="admin-page admin-gallery-page">
-      <section className="admin-bookings-shell" aria-labelledby="admin-gallery-title">
-        <header className="admin-bookings-header">
-          <div>
-            <p className="eyebrow">Tifawave admin</p>
-            <h1 id="admin-gallery-title">Gallery</h1>
-            <p>
-              Manage direct image URLs, captions, categories, ordering, and
-              visibility. Use bright, real Tifawave images with clear alt text.
-            </p>
-          </div>
-          <div className="admin-header-actions">
-            <a className="admin-header-link" href="/admin/bookings">
-              Bookings
-            </a>
-            <a className="admin-header-link" href="/admin/rooms">
-              Rooms
-            </a>
-            <a className="admin-header-link" href="/admin/packages">
-              Packages
-            </a>
-            <a className="admin-header-link" href="/admin/blocked-dates">
-              Blocked dates
-            </a>
-            <a className="admin-header-link" href="/admin/settings">
-              Settings
-            </a>
-            <form action={logoutAdminAction}>
-              <button className="btn btn-secondary" type="submit">
-                Sign out
-              </button>
-            </form>
-          </div>
-        </header>
-
+    <AdminShell
+      active="gallery"
+      className="admin-gallery-page"
+      description="Manage direct image URLs, captions, categories, ordering, and visibility. Use bright, real Tifawave images with clear alt text."
+      title="Gallery"
+    >
         <section className="admin-panel-section" aria-labelledby="add-gallery-title">
           <div className="admin-section-heading">
             <h2 id="add-gallery-title">Add image</h2>
@@ -429,7 +400,6 @@ export default async function AdminGalleryPage({
             </div>
           )}
         </section>
-      </section>
-    </main>
+    </AdminShell>
   );
 }

@@ -3653,6 +3653,10 @@ select {
   padding: clamp(22px, 4vw, 34px);
 }
 
+.admin-shell-heading {
+  max-width: 620px;
+}
+
 .admin-bookings-header h1 {
   font-size: clamp(2.25rem, 5vw, 4rem);
 }
@@ -3663,6 +3667,10 @@ select {
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 10px;
+}
+
+.admin-shell-nav form {
+  margin: 0;
 }
 
 .admin-header-link {
@@ -3685,6 +3693,12 @@ select {
   border-color: var(--seaglass);
   color: var(--seaglass);
   outline: none;
+}
+
+.admin-header-link[aria-current="page"] {
+  border-color: rgb(46 139 139 / 34%);
+  background: rgb(46 139 139 / 10%);
+  color: var(--seaglass);
 }
 
 .admin-booking-tabs {
@@ -3844,6 +3858,46 @@ select {
   border-radius: 18px;
   background: white;
   padding: clamp(16px, 3vw, 22px);
+}
+
+.admin-collapsible-card {
+  align-content: start;
+}
+
+.admin-collapsible-summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.admin-collapsible-summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-collapsible-summary-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.admin-collapsible-cue {
+  border: 1px solid rgb(11 31 42 / 10%);
+  border-radius: 999px;
+  background: rgb(246 241 231 / 72%);
+  color: var(--ink-700);
+  font-size: 0.8125rem;
+  font-weight: 800;
+  padding: 0.5rem 0.75rem;
+}
+
+.admin-collapsible-card[open] .admin-collapsible-cue {
+  background: rgb(46 139 139 / 10%);
+  color: var(--seaglass);
+}
+
+.admin-collapsible-body-link {
+  margin-top: -6px;
 }
 
 .admin-room-card-header,
@@ -4493,8 +4547,27 @@ select {
     flex-direction: column;
   }
 
+  .admin-shell-heading {
+    max-width: none;
+  }
+
   .admin-header-actions {
     justify-content: flex-start;
+    width: 100%;
+  }
+
+  .admin-header-actions form {
+    flex: 1 1 180px;
+  }
+
+  .admin-header-actions .btn {
+    width: 100%;
+  }
+
+  .admin-header-link {
+    flex: 1 1 150px;
+    min-height: 44px;
+    padding-inline: 1rem;
   }
 
   .admin-block-form {
@@ -4509,6 +4582,10 @@ select {
   .admin-room-card-actions {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .admin-collapsible-summary-meta {
+    justify-content: flex-start;
   }
 
   .admin-room-image-heading,
@@ -4750,6 +4827,40 @@ select {
 
   .admin-page {
     padding: 18px;
+  }
+
+  .admin-bookings-shell {
+    border-radius: 18px;
+  }
+
+  .admin-bookings-header,
+  .admin-panel-section {
+    padding: 18px;
+  }
+
+  .admin-header-actions {
+    gap: 8px;
+  }
+
+  .admin-header-link {
+    flex-basis: calc(50% - 8px);
+    font-size: 0.8125rem;
+    padding-inline: 0.75rem;
+  }
+
+  .admin-booking-tabs {
+    gap: 8px;
+    padding: 16px 18px;
+  }
+
+  .admin-booking-tabs a {
+    flex: 1 1 calc(50% - 8px);
+    margin: 0;
+  }
+
+  .admin-room-card,
+  .admin-gallery-card {
+    border-radius: 16px;
   }
 
   .final-cta-bar div,

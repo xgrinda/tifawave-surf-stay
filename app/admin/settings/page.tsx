@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/admin/auth";
 import { getWebsiteSettings } from "@/lib/settings";
-import { logoutAdminAction } from "../login/actions";
+import { AdminShell } from "../_components/admin-shell";
 import { updateSettingsAction } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -48,41 +48,12 @@ export default async function AdminSettingsPage({
   const message = getMessage(params);
 
   return (
-    <main className="admin-page admin-settings-page">
-      <section
-        className="admin-bookings-shell"
-        aria-labelledby="admin-settings-title"
-      >
-        <header className="admin-bookings-header">
-          <div>
-            <p className="eyebrow">Tifawave admin</p>
-            <h1 id="admin-settings-title">Settings</h1>
-            <p>Manage public contact details and booking support copy.</p>
-          </div>
-          <div className="admin-header-actions">
-            <a className="admin-header-link" href="/admin/bookings">
-              Bookings
-            </a>
-            <a className="admin-header-link" href="/admin/rooms">
-              Rooms
-            </a>
-            <a className="admin-header-link" href="/admin/packages">
-              Packages
-            </a>
-            <a className="admin-header-link" href="/admin/gallery">
-              Gallery
-            </a>
-            <a className="admin-header-link" href="/admin/blocked-dates">
-              Blocked dates
-            </a>
-            <form action={logoutAdminAction}>
-              <button className="btn btn-secondary" type="submit">
-                Sign out
-              </button>
-            </form>
-          </div>
-        </header>
-
+    <AdminShell
+      active="settings"
+      className="admin-settings-page"
+      description="Manage public contact details and booking support copy."
+      title="Settings"
+    >
         <section
           className="admin-panel-section"
           aria-labelledby="website-settings-title"
@@ -196,7 +167,6 @@ export default async function AdminSettingsPage({
             </button>
           </form>
         </section>
-      </section>
-    </main>
+    </AdminShell>
   );
 }

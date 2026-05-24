@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/admin/auth";
 import { getAdminPackages } from "@/lib/admin/packages";
-import { logoutAdminAction } from "../login/actions";
+import { AdminShell } from "../_components/admin-shell";
 import {
   createPackageAction,
   togglePackageActiveAction,
@@ -75,41 +75,12 @@ export default async function AdminPackagesPage({
   const message = getMessage(params);
 
   return (
-    <main className="admin-page admin-packages-page">
-      <section
-        className="admin-bookings-shell"
-        aria-labelledby="admin-packages-title"
-      >
-        <header className="admin-bookings-header">
-          <div>
-            <p className="eyebrow">Tifawave admin</p>
-            <h1 id="admin-packages-title">Surf packages</h1>
-            <p>Manage package copy, pricing, surf level, inclusions, and status.</p>
-          </div>
-          <div className="admin-header-actions">
-            <a className="admin-header-link" href="/admin/bookings">
-              Bookings
-            </a>
-            <a className="admin-header-link" href="/admin/rooms">
-              Rooms
-            </a>
-            <a className="admin-header-link" href="/admin/gallery">
-              Gallery
-            </a>
-            <a className="admin-header-link" href="/admin/blocked-dates">
-              Blocked dates
-            </a>
-            <a className="admin-header-link" href="/admin/settings">
-              Settings
-            </a>
-            <form action={logoutAdminAction}>
-              <button className="btn btn-secondary" type="submit">
-                Sign out
-              </button>
-            </form>
-          </div>
-        </header>
-
+    <AdminShell
+      active="packages"
+      className="admin-packages-page"
+      description="Manage package copy, pricing, surf level, inclusions, and status."
+      title="Surf packages"
+    >
         <section className="admin-panel-section" aria-labelledby="add-package-title">
           <div className="admin-section-heading">
             <h2 id="add-package-title">Add package</h2>
@@ -179,21 +150,28 @@ export default async function AdminPackagesPage({
 
           {packages.length > 0 ? (
             <div className="admin-room-list">
-              {packages.map((pkg) => (
-                <article className="admin-room-card" key={pkg.id}>
-                  <header className="admin-room-card-header">
+              {packages.map((pkg, index) => (
+                <details
+                  className="admin-room-card admin-collapsible-card"
+                  key={pkg.id}
+                  open={index === 0}
+                >
+                  <summary className="admin-room-card-header admin-collapsible-summary">
                     <div>
                       <h3>{pkg.name}</h3>
                       <p>{pkg.slug}</p>
                     </div>
-                    <span
-                      className={`admin-status-pill ${
-                        pkg.isActive ? "" : "admin-status-muted"
-                      }`}
-                    >
-                      {pkg.isActive ? "active" : "inactive"}
-                    </span>
-                  </header>
+                    <div className="admin-collapsible-summary-meta">
+                      <span
+                        className={`admin-status-pill ${
+                          pkg.isActive ? "" : "admin-status-muted"
+                        }`}
+                      >
+                        {pkg.isActive ? "active" : "inactive"}
+                      </span>
+                      <span className="admin-collapsible-cue">Edit package</span>
+                    </div>
+                  </summary>
 
                   <form className="admin-room-form" action={updatePackageAction}>
                     <input name="packageId" type="hidden" value={pkg.id} />
@@ -296,7 +274,7 @@ export default async function AdminPackagesPage({
                       {pkg.isActive ? "Deactivate package" : "Activate package"}
                     </button>
                   </form>
-                </article>
+                </details>
               ))}
             </div>
           ) : (
@@ -307,7 +285,6 @@ export default async function AdminPackagesPage({
             </div>
           )}
         </section>
-      </section>
-    </main>
+    </AdminShell>
   );
 }

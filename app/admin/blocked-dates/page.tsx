@@ -4,7 +4,7 @@ import {
   getAdminBlockedDates,
   getAdminRoomOptions
 } from "@/lib/admin/blocked-dates";
-import { logoutAdminAction } from "../login/actions";
+import { AdminShell } from "../_components/admin-shell";
 import {
   createBlockedDateAction,
   removeBlockedDateAction,
@@ -89,41 +89,12 @@ export default async function AdminBlockedDatesPage({
   const siteUrl = getSiteUrl();
 
   return (
-    <main className="admin-page admin-blocked-dates-page">
-      <section
-        className="admin-bookings-shell"
-        aria-labelledby="admin-blocked-dates-title"
-      >
-        <header className="admin-bookings-header">
-          <div>
-            <p className="eyebrow">Tifawave admin</p>
-            <h1 id="admin-blocked-dates-title">Blocked dates</h1>
-            <p>Close room inventory for dates that should not be bookable.</p>
-          </div>
-          <div className="admin-header-actions">
-            <a className="admin-header-link" href="/admin/bookings">
-              Bookings
-            </a>
-            <a className="admin-header-link" href="/admin/rooms">
-              Rooms
-            </a>
-            <a className="admin-header-link" href="/admin/packages">
-              Packages
-            </a>
-            <a className="admin-header-link" href="/admin/gallery">
-              Gallery
-            </a>
-            <a className="admin-header-link" href="/admin/settings">
-              Settings
-            </a>
-            <form action={logoutAdminAction}>
-              <button className="btn btn-secondary" type="submit">
-                Sign out
-              </button>
-            </form>
-          </div>
-        </header>
-
+    <AdminShell
+      active="blocked-dates"
+      className="admin-blocked-dates-page"
+      description="Close room inventory for dates that should not be bookable."
+      title="Blocked dates"
+    >
         <section className="admin-panel-section" aria-labelledby="block-room-title">
           <div className="admin-section-heading">
             <h2 id="block-room-title">Block a room</h2>
@@ -216,7 +187,13 @@ export default async function AdminBlockedDatesPage({
           </div>
         </section>
 
-        <div className="admin-bookings-table-wrap">
+        <section className="admin-panel-section" aria-labelledby="blocked-list-title">
+          <div className="admin-section-heading">
+            <h2 id="blocked-list-title">Existing blocks</h2>
+            <p>{blockedDates.length} blocked ranges currently closing inventory.</p>
+          </div>
+
+          <div className="admin-bookings-table-wrap">
           {blockedDates.length > 0 ? (
             <table className="admin-bookings-table admin-blocked-dates-table">
               <thead>
@@ -275,8 +252,8 @@ export default async function AdminBlockedDatesPage({
               <p>Blocked room ranges will appear here.</p>
             </div>
           )}
-        </div>
-      </section>
-    </main>
+          </div>
+        </section>
+    </AdminShell>
   );
 }
