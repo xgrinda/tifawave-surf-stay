@@ -1,14 +1,34 @@
 import { Container } from "@/components/primitives/container";
+import { focalPositionToCss } from "@/lib/image-position";
+import type { HomeImage } from "@/lib/home-media";
 import { DEFAULT_LOCALE, i18n, localizedPath, type Locale } from "@/lib/i18n";
 
-export function StayPreview({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
+export function StayPreview({
+  image,
+  locale = DEFAULT_LOCALE
+}: {
+  image?: HomeImage | null;
+  locale?: Locale;
+}) {
   const copy = i18n[locale].home.stayPreview;
 
   return (
     <section className="stay-preview" aria-labelledby="stay-preview-title">
       <Container className="stay-preview-inner">
-        <div className="stay-preview-media" aria-hidden="true">
-          <div />
+        <div
+          className={`stay-preview-media${image ? " has-image" : ""}`}
+          aria-hidden="true"
+        >
+          <div
+            style={
+              image
+                ? {
+                    backgroundImage: `url("${image.imageUrl}")`,
+                    backgroundPosition: focalPositionToCss(image.focalPosition)
+                  }
+                : undefined
+            }
+          />
         </div>
 
         <div className="stay-preview-copy">

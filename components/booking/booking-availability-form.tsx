@@ -113,6 +113,12 @@ export type BookingPaymentReturn =
       bookingId?: string;
     };
 
+export type BookingInitialParams = {
+  checkIn?: string;
+  checkOut?: string;
+  roomId?: string;
+};
+
 export type BookingContactSettings = {
   businessName: string;
   contactEmail: string;
@@ -469,6 +475,10 @@ function toDateInputValue(date: Date): string {
   return localDate.toISOString().slice(0, 10);
 }
 
+function normalizeDateInput(value: string | undefined): string {
+  return value && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : "";
+}
+
 function addDaysToDateInput(value: string, days: number): string {
   const date = new Date(`${value}T00:00:00`);
   date.setDate(date.getDate() + days);
@@ -605,17 +615,22 @@ export function BookingPaymentReturnPanel({
 }
 
 export function BookingAvailabilityForm({
+  initialParams = {},
   locale = DEFAULT_LOCALE,
   settings
 }: {
+  initialParams?: BookingInitialParams;
   locale?: Locale;
   settings: BookingContactSettings;
 }) {
   const copy = bookingCopy[locale];
+  const initialRoomId = initialParams.roomId?.trim() ?? "";
+  const initialCheckIn = normalizeDateInput(initialParams.checkIn);
+  const initialCheckOut = normalizeDateInput(initialParams.checkOut);
   const [rooms, setRooms] = useState<RoomOption[]>([]);
-  const [roomId, setRoomId] = useState("");
-  const [checkIn, setCheckIn] = useState("");
-  const [checkOut, setCheckOut] = useState("");
+  const [roomId, setRoomId] = useState(initialRoomId);
+  const [checkIn, setCheckIn] = useState(initialCheckIn);
+  const [checkOut, setCheckOut] = useState(initialCheckOut);
   const [isLoadingRooms, setIsLoadingRooms] = useState(true);
   const [isChecking, setIsChecking] = useState(false);
   const [isHolding, setIsHolding] = useState(false);
@@ -675,7 +690,15 @@ export function BookingAvailabilityForm({
 
         const activeRooms = data ?? [];
         setRooms(activeRooms);
-        setRoomId(activeRooms[0]?.id ?? "");
+        setRoomId((currentRoomId) => {
+          const requestedRoomId = currentRoomId || initialRoomId;
+
+          if (activeRooms.some((room) => room.id === requestedRoomId)) {
+            return requestedRoomId;
+          }
+
+          return activeRooms[0]?.id ?? "";
+        });
         setRoomLoadMessage(
           activeRooms.length > 0 ? "" : copy.roomLoad.noActiveRooms
         );
@@ -697,7 +720,7 @@ export function BookingAvailabilityForm({
     return () => {
       isMounted = false;
     };
-  }, [copy.roomLoad.envMissing, copy.roomLoad.noActiveRooms]);
+  }, [copy.roomLoad.envMissing, copy.roomLoad.noActiveRooms, initialRoomId]);
 
   function resetResultState() {
     setAvailability({

@@ -593,6 +593,18 @@ select {
   transition: transform 600ms var(--ease-lux);
 }
 
+.package-card-image.has-image {
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.package-card-image.has-image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgb(11 31 42 / 8%), rgb(11 31 42 / 28%));
+}
+
 .package-card:hover .package-card-image {
   transform: scale(1.06);
 }
@@ -732,6 +744,10 @@ select {
   box-shadow: 0 30px 80px -54px rgb(11 31 42 / 72%);
 }
 
+.stay-preview-media.has-image {
+  background: var(--sand);
+}
+
 .stay-preview-media::after {
   content: "";
   position: absolute;
@@ -742,12 +758,27 @@ select {
   filter: blur(1px);
 }
 
+.stay-preview-media.has-image::after {
+  inset: 0;
+  height: auto;
+  border-radius: 0;
+  background:
+    linear-gradient(180deg, rgb(11 31 42 / 0%), rgb(11 31 42 / 18%)),
+    linear-gradient(90deg, rgb(11 31 42 / 18%), transparent 48%);
+  filter: none;
+}
+
 .stay-preview-media > div {
   position: absolute;
   inset: 0;
   background:
     linear-gradient(110deg, transparent 0 48%, rgb(255 255 255 / 12%) 48% 50%, transparent 50%),
     radial-gradient(70% 80% at 18% 20%, rgb(246 241 231 / 22%), transparent 58%);
+}
+
+.stay-preview-media.has-image > div {
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
 .stay-preview-copy h2 {
@@ -900,6 +931,10 @@ select {
   box-shadow: 0 30px 80px -54px rgb(11 31 42 / 72%);
 }
 
+.place-section-media.has-image {
+  background: var(--sand);
+}
+
 .place-section-media::after {
   content: "";
   position: absolute;
@@ -913,12 +948,26 @@ select {
     radial-gradient(120% 100% at 50% 100%, rgb(246 241 231 / 28%), transparent 68%);
 }
 
+.place-section-media.has-image::after {
+  inset: 0;
+  height: auto;
+  border-radius: 0;
+  background:
+    linear-gradient(180deg, rgb(11 31 42 / 0%), rgb(11 31 42 / 28%)),
+    radial-gradient(80% 80% at 20% 12%, rgb(233 184 114 / 18%), transparent 58%);
+}
+
 .place-section-media > div {
   position: absolute;
   inset: 0;
   background:
     linear-gradient(70deg, transparent 0 46%, rgb(246 241 231 / 16%) 46% 48%, transparent 48%),
     radial-gradient(70% 70% at 68% 16%, rgb(251 248 242 / 20%), transparent 58%);
+}
+
+.place-section-media.has-image > div {
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
 .place-section-copy h2 {
@@ -1051,14 +1100,16 @@ select {
   backdrop-filter: blur(14px);
 }
 
-.final-cta-bar div {
+.final-cta-field {
+  display: grid;
+  gap: 4px;
   min-width: 120px;
   border-radius: 999px;
   padding: 12px 20px;
   text-align: left;
 }
 
-.final-cta-bar small {
+.final-cta-field small {
   display: block;
   color: rgb(255 255 255 / 70%);
   font-size: 0.6875rem;
@@ -1066,10 +1117,25 @@ select {
   text-transform: uppercase;
 }
 
-.final-cta-bar span {
+.final-cta-field input {
+  width: 100%;
+  min-width: 120px;
+  border: 0;
+  background: transparent;
   color: white;
   font-size: 0.9375rem;
   font-weight: 700;
+  outline: none;
+}
+
+.final-cta-field input:focus-visible {
+  border-radius: 999px;
+  box-shadow: 0 0 0 3px rgb(255 255 255 / 28%);
+}
+
+.final-cta-field input::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.8;
 }
 
 .final-cta-bar .btn-primary {
@@ -4928,7 +4994,7 @@ select {
     border-radius: 16px;
   }
 
-  .final-cta-bar div,
+  .final-cta-field,
   .final-cta-bar .btn {
     width: 100%;
   }

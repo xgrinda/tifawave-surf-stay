@@ -1,14 +1,34 @@
 import { Container } from "@/components/primitives/container";
+import { focalPositionToCss } from "@/lib/image-position";
+import type { HomeImage } from "@/lib/home-media";
 import { DEFAULT_LOCALE, i18n, localizedPath, type Locale } from "@/lib/i18n";
 
-export function PlaceSection({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
+export function PlaceSection({
+  image,
+  locale = DEFAULT_LOCALE
+}: {
+  image?: HomeImage | null;
+  locale?: Locale;
+}) {
   const copy = i18n[locale].home.place;
 
   return (
     <section className="place-section" aria-labelledby="place-section-title">
       <Container className="place-section-inner">
-        <div className="place-section-media" aria-hidden="true">
-          <div />
+        <div
+          className={`place-section-media${image ? " has-image" : ""}`}
+          aria-hidden="true"
+        >
+          <div
+            style={
+              image
+                ? {
+                    backgroundImage: `url("${image.imageUrl}")`,
+                    backgroundPosition: focalPositionToCss(image.focalPosition)
+                  }
+                : undefined
+            }
+          />
         </div>
 
         <div className="place-section-copy">

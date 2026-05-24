@@ -3,6 +3,7 @@ import {
   BookingAvailabilityForm,
   BookingPaymentReturnPanel,
   type BookingContactSettings,
+  type BookingInitialParams,
   type BookingPaymentReturn
 } from "@/components/booking/booking-availability-form";
 import { Container } from "@/components/primitives/container";
@@ -26,7 +27,10 @@ export const metadata: Metadata = {
 type BookPageProps = {
   searchParams?: Promise<{
     bookingId?: string;
+    checkIn?: string;
+    checkOut?: string;
     payment?: string;
+    roomId?: string;
   }>;
 };
 
@@ -78,6 +82,11 @@ export default async function BookPage({ searchParams }: BookPageProps) {
     payment: params?.payment
   });
   const visiblePaymentReturn = settings.depositsEnabled ? paymentReturn : null;
+  const initialParams: BookingInitialParams = {
+    checkIn: params?.checkIn,
+    checkOut: params?.checkOut,
+    roomId: params?.roomId
+  };
 
   return (
     <main className="booking-page">
@@ -88,7 +97,10 @@ export default async function BookPage({ searchParams }: BookPageProps) {
             settings={settings}
           />
         ) : (
-          <BookingAvailabilityForm settings={settings} />
+          <BookingAvailabilityForm
+            initialParams={initialParams}
+            settings={settings}
+          />
         )}
       </Container>
     </main>

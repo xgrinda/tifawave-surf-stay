@@ -9,19 +9,30 @@ export function FinalCta({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
       <Container className="final-cta-inner">
         <h2 id="final-cta-title">{copy.title}</h2>
         <p>{copy.copy}</p>
-        <div className="final-cta-bar" aria-label={copy.bookPreview}>
-          <div>
+        <form
+          action={localizedPath(locale, "/book")}
+          aria-label={copy.bookPreview}
+          className="final-cta-bar"
+          method="get"
+        >
+          <label className="final-cta-field">
             <small>{copy.checkIn}</small>
-            <span>{copy.datesValue}</span>
-          </div>
-          <div>
+            <input aria-label={copy.checkIn} name="checkIn" type="date" />
+          </label>
+          <label className="final-cta-field">
             <small>{copy.guests}</small>
-            <span>{copy.guestsValue}</span>
-          </div>
-          <a className="btn btn-primary" href={localizedPath(locale, "/book")}>
+            <input
+              aria-label={copy.guests}
+              defaultValue="2"
+              min="1"
+              name="guests"
+              type="number"
+            />
+          </label>
+          <button className="btn btn-primary" type="submit">
             {copy.cta}
-          </a>
-        </div>
+          </button>
+        </form>
       </Container>
     </section>
   );
