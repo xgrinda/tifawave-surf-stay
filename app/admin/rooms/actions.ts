@@ -23,20 +23,27 @@ function stringField(formData: FormData, key: string): string {
   return String(formData.get(key) ?? "");
 }
 
-function fileField(formData: FormData, key: string): File | null {
-  const value = formData.get(key);
-
-  if (
-    value &&
+function isUploadFile(value: FormDataEntryValue): value is File {
+  return (
     typeof value === "object" &&
     "arrayBuffer" in value &&
     "size" in value &&
     "type" in value
-  ) {
-    return value as File;
+  );
+}
+
+function fileFields(formData: FormData, key: string): File[] {
+  return formData.getAll(key).filter(isUploadFile).filter((file) => file.size > 0);
+}
+
+function incrementSortOrder(value: string, index: number): string {
+  const parsed = Number(value);
+
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    return value;
   }
 
-  return null;
+  return String(parsed + index * 10);
 }
 
 function roomInputFromForm(formData: FormData) {
@@ -143,32 +150,63 @@ export async function createRoomImageAction(formData: FormData) {
 export async function uploadRoomImageAction(formData: FormData) {
   await requireAdmin();
 
-  const upload = await uploadAdminImage({
-    file: fileField(formData, "imageFile"),
-    folder: "rooms"
-  });
+  const files = fileFields(formData, "imageFile");
+  const input = roomImageInputFromForm(formData);
+  let createdCount = 0;
 
-  if (!upload.ok) {
+  if (files.length === 0) {
     redirectWithMessage({
-      error: upload.message
+      error: "Choose at least one image file to upload."
     });
   }
 
-  const result = await createAdminRoomImage({
-    ...roomImageInputFromForm(formData),
-    imageUrl: upload.publicUrl
-  });
-
-  if (!result.ok) {
-    await removeAdminUploadedImage(upload.path);
-    redirectWithMessage({
-      error: result.message
+  for (const [index, file] of files.entries()) {
+    const upload = await uploadAdminImage({
+      file,
+      folder: "rooms"
     });
+
+    if (!upload.ok) {
+      if (createdCount > 0) {
+        revalidateRooms();
+      }
+
+      redirectWithMessage({
+        error:
+          createdCount > 0
+            ? `${createdCount} image uploads finished, but ${file.name} failed: ${upload.message}`
+            : upload.message
+      });
+    }
+
+    const result = await createAdminRoomImage({
+      ...input,
+      imageUrl: upload.publicUrl,
+      isPrimary: input.isPrimary && index === 0,
+      sortOrder: incrementSortOrder(input.sortOrder, index)
+    });
+
+    if (!result.ok) {
+      await removeAdminUploadedImage(upload.path);
+
+      if (createdCount > 0) {
+        revalidateRooms();
+      }
+
+      redirectWithMessage({
+        error:
+          createdCount > 0
+            ? `${createdCount} image uploads finished, but ${file.name} could not be saved: ${result.message}`
+            : result.message
+      });
+    }
+
+    createdCount += 1;
   }
 
   revalidateRooms();
   redirectWithMessage({
-    image: "1"
+    uploaded: String(createdCount)
   });
 }
 

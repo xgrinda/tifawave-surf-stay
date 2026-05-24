@@ -3,6 +3,10 @@ import { requireAdmin } from "@/lib/admin/auth";
 import { getAdminRooms } from "@/lib/admin/rooms";
 import { focalPositionToCss } from "@/lib/image-position";
 import { AdminShell } from "../_components/admin-shell";
+import {
+  ImageUploadField,
+  UploadSubmitButton
+} from "../_components/image-upload-controls";
 import { MediaGuidance } from "../_components/media-guidance";
 import {
   createRoomImageAction,
@@ -27,6 +31,7 @@ type AdminRoomsPageProps = {
     error?: string;
     image?: string;
     status?: string;
+    uploaded?: string;
     updated?: string;
   }>;
 };
@@ -64,6 +69,18 @@ function getMessage(params: Awaited<AdminRoomsPageProps["searchParams"]>) {
     return {
       tone: "success",
       text: "Room images updated."
+    };
+  }
+
+  if (params?.uploaded) {
+    const count = Number(params.uploaded);
+
+    return {
+      tone: "success",
+      text:
+        Number.isInteger(count) && count > 1
+          ? `${count} room images uploaded and optimized.`
+          : "Room image uploaded and optimized."
     };
   }
 
@@ -330,21 +347,16 @@ export default async function AdminRoomsPage({
                     >
                       <input name="roomId" type="hidden" value={room.id} />
                       <div className="admin-upload-heading">
-                        <h5>Upload room image</h5>
+                        <h5>Upload room images</h5>
                         <p>
-                          Upload JPG, PNG, WebP, or AVIF. Max 5 MB. The public
-                          Storage URL is saved automatically.
+                          Select one or more images. Uploads are auto-rotated,
+                          resized, optimized, and saved as WebP.
                         </p>
                       </div>
-                      <label className="admin-field admin-field-wide">
-                        <span>Image file</span>
-                        <input
-                          accept="image/jpeg,image/png,image/webp,image/avif"
-                          name="imageFile"
-                          required
-                          type="file"
-                        />
-                      </label>
+                      <ImageUploadField
+                        help="JPG, PNG, WebP, or AVIF. Max 8 MB each before optimization."
+                        label="Image files"
+                      />
                       <label className="admin-field">
                         <span>Alt text</span>
                         <input
@@ -380,9 +392,12 @@ export default async function AdminRoomsPage({
                         <input name="isPrimary" type="checkbox" value="true" />
                         <span>Primary image</span>
                       </label>
-                      <button className="admin-status-button" type="submit">
-                        Upload image
-                      </button>
+                      <UploadSubmitButton
+                        className="admin-status-button"
+                        pendingLabel="Uploading room images..."
+                      >
+                        Upload images
+                      </UploadSubmitButton>
                     </form>
 
                     {room.images.length > 0 ? (

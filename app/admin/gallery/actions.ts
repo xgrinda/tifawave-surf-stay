@@ -20,20 +20,27 @@ function stringField(formData: FormData, key: string): string {
   return String(formData.get(key) ?? "");
 }
 
-function fileField(formData: FormData, key: string): File | null {
-  const value = formData.get(key);
-
-  if (
-    value &&
+function isUploadFile(value: FormDataEntryValue): value is File {
+  return (
     typeof value === "object" &&
     "arrayBuffer" in value &&
     "size" in value &&
     "type" in value
-  ) {
-    return value as File;
+  );
+}
+
+function fileFields(formData: FormData, key: string): File[] {
+  return formData.getAll(key).filter(isUploadFile).filter((file) => file.size > 0);
+}
+
+function incrementSortOrder(value: string, index: number): string {
+  const parsed = Number(value);
+
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    return value;
   }
 
-  return null;
+  return String(parsed + index * 10);
 }
 
 function galleryImageInputFromForm(formData: FormData) {
@@ -73,32 +80,62 @@ export async function createGalleryImageAction(formData: FormData) {
 export async function uploadGalleryImageAction(formData: FormData) {
   await requireAdmin();
 
-  const upload = await uploadAdminImage({
-    file: fileField(formData, "imageFile"),
-    folder: "gallery"
-  });
+  const files = fileFields(formData, "imageFile");
+  const input = galleryImageInputFromForm(formData);
+  let createdCount = 0;
 
-  if (!upload.ok) {
+  if (files.length === 0) {
     redirectWithMessage({
-      error: upload.message
+      error: "Choose at least one image file to upload."
     });
   }
 
-  const result = await createAdminGalleryImage({
-    ...galleryImageInputFromForm(formData),
-    imageUrl: upload.publicUrl
-  });
-
-  if (!result.ok) {
-    await removeAdminUploadedImage(upload.path);
-    redirectWithMessage({
-      error: result.message
+  for (const [index, file] of files.entries()) {
+    const upload = await uploadAdminImage({
+      file,
+      folder: "gallery"
     });
+
+    if (!upload.ok) {
+      if (createdCount > 0) {
+        revalidateGallery();
+      }
+
+      redirectWithMessage({
+        error:
+          createdCount > 0
+            ? `${createdCount} image uploads finished, but ${file.name} failed: ${upload.message}`
+            : upload.message
+      });
+    }
+
+    const result = await createAdminGalleryImage({
+      ...input,
+      imageUrl: upload.publicUrl,
+      sortOrder: incrementSortOrder(input.sortOrder, index)
+    });
+
+    if (!result.ok) {
+      await removeAdminUploadedImage(upload.path);
+
+      if (createdCount > 0) {
+        revalidateGallery();
+      }
+
+      redirectWithMessage({
+        error:
+          createdCount > 0
+            ? `${createdCount} image uploads finished, but ${file.name} could not be saved: ${result.message}`
+            : result.message
+      });
+    }
+
+    createdCount += 1;
   }
 
   revalidateGallery();
   redirectWithMessage({
-    created: "1"
+    uploaded: String(createdCount)
   });
 }
 

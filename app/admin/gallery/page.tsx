@@ -3,6 +3,10 @@ import { requireAdmin } from "@/lib/admin/auth";
 import { getAdminGalleryImages } from "@/lib/admin/gallery";
 import { focalPositionToCss } from "@/lib/image-position";
 import { AdminShell } from "../_components/admin-shell";
+import {
+  ImageUploadField,
+  UploadSubmitButton
+} from "../_components/image-upload-controls";
 import { MediaGuidance } from "../_components/media-guidance";
 import {
   createGalleryImageAction,
@@ -25,6 +29,7 @@ type AdminGalleryPageProps = {
     error?: string;
     removed?: string;
     status?: string;
+    uploaded?: string;
     updated?: string;
   }>;
 };
@@ -62,6 +67,18 @@ function getMessage(params: Awaited<AdminGalleryPageProps["searchParams"]>) {
     return {
       tone: "success",
       text: "Gallery image removed."
+    };
+  }
+
+  if (params?.uploaded) {
+    const count = Number(params.uploaded);
+
+    return {
+      tone: "success",
+      text:
+        Number.isInteger(count) && count > 1
+          ? `${count} gallery images uploaded and optimized.`
+          : "Gallery image uploaded and optimized."
     };
   }
 
@@ -179,22 +196,17 @@ export default async function AdminGalleryPage({
             encType="multipart/form-data"
           >
             <div className="admin-upload-heading">
-              <h3>Upload image</h3>
+              <h3>Upload images</h3>
               <p>
-                Upload JPG, PNG, WebP, or AVIF. Max 5 MB. The generated public
-                Storage URL will be saved into the gallery library.
+                Select one or more images. Uploads are auto-rotated, resized,
+                optimized, and saved as WebP.
               </p>
             </div>
             <div className="admin-settings-grid">
-              <label className="admin-field admin-field-wide">
-                <span>Image file</span>
-                <input
-                  accept="image/jpeg,image/png,image/webp,image/avif"
-                  name="imageFile"
-                  required
-                  type="file"
-                />
-              </label>
+              <ImageUploadField
+                help="JPG, PNG, WebP, or AVIF. Max 8 MB each before optimization."
+                label="Image files"
+              />
               <label className="admin-field">
                 <span>Alt text</span>
                 <input
@@ -239,9 +251,9 @@ export default async function AdminGalleryPage({
                 />
               </label>
             </div>
-            <button className="btn btn-primary admin-settings-submit" type="submit">
-              Upload image
-            </button>
+            <UploadSubmitButton pendingLabel="Uploading gallery images...">
+              Upload images
+            </UploadSubmitButton>
           </form>
         </section>
 
