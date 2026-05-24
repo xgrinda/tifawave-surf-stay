@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/admin/auth";
 import { getAdminRooms } from "@/lib/admin/rooms";
 import { focalPositionToCss } from "@/lib/image-position";
 import { AdminShell } from "../_components/admin-shell";
+import { MediaGuidance } from "../_components/media-guidance";
 import {
   createRoomImageAction,
   createRoomAction,
@@ -129,6 +130,12 @@ export default async function AdminRoomsPage({
             </button>
           </form>
         </section>
+
+        <MediaGuidance
+          id="room-media-guidance-title"
+          title="Room photo checklist"
+          variant="rooms"
+        />
 
         <section className="admin-panel-section" aria-labelledby="room-list-title">
           <div className="admin-section-heading">

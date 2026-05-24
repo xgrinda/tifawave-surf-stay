@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/admin/auth";
 import { getAdminGalleryImages } from "@/lib/admin/gallery";
 import { focalPositionToCss } from "@/lib/image-position";
 import { AdminShell } from "../_components/admin-shell";
+import { MediaGuidance } from "../_components/media-guidance";
 import {
   createGalleryImageAction,
   removeGalleryImageAction,
@@ -92,6 +93,12 @@ export default async function AdminGalleryPage({
       description="Manage direct image URLs, captions, categories, ordering, and visibility. Use bright, real Tifawave images with clear alt text."
       title="Gallery"
     >
+        <MediaGuidance
+          id="gallery-media-guidance-title"
+          title="Gallery photo checklist"
+          variant="gallery"
+        />
+
         <section className="admin-panel-section" aria-labelledby="add-gallery-title">
           <div className="admin-section-heading">
             <h2 id="add-gallery-title">Add image</h2>

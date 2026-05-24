@@ -3784,6 +3784,22 @@ select {
   color: var(--clay-deep);
 }
 
+.admin-helper-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  border: 1px solid rgb(11 31 42 / 10%);
+  border-radius: 18px;
+  background: white;
+  color: var(--ink-700);
+  line-height: 1.55;
+  padding: clamp(16px, 3vw, 22px) clamp(20px, 4vw, 28px);
+}
+
+.admin-helper-list li::marker {
+  color: var(--seaglass);
+}
+
 .admin-block-form {
   display: grid;
   grid-template-columns: minmax(220px, 1.4fr) repeat(2, minmax(150px, 1fr)) auto;
