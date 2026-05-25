@@ -9,6 +9,7 @@ export type AdminBooking = {
   bookingType: "stay_only" | "surf_package" | "group_request";
   guestName: string;
   guestEmail: string;
+  guestPhone: string | null;
   roomName: string;
   packageName: string | null;
   surfLevel: string | null;
@@ -36,7 +37,7 @@ export async function getAdminBookings(
   let query = supabase
     .from("bookings")
     .select(
-      "id, room_id, package_id, booking_type, guest_name, guest_email, check_in, check_out, status, surf_level, group_size, airport_transfer, board_rental, wetsuit_rental, coworking_interest, room_preference, private_coaching, yoga_interest, meals_needed, retreat_name, notes, created_at"
+      "id, room_id, package_id, booking_type, guest_name, guest_email, guest_phone, check_in, check_out, status, surf_level, group_size, airport_transfer, board_rental, wetsuit_rental, coworking_interest, room_preference, private_coaching, yoga_interest, meals_needed, retreat_name, notes, created_at"
     )
     .order("created_at", { ascending: false });
 
@@ -106,6 +107,7 @@ export async function getAdminBookings(
     bookingType: booking.booking_type,
     guestName: booking.guest_name ?? "Guest",
     guestEmail: booking.guest_email ?? "No email",
+    guestPhone: booking.guest_phone,
     roomName: booking.room_id
       ? roomNames.get(booking.room_id) ?? "Room unavailable"
       : "Custom room plan",

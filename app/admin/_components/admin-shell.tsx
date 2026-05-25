@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { logoutAdminAction } from "../login/actions";
 
 type AdminNavKey =
+  | "dashboard"
   | "bookings"
   | "rooms"
   | "packages"
@@ -22,6 +23,7 @@ const adminNavItems: Array<{
   key: AdminNavKey;
   label: string;
 }> = [
+  { href: "/admin", key: "dashboard", label: "Dashboard" },
   { href: "/admin/bookings", key: "bookings", label: "Bookings" },
   { href: "/admin/rooms", key: "rooms", label: "Rooms" },
   { href: "/admin/packages", key: "packages", label: "Packages" },
