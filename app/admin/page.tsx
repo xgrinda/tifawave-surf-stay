@@ -49,21 +49,25 @@ export default async function AdminDashboardPage() {
 
   const statCards = [
     {
+      description: "Requests waiting for review and manual confirmation.",
       href: "/admin/bookings",
       label: "Pending bookings",
       value: stats.pendingBookings
     },
     {
+      description: "Confirmed stays with check-in from today onward.",
       href: "/admin/bookings?status=confirmed",
       label: "Confirmed upcoming stays",
       value: stats.confirmedUpcomingStays
     },
     {
+      description: "Group or retreat inquiries needing a custom proposal.",
       href: "/admin/bookings",
       label: "Pending group requests",
       value: stats.groupRequests
     },
     {
+      description: "Active room closures and imported availability locks.",
       href: "/admin/blocked-dates",
       label: "Upcoming blocked dates",
       value: stats.blockedDates
@@ -83,8 +87,20 @@ export default async function AdminDashboardPage() {
             <a className="admin-dashboard-stat" href={stat.href} key={stat.label}>
               <span>{stat.label}</span>
               <strong>{stat.value}</strong>
+              <p>{stat.description}</p>
             </a>
           ))}
+        </div>
+
+        <div className="admin-dashboard-workflow">
+          <div>
+            <span>Daily workflow</span>
+            <strong>Review requests, confirm availability, then update rooms and media.</strong>
+          </div>
+          <p>
+            Start with pending bookings, check blocked dates when availability is tight,
+            then keep rooms, packages, and gallery content polished for guests.
+          </p>
         </div>
 
         <div className="admin-dashboard-links">

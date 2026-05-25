@@ -20,7 +20,7 @@ export default async function AdminLoginPage({
   searchParams
 }: AdminLoginPageProps) {
   if (await isAdminAuthenticated()) {
-    redirect("/admin/bookings");
+    redirect("/admin");
   }
 
   const params = await searchParams;
@@ -29,9 +29,14 @@ export default async function AdminLoginPage({
   return (
     <main className="admin-page admin-login-page">
       <section className="admin-login-panel" aria-labelledby="admin-login-title">
-        <p className="eyebrow">Tifawave admin</p>
-        <h1 id="admin-login-title">Sign in.</h1>
-        <p>Protected booking operations for the Tifawave team.</p>
+        <div className="admin-login-brand">
+          <span aria-hidden="true">T</span>
+          <div>
+            <p className="eyebrow">Tifawave admin</p>
+            <h1 id="admin-login-title">Sign in.</h1>
+          </div>
+        </div>
+        <p>Protected booking, content, and availability operations for the Tifawave team.</p>
 
         <form className="admin-login-form" action={loginAdminAction}>
           <label className="admin-field" htmlFor="admin-password">
@@ -57,6 +62,12 @@ export default async function AdminLoginPage({
             Sign in
           </button>
         </form>
+
+        <div className="admin-login-meta" aria-label="Admin workspace notes">
+          <span>Manual confirmations</span>
+          <span>Room inventory</span>
+          <span>Guest requests</span>
+        </div>
       </section>
     </main>
   );

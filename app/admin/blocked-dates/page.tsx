@@ -209,15 +209,15 @@ export default async function AdminBlockedDatesPage({
               <tbody>
                 {blockedDates.map((block) => (
                   <tr key={block.id}>
-                    <td>{block.roomName}</td>
-                    <td>
+                    <td data-label="Room">{block.roomName}</td>
+                    <td data-label="Dates">
                       {formatDate(block.startDate)} to{" "}
                       {formatDate(block.endDate)}
                     </td>
-                    <td>
+                    <td data-label="Reason">
                       <span className="admin-status-pill">{block.reason}</span>
                     </td>
-                    <td>
+                    <td data-label="Source">
                       <span className="admin-source-cell">
                         {block.source === "ical" ? "iCal import" : "Admin"}
                         {block.sourceUrl ? (
@@ -225,8 +225,8 @@ export default async function AdminBlockedDatesPage({
                         ) : null}
                       </span>
                     </td>
-                    <td>{formatDateTime(block.createdAt)}</td>
-                    <td>
+                    <td data-label="Created">{formatDateTime(block.createdAt)}</td>
+                    <td data-label="Actions">
                       <form action={removeBlockedDateAction}>
                         <input
                           name="blockedDateId"

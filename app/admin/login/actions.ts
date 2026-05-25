@@ -11,7 +11,7 @@ export async function loginAdminAction(formData: FormData) {
     redirect("/admin/login?error=1");
   }
 
-  redirect("/admin/bookings");
+  redirect("/admin");
 }
 
 export async function logoutAdminAction() {
