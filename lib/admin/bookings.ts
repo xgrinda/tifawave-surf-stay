@@ -6,10 +6,23 @@ export type AdminBookingFilter = "pending" | "confirmed" | "cancelled" | "all";
 
 export type AdminBooking = {
   id: string;
+  bookingType: "stay_only" | "surf_package" | "group_request";
   guestName: string;
   guestEmail: string;
   roomName: string;
   packageName: string | null;
+  surfLevel: string | null;
+  groupSize: number | null;
+  airportTransfer: boolean;
+  boardRental: boolean;
+  wetsuitRental: boolean;
+  coworkingInterest: boolean;
+  roomPreference: string | null;
+  privateCoaching: boolean;
+  yogaInterest: boolean;
+  mealsNeeded: boolean;
+  retreatName: string | null;
+  notes: string | null;
   checkIn: string;
   checkOut: string;
   status: BookingStatus;
@@ -23,7 +36,7 @@ export async function getAdminBookings(
   let query = supabase
     .from("bookings")
     .select(
-      "id, room_id, package_id, guest_name, guest_email, check_in, check_out, status, created_at"
+      "id, room_id, package_id, booking_type, guest_name, guest_email, check_in, check_out, status, surf_level, group_size, airport_transfer, board_rental, wetsuit_rental, coworking_interest, room_preference, private_coaching, yoga_interest, meals_needed, retreat_name, notes, created_at"
     )
     .order("created_at", { ascending: false });
 
@@ -41,17 +54,29 @@ export async function getAdminBookings(
     return [];
   }
 
-  const roomIds = Array.from(new Set(bookings.map((booking) => booking.room_id)));
-  const { data: rooms, error: roomsError } = await supabase
-    .from("rooms")
-    .select("id, name")
-    .in("id", roomIds);
+  const roomIds = Array.from(
+    new Set(
+      bookings
+        .map((booking) => booking.room_id)
+        .filter((roomId): roomId is string => Boolean(roomId))
+    )
+  );
+  const roomNames = new Map<string, string>();
 
-  if (roomsError) {
-    throw new Error(roomsError.message);
+  if (roomIds.length > 0) {
+    const { data: rooms, error: roomsError } = await supabase
+      .from("rooms")
+      .select("id, name")
+      .in("id", roomIds);
+
+    if (roomsError) {
+      throw new Error(roomsError.message);
+    }
+
+    for (const room of rooms) {
+      roomNames.set(room.id, room.name);
+    }
   }
-
-  const roomNames = new Map(rooms.map((room) => [room.id, room.name]));
   const packageIds = Array.from(
     new Set(
       bookings
@@ -78,12 +103,27 @@ export async function getAdminBookings(
 
   return bookings.map((booking) => ({
     id: booking.id,
+    bookingType: booking.booking_type,
     guestName: booking.guest_name ?? "Guest",
     guestEmail: booking.guest_email ?? "No email",
-    roomName: roomNames.get(booking.room_id) ?? "Room unavailable",
+    roomName: booking.room_id
+      ? roomNames.get(booking.room_id) ?? "Room unavailable"
+      : "Custom room plan",
     packageName: booking.package_id
       ? packageNames.get(booking.package_id) ?? "Package unavailable"
       : null,
+    surfLevel: booking.surf_level,
+    groupSize: booking.group_size,
+    airportTransfer: booking.airport_transfer,
+    boardRental: booking.board_rental,
+    wetsuitRental: booking.wetsuit_rental,
+    coworkingInterest: booking.coworking_interest,
+    roomPreference: booking.room_preference,
+    privateCoaching: booking.private_coaching,
+    yogaInterest: booking.yoga_interest,
+    mealsNeeded: booking.meals_needed,
+    retreatName: booking.retreat_name,
+    notes: booking.notes,
     checkIn: booking.check_in,
     checkOut: booking.check_out,
     status: booking.status,

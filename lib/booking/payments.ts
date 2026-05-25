@@ -12,7 +12,7 @@ type PaymentStatus = "unpaid" | "checkout_open" | "paid" | "failed";
 
 type PaymentBooking = {
   id: string;
-  room_id: string;
+  room_id: string | null;
   status: string;
   check_in: string;
   check_out: string;
@@ -171,6 +171,14 @@ export async function createDepositCheckoutSession(
       ok: false,
       reason: "not_payable",
       message: "Only pending bookings can pay a deposit."
+    };
+  }
+
+  if (!booking.room_id) {
+    return {
+      ok: false,
+      reason: "not_payable",
+      message: "Group and retreat requests are confirmed manually."
     };
   }
 

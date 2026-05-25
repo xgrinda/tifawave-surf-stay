@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { createPendingBookingFromHold } from "@/lib/booking/bookings";
+import {
+  createGroupBookingRequest,
+  createPendingBookingFromHold
+} from "@/lib/booking/bookings";
 
 type BookingResponse =
   | {
@@ -38,6 +41,16 @@ function optionalStringField(
   return typeof value === "string" ? value : null;
 }
 
+function booleanField(body: Record<string, unknown>, key: string): boolean {
+  return body[key] === true;
+}
+
+function numberField(body: Record<string, unknown>, key: string): number {
+  const value = body[key];
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function errorResponse(reason: string, message: string, status = 400) {
   return NextResponse.json<BookingResponse>(
     {
@@ -59,9 +72,54 @@ export async function POST(request: Request) {
     );
   }
 
+  const bookingType = stringField(body, "bookingType");
+
+  if (bookingType === "group_request") {
+    const result = await createGroupBookingRequest({
+      checkIn: stringField(body, "checkIn"),
+      checkOut: stringField(body, "checkOut"),
+      groupSize: numberField(body, "groupSize"),
+      roomPreference: stringField(body, "roomPreference"),
+      surfLevel: stringField(body, "surfLevel"),
+      mealsNeeded: booleanField(body, "mealsNeeded"),
+      airportTransfer: booleanField(body, "airportTransfer"),
+      privateCoaching: booleanField(body, "privateCoaching"),
+      yogaInterest: booleanField(body, "yogaInterest"),
+      coworkingInterest: booleanField(body, "coworkingInterest"),
+      retreatName: optionalStringField(body, "retreatName"),
+      guestName: stringField(body, "guestName"),
+      guestEmail: stringField(body, "guestEmail"),
+      guestPhone: stringField(body, "guestPhone"),
+      message: stringField(body, "message")
+    });
+
+    if (!result.ok) {
+      return errorResponse(
+        result.reason,
+        result.message,
+        result.reason === "invalid_input" ? 400 : 500
+      );
+    }
+
+    return NextResponse.json<BookingResponse>(
+      {
+        bookingId: result.bookingId,
+        status: result.status
+      },
+      { status: 201 }
+    );
+  }
+
   const result = await createPendingBookingFromHold({
     holdId: stringField(body, "holdId"),
     packageId: optionalStringField(body, "packageId"),
+    bookingType: bookingType === "surf_package" ? "surf_package" : "stay_only",
+    surfLevel: optionalStringField(body, "surfLevel"),
+    airportTransfer: booleanField(body, "airportTransfer"),
+    boardRental: booleanField(body, "boardRental"),
+    wetsuitRental: booleanField(body, "wetsuitRental"),
+    coworkingInterest: booleanField(body, "coworkingInterest"),
+    roomPreference: optionalStringField(body, "roomPreference"),
     guestName: stringField(body, "guestName"),
     guestEmail: stringField(body, "guestEmail"),
     guestPhone: stringField(body, "guestPhone"),

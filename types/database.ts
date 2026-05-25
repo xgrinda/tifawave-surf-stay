@@ -174,9 +174,10 @@ export type Database = {
       bookings: {
         Row: {
           id: string;
-          room_id: string;
+          room_id: string | null;
           package_id: string | null;
           reference: string | null;
+          booking_type: "stay_only" | "surf_package" | "group_request";
           status: Database["public"]["Enums"]["booking_status"];
           check_in: string;
           check_out: string;
@@ -186,6 +187,17 @@ export type Database = {
           guest_email: string | null;
           guest_phone: string | null;
           notes: string | null;
+          surf_level: string | null;
+          group_size: number | null;
+          airport_transfer: boolean;
+          board_rental: boolean;
+          wetsuit_rental: boolean;
+          coworking_interest: boolean;
+          room_preference: string | null;
+          private_coaching: boolean;
+          yoga_interest: boolean;
+          meals_needed: boolean;
+          retreat_name: string | null;
           stripe_checkout_session_id: string | null;
           stripe_payment_intent_id: string | null;
           deposit_amount_cents: number | null;
@@ -197,9 +209,10 @@ export type Database = {
         };
         Insert: {
           id?: string;
-          room_id: string;
+          room_id?: string | null;
           package_id?: string | null;
           reference?: string | null;
+          booking_type?: "stay_only" | "surf_package" | "group_request";
           status?: Database["public"]["Enums"]["booking_status"];
           check_in: string;
           check_out: string;
@@ -208,6 +221,17 @@ export type Database = {
           guest_email?: string | null;
           guest_phone?: string | null;
           notes?: string | null;
+          surf_level?: string | null;
+          group_size?: number | null;
+          airport_transfer?: boolean;
+          board_rental?: boolean;
+          wetsuit_rental?: boolean;
+          coworking_interest?: boolean;
+          room_preference?: string | null;
+          private_coaching?: boolean;
+          yoga_interest?: boolean;
+          meals_needed?: boolean;
+          retreat_name?: string | null;
           stripe_checkout_session_id?: string | null;
           stripe_payment_intent_id?: string | null;
           deposit_amount_cents?: number | null;
@@ -219,9 +243,10 @@ export type Database = {
         };
         Update: {
           id?: string;
-          room_id?: string;
+          room_id?: string | null;
           package_id?: string | null;
           reference?: string | null;
+          booking_type?: "stay_only" | "surf_package" | "group_request";
           status?: Database["public"]["Enums"]["booking_status"];
           check_in?: string;
           check_out?: string;
@@ -230,6 +255,17 @@ export type Database = {
           guest_email?: string | null;
           guest_phone?: string | null;
           notes?: string | null;
+          surf_level?: string | null;
+          group_size?: number | null;
+          airport_transfer?: boolean;
+          board_rental?: boolean;
+          wetsuit_rental?: boolean;
+          coworking_interest?: boolean;
+          room_preference?: string | null;
+          private_coaching?: boolean;
+          yoga_interest?: boolean;
+          meals_needed?: boolean;
+          retreat_name?: string | null;
           stripe_checkout_session_id?: string | null;
           stripe_payment_intent_id?: string | null;
           deposit_amount_cents?: number | null;

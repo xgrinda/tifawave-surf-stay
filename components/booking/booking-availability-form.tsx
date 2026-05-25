@@ -106,6 +106,8 @@ type BookingState =
       message: string;
     };
 
+type BookingMode = "stay_only" | "surf_package" | "group_request";
+
 type PaymentState =
   | {
       status: "idle";
@@ -145,12 +147,25 @@ export type BookingContactSettings = {
 
 type FieldErrors = {
   roomId?: string;
+  packageId?: string;
   checkIn?: string;
   checkOut?: string;
   guests?: string;
 };
 
 type GuestFieldErrors = {
+  guestName?: string;
+  guestEmail?: string;
+  guestPhone?: string;
+  message?: string;
+};
+
+type GroupFieldErrors = {
+  checkIn?: string;
+  checkOut?: string;
+  groupSize?: string;
+  roomPreference?: string;
+  surfLevel?: string;
   guestName?: string;
   guestEmail?: string;
   guestPhone?: string;
@@ -211,10 +226,16 @@ const bookingCopy = {
       checkOutAfter: "Check-out must be after check-in.",
       guestsPositive: "Choose at least 1 guest.",
       guestsCapacity: "Guest count is above this room's capacity.",
+      choosePackage: "Choose a surf package.",
+      chooseRoomPreference: "Choose a preferred room setup.",
+      chooseSurfLevel: "Choose or describe the surf level.",
+      groupSizePositive: "Enter a valid group size.",
       guestName: "Enter a guest name between 2 and 120 characters.",
       guestEmail: "Enter a valid email address.",
       guestPhone: "Enter a valid phone or WhatsApp number.",
-      guestMessage: "Message must be 1000 characters or fewer."
+      guestMessage: "Message must be 1000 characters or fewer.",
+      groupMessage:
+        "Add a few details about the group or retreat, up to 1600 characters."
     },
     roomLoad: {
       noActiveRooms:
@@ -247,7 +268,64 @@ const bookingCopy = {
       night: "night",
       packageUnit: "package",
       packageSummaryEyebrow: "Surf package request",
+      modeStay: "Stay Only",
+      modeSurf: "Surf Package",
+      modeGroup: "Group / Retreat Request",
+      stayModeCopy:
+        "This is a reservation request. Tifawave will review availability and confirm your stay.",
+      surfModeCopy:
+        "Choose a surf package and preferred room. Final package pricing is confirmed manually after availability review.",
+      groupModeCopy:
+        "For groups and retreats, Tifawave reviews room availability, surf levels, meals, and logistics before confirming a custom stay proposal.",
+      groupSuggestTitle: "Planning for more than 10 guests?",
+      groupSuggestCopy:
+        "Group and retreat requests work best as a custom proposal with room setup, meals, surf levels, and logistics reviewed together.",
+      switchToGroup: "Use group request",
       guests: (count: number) => `Up to ${count} guests`
+    },
+    surf: {
+      surfLevel: "Surf level",
+      beginner: "Beginner",
+      intermediate: "Intermediate",
+      advanced: "Advanced",
+      mixedGroup: "Mixed group",
+      airportTransfer: "Airport transfer needed",
+      boardRental: "Board rental needed",
+      wetsuitRental: "Wetsuit rental needed",
+      coworkingInterest: "Coworking interest",
+      finalPricing:
+        "Final package pricing is confirmed manually after availability review."
+    },
+    group: {
+      eyebrow: "Custom group request",
+      title: "Plan a group or retreat stay.",
+      copy:
+        "No automatic pricing or confirmation is created here. Tifawave will reply with a custom proposal.",
+      groupSize: "Group size",
+      preferredDates: "Preferred dates",
+      roomSetup: "Preferred room setup",
+      sharedDorms: "Shared dorms",
+      privateRooms: "Private rooms",
+      mixedRooms: "Mix of both",
+      entireProperty: "Entire property",
+      notSure: "Not sure",
+      surfLevelMix: "Surf level mix",
+      surfLevelPlaceholder: "Example: mostly beginners, two intermediates",
+      mealsNeeded: "Meals needed",
+      airportTransfer: "Airport transfer needed",
+      privateCoaching: "Private coaching needed",
+      yogaInterest: "Yoga sessions interest",
+      coworkingInterest: "Coworking interest",
+      retreatName: "Retreat / workshop name",
+      retreatPlaceholder: "Optional",
+      organizerName: "Organizer name",
+      organizerEmail: "Organizer email",
+      organizerPhone: "Organizer phone / WhatsApp",
+      detailedMessage: "Detailed message",
+      messagePlaceholder:
+        "Tell us dates flexibility, group goals, meals, coaching, and anything important.",
+      submit: "Send group request",
+      submitting: "Sending group request..."
     },
     hold: {
       checkBeforeHold: "Check the room and dates before holding them.",
@@ -364,10 +442,16 @@ const bookingCopy = {
       checkOutAfter: "Le départ doit être après l'arrivée.",
       guestsPositive: "Choisissez au moins 1 personne.",
       guestsCapacity: "Le nombre de personnes dépasse la capacité de cette chambre.",
+      choosePackage: "Choisissez un séjour surf.",
+      chooseRoomPreference: "Choisissez une préférence de chambre.",
+      chooseSurfLevel: "Choisissez ou décrivez le niveau de surf.",
+      groupSizePositive: "Indiquez une taille de groupe valide.",
       guestName: "Indiquez un nom entre 2 et 120 caractères.",
       guestEmail: "Indiquez une adresse email valide.",
       guestPhone: "Indiquez un téléphone ou WhatsApp valide.",
-      guestMessage: "Le message doit contenir 1000 caractères maximum."
+      guestMessage: "Le message doit contenir 1000 caractères maximum.",
+      groupMessage:
+        "Ajoutez quelques détails sur le groupe ou la retraite, 1600 caractères maximum."
     },
     roomLoad: {
       noActiveRooms:
@@ -401,7 +485,64 @@ const bookingCopy = {
       night: "nuit",
       packageUnit: "séjour",
       packageSummaryEyebrow: "Demande de séjour surf",
+      modeStay: "Séjour seulement",
+      modeSurf: "Séjour surf",
+      modeGroup: "Groupe / retraite",
+      stayModeCopy:
+        "Ceci est une demande de réservation. Tifawave vérifiera les disponibilités et confirmera votre séjour.",
+      surfModeCopy:
+        "Choisissez un séjour surf et une chambre préférée. Le tarif final est confirmé manuellement après vérification.",
+      groupModeCopy:
+        "Pour les groupes et retraites, Tifawave vérifie chambres, niveaux de surf, repas et logistique avant une proposition personnalisée.",
+      groupSuggestTitle: "Vous prévoyez plus de 10 personnes?",
+      groupSuggestCopy:
+        "Les groupes et retraites fonctionnent mieux avec une proposition personnalisée: chambres, repas, niveaux et logistique.",
+      switchToGroup: "Utiliser la demande groupe",
       guests: (count: number) => `Jusqu'à ${count} personnes`
+    },
+    surf: {
+      surfLevel: "Niveau de surf",
+      beginner: "Débutant",
+      intermediate: "Intermédiaire",
+      advanced: "Avancé",
+      mixedGroup: "Groupe mixte",
+      airportTransfer: "Transfert aéroport nécessaire",
+      boardRental: "Location de planche nécessaire",
+      wetsuitRental: "Location de combinaison nécessaire",
+      coworkingInterest: "Intérêt coworking",
+      finalPricing:
+        "Le tarif final du séjour surf est confirmé manuellement après vérification des disponibilités."
+    },
+    group: {
+      eyebrow: "Demande groupe personnalisée",
+      title: "Planifier un groupe ou une retraite.",
+      copy:
+        "Aucun tarif ni confirmation automatique n'est créé ici. Tifawave répondra avec une proposition personnalisée.",
+      groupSize: "Taille du groupe",
+      preferredDates: "Dates souhaitées",
+      roomSetup: "Configuration de chambres préférée",
+      sharedDorms: "Dortoirs partagés",
+      privateRooms: "Chambres privées",
+      mixedRooms: "Mix des deux",
+      entireProperty: "Toute la propriété",
+      notSure: "Pas sûr",
+      surfLevelMix: "Mix de niveaux surf",
+      surfLevelPlaceholder: "Exemple: surtout débutants, deux intermédiaires",
+      mealsNeeded: "Repas nécessaires",
+      airportTransfer: "Transfert aéroport nécessaire",
+      privateCoaching: "Coaching privé nécessaire",
+      yogaInterest: "Intérêt pour yoga",
+      coworkingInterest: "Intérêt coworking",
+      retreatName: "Nom de la retraite / atelier",
+      retreatPlaceholder: "Optionnel",
+      organizerName: "Nom de l'organisateur",
+      organizerEmail: "Email de l'organisateur",
+      organizerPhone: "Téléphone / WhatsApp de l'organisateur",
+      detailedMessage: "Message détaillé",
+      messagePlaceholder:
+        "Indiquez flexibilité des dates, objectifs du groupe, repas, coaching et détails importants.",
+      submit: "Envoyer la demande groupe",
+      submitting: "Envoi de la demande..."
     },
     hold: {
       checkBeforeHold: "Vérifiez la chambre et les dates avant de les bloquer.",
@@ -682,13 +823,31 @@ export function BookingAvailabilityForm({
   const initialCheckIn = normalizeDateInput(initialParams.checkIn);
   const initialCheckOut = normalizeDateInput(initialParams.checkOut);
   const initialGuests = normalizeGuestCountInput(initialParams.guests);
+  const initialGuestCount = parseGuestCount(initialGuests);
   const [rooms, setRooms] = useState<RoomOption[]>([]);
   const [packages, setPackages] = useState<SurfPackageOption[]>([]);
+  const [bookingMode, setBookingMode] = useState<BookingMode>(
+    initialPackageId ? "surf_package" : "stay_only"
+  );
   const [roomId, setRoomId] = useState(initialRoomId);
   const [packageId, setPackageId] = useState(initialPackageId);
   const [checkIn, setCheckIn] = useState(initialCheckIn);
   const [checkOut, setCheckOut] = useState(initialCheckOut);
   const [guests, setGuests] = useState(initialGuests);
+  const [groupSize, setGroupSize] = useState(
+    initialGuestCount > 10 ? String(initialGuestCount) : "11"
+  );
+  const [surfLevel, setSurfLevel] = useState("beginner");
+  const [airportTransfer, setAirportTransfer] = useState(false);
+  const [boardRental, setBoardRental] = useState(false);
+  const [wetsuitRental, setWetsuitRental] = useState(false);
+  const [coworkingInterest, setCoworkingInterest] = useState(false);
+  const [groupRoomPreference, setGroupRoomPreference] = useState("mix_of_both");
+  const [groupSurfLevel, setGroupSurfLevel] = useState("");
+  const [mealsNeeded, setMealsNeeded] = useState(false);
+  const [privateCoaching, setPrivateCoaching] = useState(false);
+  const [yogaInterest, setYogaInterest] = useState(false);
+  const [retreatName, setRetreatName] = useState("");
   const [isLoadingRooms, setIsLoadingRooms] = useState(true);
   const [isLoadingPackages, setIsLoadingPackages] = useState(true);
   const [isChecking, setIsChecking] = useState(false);
@@ -699,6 +858,7 @@ export function BookingAvailabilityForm({
   const [packageLoadMessage, setPackageLoadMessage] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [guestErrors, setGuestErrors] = useState<GuestFieldErrors>({});
+  const [groupErrors, setGroupErrors] = useState<GroupFieldErrors>({});
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
@@ -734,6 +894,15 @@ export function BookingAvailabilityForm({
     !isLoadingPackages && !isBusy && booking.status !== "confirmed";
   const checkOutMin = checkIn ? addDaysToDateInput(checkIn, 1) : today;
   const guestCount = parseGuestCount(guests);
+  const groupGuestCount = parseGuestCount(groupSize);
+  const canOfferDeposit =
+    settings.depositsEnabled && bookingMode !== "group_request";
+  const activeModeCopy =
+    bookingMode === "surf_package"
+      ? copy.flow.surfModeCopy
+      : bookingMode === "group_request"
+        ? copy.flow.groupModeCopy
+        : copy.flow.stayModeCopy;
 
   useEffect(() => {
     let isMounted = true;
@@ -855,6 +1024,23 @@ export function BookingAvailabilityForm({
       status: "idle"
     });
     setGuestErrors({});
+    setGroupErrors({});
+  }
+
+  function selectBookingMode(nextMode: BookingMode) {
+    setBookingMode(nextMode);
+    setFieldErrors({});
+    setGuestErrors({});
+    setGroupErrors({});
+    resetResultState();
+
+    if (nextMode === "stay_only") {
+      setPackageId("");
+    }
+
+    if (nextMode === "group_request") {
+      setGroupSize(String(Math.max(guestCount, 11)));
+    }
   }
 
   function validateFields(): FieldErrors {
@@ -862,6 +1048,10 @@ export function BookingAvailabilityForm({
 
     if (!roomId) {
       errors.roomId = copy.validation.chooseRoom;
+    }
+
+    if (bookingMode === "surf_package" && !packageId) {
+      errors.packageId = copy.validation.choosePackage;
     }
 
     if (!checkIn) {
@@ -928,6 +1118,69 @@ export function BookingAvailabilityForm({
     setGuestErrors((currentErrors) => {
       const nextErrors = { ...currentErrors };
       delete nextErrors[fieldName];
+      return nextErrors;
+    });
+  }
+
+  function validateGroupFields(): GroupFieldErrors {
+    const errors: GroupFieldErrors = {};
+    const normalizedName = guestName.trim().replace(/\s+/g, " ");
+    const normalizedEmail = guestEmail.trim().toLowerCase();
+    const normalizedPhone = guestPhone.trim().replace(/\s+/g, " ");
+    const normalizedMessage = message.trim();
+
+    if (!checkIn) {
+      errors.checkIn = copy.validation.chooseCheckIn;
+    } else if (today && checkIn < today) {
+      errors.checkIn = copy.validation.checkInPast;
+    }
+
+    if (!checkOut) {
+      errors.checkOut = copy.validation.chooseCheckOut;
+    } else if (checkIn && checkOut <= checkIn) {
+      errors.checkOut = copy.validation.checkOutAfter;
+    }
+
+    if (!Number.isInteger(groupGuestCount) || groupGuestCount < 1) {
+      errors.groupSize = copy.validation.groupSizePositive;
+    }
+
+    if (!groupRoomPreference) {
+      errors.roomPreference = copy.validation.chooseRoomPreference;
+    }
+
+    if (groupSurfLevel.trim().length < 2) {
+      errors.surfLevel = copy.validation.chooseSurfLevel;
+    }
+
+    if (normalizedName.length < 2 || normalizedName.length > 120) {
+      errors.guestName = copy.validation.guestName;
+    }
+
+    if (!EMAIL_PATTERN.test(normalizedEmail) || normalizedEmail.length > 254) {
+      errors.guestEmail = copy.validation.guestEmail;
+    }
+
+    if (!PHONE_PATTERN.test(normalizedPhone)) {
+      errors.guestPhone = copy.validation.guestPhone;
+    }
+
+    if (normalizedMessage.length < 10 || normalizedMessage.length > 1600) {
+      errors.message = copy.validation.groupMessage;
+    }
+
+    return errors;
+  }
+
+  function clearGroupError(fieldName: keyof GroupFieldErrors) {
+    setGroupErrors((currentErrors) => {
+      const nextErrors = { ...currentErrors };
+      delete nextErrors[fieldName];
+
+      if (fieldName === "checkIn") {
+        delete nextErrors.checkOut;
+      }
+
       return nextErrors;
     });
   }
@@ -1119,7 +1372,19 @@ export function BookingAvailabilityForm({
       const response = await fetch("/api/booking", {
         body: JSON.stringify({
           holdId: hold.holdId,
-          packageId: selectedPackage?.id ?? null,
+          bookingType: bookingMode,
+          packageId:
+            bookingMode === "surf_package" ? selectedPackage?.id ?? null : null,
+          surfLevel: bookingMode === "surf_package" ? surfLevel : null,
+          airportTransfer:
+            bookingMode === "surf_package" ? airportTransfer : false,
+          boardRental: bookingMode === "surf_package" ? boardRental : false,
+          wetsuitRental:
+            bookingMode === "surf_package" ? wetsuitRental : false,
+          coworkingInterest:
+            bookingMode === "surf_package" ? coworkingInterest : false,
+          roomPreference:
+            bookingMode === "surf_package" ? selectedRoom?.name ?? null : null,
           guestName,
           guestEmail,
           guestPhone,
@@ -1165,9 +1430,89 @@ export function BookingAvailabilityForm({
     }
   }
 
+  async function handleGroupBookingSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (isBusy || booking.status === "confirmed") {
+      return;
+    }
+
+    const errors = validateGroupFields();
+    setGroupErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
+      setBooking({
+        status: "error",
+        message: copy.guest.fixFields
+      });
+      return;
+    }
+
+    setIsCreatingBooking(true);
+    setBooking({ status: "idle" });
+
+    try {
+      const response = await fetch("/api/booking", {
+        body: JSON.stringify({
+          bookingType: "group_request",
+          checkIn,
+          checkOut,
+          groupSize: groupGuestCount,
+          roomPreference: groupRoomPreference,
+          surfLevel: groupSurfLevel,
+          mealsNeeded,
+          airportTransfer,
+          privateCoaching,
+          yogaInterest,
+          coworkingInterest,
+          retreatName,
+          guestName,
+          guestEmail,
+          guestPhone,
+          message
+        }),
+        headers: {
+          "content-type": "application/json"
+        },
+        method: "POST"
+      });
+      const result = await readJson<PendingBookingResponse>(response);
+
+      if (response.ok && isPendingBookingCreated(result)) {
+        trackPendingBookingCreated({
+          bookingStatus: result.status
+        });
+        setBooking({
+          status: "confirmed",
+          bookingId: result.bookingId,
+          bookingStatus: result.status
+        });
+        setPayment({
+          status: "idle"
+        });
+        return;
+      }
+
+      setBooking({
+        status: "error",
+        message:
+          "message" in result
+            ? result.message
+            : copy.guest.pendingCouldNotCreate
+      });
+    } catch {
+      setBooking({
+        status: "error",
+        message: copy.guest.pendingCouldNotCreateNow
+      });
+    } finally {
+      setIsCreatingBooking(false);
+    }
+  }
+
   async function handleDepositCheckout() {
     if (
-      !settings.depositsEnabled ||
+      !canOfferDeposit ||
       isStartingCheckout ||
       booking.status !== "confirmed"
     ) {
@@ -1254,6 +1599,377 @@ export function BookingAvailabilityForm({
       </div>
 
       <div className="booking-panel" aria-busy={isBusy || isLoadingRooms}>
+        <div className="booking-mode-tabs" role="tablist" aria-label="Booking mode">
+          {[
+            { label: copy.flow.modeStay, value: "stay_only" },
+            { label: copy.flow.modeSurf, value: "surf_package" },
+            { label: copy.flow.modeGroup, value: "group_request" }
+          ].map((mode) => (
+            <button
+              aria-selected={bookingMode === mode.value}
+              className="booking-mode-tab"
+              key={mode.value}
+              onClick={() => selectBookingMode(mode.value as BookingMode)}
+              role="tab"
+              type="button"
+            >
+              {mode.label}
+            </button>
+          ))}
+        </div>
+
+        <p className="booking-mode-note">{activeModeCopy}</p>
+
+        {bookingMode === "group_request" ? (
+          <form
+            className="booking-guest-form booking-group-form"
+            noValidate
+            onSubmit={handleGroupBookingSubmit}
+          >
+            <div className="booking-guest-heading">
+              <p className="eyebrow">{copy.group.eyebrow}</p>
+              <h2>{copy.group.title}</h2>
+              <p>{copy.group.copy}</p>
+            </div>
+
+            <label className="booking-field" htmlFor="booking-group-size">
+              <span>{copy.group.groupSize}</span>
+              <input
+                aria-describedby={
+                  groupErrors.groupSize ? "booking-group-size-error" : undefined
+                }
+                aria-invalid={Boolean(groupErrors.groupSize)}
+                disabled={isCreatingBooking}
+                id="booking-group-size"
+                min="1"
+                onChange={(event) => {
+                  setGroupSize(event.target.value);
+                  clearGroupError("groupSize");
+                }}
+                required
+                type="number"
+                value={groupSize}
+              />
+              {groupErrors.groupSize ? (
+                <small
+                  className="booking-field-error"
+                  id="booking-group-size-error"
+                >
+                  {groupErrors.groupSize}
+                </small>
+              ) : null}
+            </label>
+
+            <div className="booking-date-grid">
+              <label className="booking-field" htmlFor="booking-group-check-in">
+                <span>{copy.flow.checkIn}</span>
+                <input
+                  aria-describedby={
+                    groupErrors.checkIn
+                      ? "booking-group-check-in-error"
+                      : undefined
+                  }
+                  aria-invalid={Boolean(groupErrors.checkIn)}
+                  disabled={isCreatingBooking}
+                  id="booking-group-check-in"
+                  min={today || undefined}
+                  onChange={(event) => {
+                    setCheckIn(event.target.value);
+                    clearGroupError("checkIn");
+                  }}
+                  required
+                  type="date"
+                  value={checkIn}
+                />
+                {groupErrors.checkIn ? (
+                  <small
+                    className="booking-field-error"
+                    id="booking-group-check-in-error"
+                  >
+                    {groupErrors.checkIn}
+                  </small>
+                ) : null}
+              </label>
+
+              <label className="booking-field" htmlFor="booking-group-check-out">
+                <span>{copy.flow.checkOut}</span>
+                <input
+                  aria-describedby={
+                    groupErrors.checkOut
+                      ? "booking-group-check-out-error"
+                      : undefined
+                  }
+                  aria-invalid={Boolean(groupErrors.checkOut)}
+                  disabled={isCreatingBooking}
+                  id="booking-group-check-out"
+                  min={checkOutMin || undefined}
+                  onChange={(event) => {
+                    setCheckOut(event.target.value);
+                    clearGroupError("checkOut");
+                  }}
+                  required
+                  type="date"
+                  value={checkOut}
+                />
+                {groupErrors.checkOut ? (
+                  <small
+                    className="booking-field-error"
+                    id="booking-group-check-out-error"
+                  >
+                    {groupErrors.checkOut}
+                  </small>
+                ) : null}
+              </label>
+            </div>
+
+            <label className="booking-field" htmlFor="booking-room-setup">
+              <span>{copy.group.roomSetup}</span>
+              <select
+                aria-describedby={
+                  groupErrors.roomPreference
+                    ? "booking-room-setup-error"
+                    : undefined
+                }
+                aria-invalid={Boolean(groupErrors.roomPreference)}
+                disabled={isCreatingBooking}
+                id="booking-room-setup"
+                onChange={(event) => {
+                  setGroupRoomPreference(event.target.value);
+                  clearGroupError("roomPreference");
+                }}
+                required
+                value={groupRoomPreference}
+              >
+                <option value="shared_dorms">{copy.group.sharedDorms}</option>
+                <option value="private_rooms">{copy.group.privateRooms}</option>
+                <option value="mix_of_both">{copy.group.mixedRooms}</option>
+                <option value="entire_property">
+                  {copy.group.entireProperty}
+                </option>
+                <option value="not_sure">{copy.group.notSure}</option>
+              </select>
+              {groupErrors.roomPreference ? (
+                <small
+                  className="booking-field-error"
+                  id="booking-room-setup-error"
+                >
+                  {groupErrors.roomPreference}
+                </small>
+              ) : null}
+            </label>
+
+            <label className="booking-field" htmlFor="booking-group-surf-level">
+              <span>{copy.group.surfLevelMix}</span>
+              <input
+                aria-describedby={
+                  groupErrors.surfLevel
+                    ? "booking-group-surf-level-error"
+                    : undefined
+                }
+                aria-invalid={Boolean(groupErrors.surfLevel)}
+                disabled={isCreatingBooking}
+                id="booking-group-surf-level"
+                onChange={(event) => {
+                  setGroupSurfLevel(event.target.value);
+                  clearGroupError("surfLevel");
+                }}
+                placeholder={copy.group.surfLevelPlaceholder}
+                required
+                type="text"
+                value={groupSurfLevel}
+              />
+              {groupErrors.surfLevel ? (
+                <small
+                  className="booking-field-error"
+                  id="booking-group-surf-level-error"
+                >
+                  {groupErrors.surfLevel}
+                </small>
+              ) : null}
+            </label>
+
+            <div className="booking-option-grid">
+              {[
+                {
+                  checked: mealsNeeded,
+                  label: copy.group.mealsNeeded,
+                  onChange: setMealsNeeded
+                },
+                {
+                  checked: airportTransfer,
+                  label: copy.group.airportTransfer,
+                  onChange: setAirportTransfer
+                },
+                {
+                  checked: privateCoaching,
+                  label: copy.group.privateCoaching,
+                  onChange: setPrivateCoaching
+                },
+                {
+                  checked: yogaInterest,
+                  label: copy.group.yogaInterest,
+                  onChange: setYogaInterest
+                },
+                {
+                  checked: coworkingInterest,
+                  label: copy.group.coworkingInterest,
+                  onChange: setCoworkingInterest
+                }
+              ].map((option) => (
+                <label className="booking-check-option" key={option.label}>
+                  <input
+                    checked={option.checked}
+                    disabled={isCreatingBooking}
+                    onChange={(event) => option.onChange(event.target.checked)}
+                    type="checkbox"
+                  />
+                  <span>{option.label}</span>
+                </label>
+              ))}
+            </div>
+
+            <label className="booking-field" htmlFor="booking-retreat-name">
+              <span>{copy.group.retreatName}</span>
+              <input
+                disabled={isCreatingBooking}
+                id="booking-retreat-name"
+                onChange={(event) => setRetreatName(event.target.value)}
+                placeholder={copy.group.retreatPlaceholder}
+                type="text"
+                value={retreatName}
+              />
+            </label>
+
+            <label className="booking-field" htmlFor="booking-organizer-name">
+              <span>{copy.group.organizerName}</span>
+              <input
+                aria-describedby={
+                  groupErrors.guestName
+                    ? "booking-organizer-name-error"
+                    : undefined
+                }
+                aria-invalid={Boolean(groupErrors.guestName)}
+                disabled={isCreatingBooking}
+                id="booking-organizer-name"
+                onChange={(event) => {
+                  setGuestName(event.target.value);
+                  clearGroupError("guestName");
+                }}
+                placeholder={copy.guest.namePlaceholder}
+                required
+                type="text"
+                value={guestName}
+              />
+              {groupErrors.guestName ? (
+                <small
+                  className="booking-field-error"
+                  id="booking-organizer-name-error"
+                >
+                  {groupErrors.guestName}
+                </small>
+              ) : null}
+            </label>
+
+            <div className="booking-date-grid">
+              <label className="booking-field" htmlFor="booking-organizer-email">
+                <span>{copy.group.organizerEmail}</span>
+                <input
+                  aria-describedby={
+                    groupErrors.guestEmail
+                      ? "booking-organizer-email-error"
+                      : undefined
+                  }
+                  aria-invalid={Boolean(groupErrors.guestEmail)}
+                  disabled={isCreatingBooking}
+                  id="booking-organizer-email"
+                  onChange={(event) => {
+                    setGuestEmail(event.target.value);
+                    clearGroupError("guestEmail");
+                  }}
+                  placeholder="you@example.com"
+                  required
+                  type="email"
+                  value={guestEmail}
+                />
+                {groupErrors.guestEmail ? (
+                  <small
+                    className="booking-field-error"
+                    id="booking-organizer-email-error"
+                  >
+                    {groupErrors.guestEmail}
+                  </small>
+                ) : null}
+              </label>
+
+              <label className="booking-field" htmlFor="booking-organizer-phone">
+                <span>{copy.group.organizerPhone}</span>
+                <input
+                  aria-describedby={
+                    groupErrors.guestPhone
+                      ? "booking-organizer-phone-error"
+                      : undefined
+                  }
+                  aria-invalid={Boolean(groupErrors.guestPhone)}
+                  disabled={isCreatingBooking}
+                  id="booking-organizer-phone"
+                  onChange={(event) => {
+                    setGuestPhone(event.target.value);
+                    clearGroupError("guestPhone");
+                  }}
+                  placeholder="+212 600 000 000"
+                  required
+                  type="tel"
+                  value={guestPhone}
+                />
+                {groupErrors.guestPhone ? (
+                  <small
+                    className="booking-field-error"
+                    id="booking-organizer-phone-error"
+                  >
+                    {groupErrors.guestPhone}
+                  </small>
+                ) : null}
+              </label>
+            </div>
+
+            <label className="booking-field" htmlFor="booking-group-message">
+              <span>{copy.group.detailedMessage}</span>
+              <textarea
+                aria-describedby={
+                  groupErrors.message ? "booking-group-message-error" : undefined
+                }
+                aria-invalid={Boolean(groupErrors.message)}
+                disabled={isCreatingBooking}
+                id="booking-group-message"
+                onChange={(event) => {
+                  setMessage(event.target.value);
+                  clearGroupError("message");
+                }}
+                placeholder={copy.group.messagePlaceholder}
+                required
+                rows={5}
+                value={message}
+              />
+              {groupErrors.message ? (
+                <small
+                  className="booking-field-error"
+                  id="booking-group-message-error"
+                >
+                  {groupErrors.message}
+                </small>
+              ) : null}
+            </label>
+
+            <button
+              className="btn btn-primary booking-submit"
+              disabled={isCreatingBooking}
+              type="submit"
+            >
+              {isCreatingBooking ? copy.group.submitting : copy.group.submit}
+            </button>
+          </form>
+        ) : (
+          <>
         <form className="booking-form" noValidate onSubmit={handleAvailabilitySubmit}>
           <label className="booking-field" htmlFor="booking-room">
             <span>{copy.flow.room}</span>
@@ -1292,31 +2008,47 @@ export function BookingAvailabilityForm({
             ) : null}
           </label>
 
-          <label className="booking-field" htmlFor="booking-package">
-            <span>{copy.flow.package}</span>
-            <select
-              disabled={!canUsePackageField}
-              id="booking-package"
-              onChange={(event) => {
-                setPackageId(event.target.value);
-                setBooking({ status: "idle" });
-                setPayment({ status: "idle" });
-              }}
-              value={packageId}
-            >
-              <option value="">
-                {isLoadingPackages
-                  ? copy.flow.loadingPackages
-                  : copy.flow.stayOnly}
-              </option>
-              {packages.map((pkg) => (
-                <option key={pkg.id} value={pkg.id}>
-                  {pkg.name} - {formatPrice(pkg.price_cents, locale)} /{" "}
-                  {pkg.duration || copy.flow.packageUnit}
+          {bookingMode === "surf_package" ? (
+            <label className="booking-field" htmlFor="booking-package">
+              <span>{copy.flow.package}</span>
+              <select
+                aria-describedby={
+                  fieldErrors.packageId ? "booking-package-error" : undefined
+                }
+                aria-invalid={Boolean(fieldErrors.packageId)}
+                disabled={!canUsePackageField}
+                id="booking-package"
+                onChange={(event) => {
+                  setPackageId(event.target.value);
+                  clearFieldError("packageId");
+                  setBooking({ status: "idle" });
+                  setPayment({ status: "idle" });
+                }}
+                required
+                value={packageId}
+              >
+                <option value="">
+                  {isLoadingPackages
+                    ? copy.flow.loadingPackages
+                    : copy.flow.noActivePackages}
                 </option>
-              ))}
-            </select>
-          </label>
+                {packages.map((pkg) => (
+                  <option key={pkg.id} value={pkg.id}>
+                    {pkg.name} - {formatPrice(pkg.price_cents, locale)} /{" "}
+                    {pkg.duration || copy.flow.packageUnit}
+                  </option>
+                ))}
+              </select>
+              {fieldErrors.packageId ? (
+                <small
+                  className="booking-field-error"
+                  id="booking-package-error"
+                >
+                  {fieldErrors.packageId}
+                </small>
+              ) : null}
+            </label>
+          ) : null}
 
           <div className="booking-date-grid">
             <label className="booking-field" htmlFor="booking-check-in">
@@ -1405,6 +2137,62 @@ export function BookingAvailabilityForm({
             </label>
           </div>
 
+          {bookingMode === "surf_package" ? (
+            <div className="booking-surf-options">
+              <label className="booking-field" htmlFor="booking-surf-level">
+                <span>{copy.surf.surfLevel}</span>
+                <select
+                  disabled={!canUseFields}
+                  id="booking-surf-level"
+                  onChange={(event) => setSurfLevel(event.target.value)}
+                  value={surfLevel}
+                >
+                  <option value="beginner">{copy.surf.beginner}</option>
+                  <option value="intermediate">
+                    {copy.surf.intermediate}
+                  </option>
+                  <option value="advanced">{copy.surf.advanced}</option>
+                  <option value="mixed_group">{copy.surf.mixedGroup}</option>
+                </select>
+              </label>
+
+              <div className="booking-option-grid">
+                {[
+                  {
+                    checked: airportTransfer,
+                    label: copy.surf.airportTransfer,
+                    onChange: setAirportTransfer
+                  },
+                  {
+                    checked: boardRental,
+                    label: copy.surf.boardRental,
+                    onChange: setBoardRental
+                  },
+                  {
+                    checked: wetsuitRental,
+                    label: copy.surf.wetsuitRental,
+                    onChange: setWetsuitRental
+                  },
+                  {
+                    checked: coworkingInterest,
+                    label: copy.surf.coworkingInterest,
+                    onChange: setCoworkingInterest
+                  }
+                ].map((option) => (
+                  <label className="booking-check-option" key={option.label}>
+                    <input
+                      checked={option.checked}
+                      disabled={!canUseFields}
+                      onChange={(event) => option.onChange(event.target.checked)}
+                      type="checkbox"
+                    />
+                    <span>{option.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
           {isLoadingRooms ? (
             <div
               aria-hidden="true"
@@ -1428,7 +2216,7 @@ export function BookingAvailabilityForm({
             </div>
           ) : null}
 
-          {selectedPackage ? (
+          {bookingMode === "surf_package" && selectedPackage ? (
             <div className="booking-package-summary">
               <p className="eyebrow">{copy.flow.packageSummaryEyebrow}</p>
               <div className="booking-room-summary-heading">
@@ -1443,11 +2231,30 @@ export function BookingAvailabilityForm({
                   selectedPackage.full_description}
               </p>
               <span>{selectedPackage.surf_level}</span>
+              <p className="booking-muted-note">{copy.surf.finalPricing}</p>
             </div>
           ) : null}
 
-          {packageLoadMessage && !selectedPackage ? (
+          {bookingMode === "surf_package" &&
+          packageLoadMessage &&
+          !selectedPackage ? (
             <p className="booking-muted-note">{packageLoadMessage}</p>
+          ) : null}
+
+          {guestCount > 10 ? (
+            <div className="booking-group-suggest">
+              <div>
+                <strong>{copy.flow.groupSuggestTitle}</strong>
+                <p>{copy.flow.groupSuggestCopy}</p>
+              </div>
+              <button
+                className="btn btn-secondary"
+                onClick={() => selectBookingMode("group_request")}
+                type="button"
+              >
+                {copy.flow.switchToGroup}
+              </button>
+            </div>
           ) : null}
 
           {isLoadingRooms ? (
@@ -1666,21 +2473,23 @@ export function BookingAvailabilityForm({
             </button>
           </form>
         ) : null}
+          </>
+        )}
 
         {booking.status === "confirmed" ? (
           <div className="booking-pending-confirmation" aria-live="polite">
             <p className="eyebrow">
-              {settings.depositsEnabled
+              {canOfferDeposit
                 ? copy.pending.depositEyebrow
                 : copy.pending.manualEyebrow}
             </p>
             <h2>
-              {settings.depositsEnabled
+              {canOfferDeposit
                 ? copy.pending.depositTitle
                 : copy.pending.manualTitle}
             </h2>
             <p>
-              {settings.depositsEnabled
+              {canOfferDeposit
                 ? copy.pending.depositBody
                 : copy.pending.manualCopy}
             </p>
@@ -1694,7 +2503,7 @@ export function BookingAvailabilityForm({
                 <dd>{booking.bookingStatus}</dd>
               </div>
             </dl>
-            {settings.depositsEnabled ? (
+            {canOfferDeposit ? (
               <div className="booking-payment-actions">
                 <button
                   className="btn btn-primary"

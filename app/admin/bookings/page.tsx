@@ -62,6 +62,32 @@ function formatDateTime(value: string): string {
   }).format(new Date(value));
 }
 
+function bookingTypeLabel(type: string): string {
+  if (type === "surf_package") {
+    return "Surf package";
+  }
+
+  if (type === "group_request") {
+    return "Group request";
+  }
+
+  return "Stay only";
+}
+
+function formatPreference(value: string | null): string | null {
+  if (!value) {
+    return null;
+  }
+
+  return value
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function booleanLabel(value: boolean): string {
+  return value ? "Yes" : "No";
+}
+
 export default async function AdminBookingsPage({
   searchParams
 }: AdminBookingsPageProps) {
@@ -94,10 +120,12 @@ export default async function AdminBookingsPage({
             <table className="admin-bookings-table">
               <thead>
                 <tr>
+                  <th scope="col">Type</th>
                   <th scope="col">Guest</th>
                   <th scope="col">Email</th>
                   <th scope="col">Room</th>
                   <th scope="col">Package</th>
+                  <th scope="col">Details</th>
                   <th scope="col">Dates</th>
                   <th scope="col">Status</th>
                   <th scope="col">Created</th>
@@ -107,6 +135,11 @@ export default async function AdminBookingsPage({
               <tbody>
                 {bookings.map((booking) => (
                   <tr key={booking.id}>
+                    <td>
+                      <span className="admin-booking-type-pill">
+                        {bookingTypeLabel(booking.bookingType)}
+                      </span>
+                    </td>
                     <td>{booking.guestName}</td>
                     <td>
                       <a href={`mailto:${booking.guestEmail}`}>
@@ -114,7 +147,90 @@ export default async function AdminBookingsPage({
                       </a>
                     </td>
                     <td>{booking.roomName}</td>
-                    <td>{booking.packageName ?? "Stay only"}</td>
+                    <td>
+                      {booking.packageName ??
+                        (booking.bookingType === "group_request"
+                          ? "Custom proposal"
+                          : "Stay only")}
+                    </td>
+                    <td>
+                      <dl className="admin-booking-details">
+                        {booking.groupSize ? (
+                          <div>
+                            <dt>Group size</dt>
+                            <dd>{booking.groupSize}</dd>
+                          </div>
+                        ) : null}
+                        {booking.roomPreference ? (
+                          <div>
+                            <dt>Room preference</dt>
+                            <dd>{formatPreference(booking.roomPreference)}</dd>
+                          </div>
+                        ) : null}
+                        {booking.surfLevel ? (
+                          <div>
+                            <dt>Surf level</dt>
+                            <dd>{formatPreference(booking.surfLevel)}</dd>
+                          </div>
+                        ) : null}
+                        {booking.retreatName ? (
+                          <div>
+                            <dt>Retreat</dt>
+                            <dd>{booking.retreatName}</dd>
+                          </div>
+                        ) : null}
+                        {booking.notes ? (
+                          <div className="admin-booking-note">
+                            <dt>Notes</dt>
+                            <dd>{booking.notes}</dd>
+                          </div>
+                        ) : null}
+                        {booking.bookingType === "surf_package" ? (
+                          <>
+                            <div>
+                              <dt>Transfer</dt>
+                              <dd>{booleanLabel(booking.airportTransfer)}</dd>
+                            </div>
+                            <div>
+                              <dt>Board</dt>
+                              <dd>{booleanLabel(booking.boardRental)}</dd>
+                            </div>
+                            <div>
+                              <dt>Wetsuit</dt>
+                              <dd>{booleanLabel(booking.wetsuitRental)}</dd>
+                            </div>
+                            <div>
+                              <dt>Coworking</dt>
+                              <dd>{booleanLabel(booking.coworkingInterest)}</dd>
+                            </div>
+                          </>
+                        ) : null}
+                        {booking.bookingType === "group_request" ? (
+                          <>
+                            <div>
+                              <dt>Meals</dt>
+                              <dd>{booleanLabel(booking.mealsNeeded)}</dd>
+                            </div>
+                            <div>
+                              <dt>Transfer</dt>
+                              <dd>{booleanLabel(booking.airportTransfer)}</dd>
+                            </div>
+                            <div>
+                              <dt>Private coaching</dt>
+                              <dd>{booleanLabel(booking.privateCoaching)}</dd>
+                            </div>
+                            <div>
+                              <dt>Yoga</dt>
+                              <dd>{booleanLabel(booking.yogaInterest)}</dd>
+                            </div>
+                            <div>
+                              <dt>Coworking</dt>
+                              <dd>{booleanLabel(booking.coworkingInterest)}</dd>
+                            </div>
+                          </>
+                        ) : null}
+                      </dl>
+                    </td>
                     <td>
                       {formatDate(booking.checkIn)} to{" "}
                       {formatDate(booking.checkOut)}
