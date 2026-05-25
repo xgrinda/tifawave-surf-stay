@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Container } from "@/components/primitives/container";
 import { focalPositionToCss } from "@/lib/image-position";
 import type { HomeImage } from "@/lib/home-media";
@@ -19,16 +20,21 @@ export function PlaceSection({
           className={`place-section-media${image ? " has-image" : ""}`}
           aria-hidden="true"
         >
-          <div
-            style={
-              image
-                ? {
-                    backgroundImage: `url("${image.imageUrl}")`,
-                    backgroundPosition: focalPositionToCss(image.focalPosition)
-                  }
-                : undefined
-            }
-          />
+          {image ? (
+            <Image
+              alt=""
+              aria-hidden="true"
+              fill
+              quality={84}
+              sizes="(max-width: 880px) 100vw, 50vw"
+              src={image.imageUrl}
+              style={{
+                objectPosition: focalPositionToCss(image.focalPosition)
+              }}
+            />
+          ) : (
+            <div />
+          )}
         </div>
 
         <div className="place-section-copy">

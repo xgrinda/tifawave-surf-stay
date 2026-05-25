@@ -1,7 +1,6 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element -- Gallery CMS accepts arbitrary remote image URLs. */
-
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import type { PublicGalleryImage } from "@/lib/gallery";
 import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n";
@@ -122,10 +121,12 @@ export function GalleryGrid({
             onClick={() => setSelectedImage(image)}
             type="button"
           >
-            <img
-              alt={image.altText}
-              decoding="async"
-              loading="lazy"
+            <Image
+              alt=""
+              fill
+              priority={index === 0}
+              quality={82}
+              sizes="(max-width: 560px) 100vw, (max-width: 920px) 50vw, 25vw"
               src={image.imageUrl}
               style={{
                 objectPosition: focalPositionToCss(image.focalPosition)
@@ -161,7 +162,18 @@ export function GalleryGrid({
             >
               {copy.close}
             </button>
-            <img alt={selectedImage.altText} src={selectedImage.imageUrl} />
+            <div className="gallery-lightbox-image">
+              <Image
+                alt={selectedImage.altText}
+                fill
+                quality={88}
+                sizes="(max-width: 920px) 100vw, 1060px"
+                src={selectedImage.imageUrl}
+                style={{
+                  objectPosition: focalPositionToCss(selectedImage.focalPosition)
+                }}
+              />
+            </div>
             <div className="gallery-lightbox-copy">
               <p className="eyebrow">{categoryLabel(selectedImage.category)}</p>
               <h2 id="gallery-lightbox-title">

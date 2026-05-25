@@ -8,11 +8,19 @@ type AvailabilityResponse = {
 };
 
 function missingParamResponse(paramName: string) {
+  const messageByParam: Record<string, string> = {
+    checkIn: "Choose a check-in date before checking availability.",
+    checkOut: "Choose a check-out date before checking availability.",
+    roomId: "Choose a room before checking availability."
+  };
+
   return NextResponse.json<AvailabilityResponse>(
     {
       available: false,
       reason: "missing_param",
-      message: `Missing required query parameter: ${paramName}`
+      message:
+        messageByParam[paramName] ??
+        "Please complete the booking details before checking availability."
     },
     { status: 400 }
   );

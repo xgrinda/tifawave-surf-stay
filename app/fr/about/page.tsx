@@ -1,6 +1,7 @@
 /* eslint-disable react/no-unescaped-entities -- French prose uses apostrophes heavily. */
 
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { Container } from "@/components/primitives/container";
 import { getActiveGalleryImages } from "@/lib/gallery";
@@ -100,18 +101,21 @@ export default async function FrenchAboutPage() {
             className={`about-story-visual${storyImage ? " has-image" : ""}`}
             aria-hidden="true"
           >
-            <div
-              style={
-                storyImage
-                  ? {
-                      backgroundImage: `url("${storyImage.imageUrl}")`,
-                      backgroundPosition: focalPositionToCss(
-                        storyImage.focalPosition
-                      )
-                    }
-                  : undefined
-              }
-            />
+            {storyImage ? (
+              <Image
+                alt=""
+                aria-hidden="true"
+                fill
+                quality={84}
+                sizes="(max-width: 880px) 100vw, 50vw"
+                src={storyImage.imageUrl}
+                style={{
+                  objectPosition: focalPositionToCss(storyImage.focalPosition)
+                }}
+              />
+            ) : (
+              <div />
+            )}
           </div>
           <div className="about-story-copy">
             <p className="eyebrow">L'histoire</p>

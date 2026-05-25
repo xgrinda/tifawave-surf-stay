@@ -1,12 +1,13 @@
 /* eslint-disable react/no-unescaped-entities -- French prose uses apostrophes heavily. */
 
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Container } from "@/components/primitives/container";
 import { focalPositionToCss } from "@/lib/image-position";
 import { getActiveRoomBySlug } from "@/lib/rooms";
-import { getSiteUrl } from "@/lib/site";
+import { getSiteUrl, SITE_OG_IMAGE } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
@@ -46,17 +47,39 @@ export async function generateMetadata({
     };
   }
 
+  const title = `${room.name} | Tifawave Surf Stay`;
+  const description =
+    room.description ??
+    `Découvrez ${room.name}: capacité, photos et réservation directe.`;
+  const primaryImage = room.images[0] ?? null;
+
   return {
-    title: `${room.name} | Tifawave Surf Stay`,
-    description:
-      room.description ??
-      `Découvrez ${room.name}: capacité, photos et réservation directe.`,
+    title,
+    description,
     alternates: {
       canonical: `${siteUrl}/fr/stay/${room.slug}`,
       languages: {
         en: `${siteUrl}/stay/${room.slug}`,
         fr: `${siteUrl}/fr/stay/${room.slug}`
       }
+    },
+    openGraph: {
+      title,
+      description,
+      images: [
+        {
+          alt: primaryImage?.altText || `${room.name} chez Tifawave`,
+          url: primaryImage?.imageUrl ?? SITE_OG_IMAGE
+        }
+      ],
+      type: "website",
+      url: `${siteUrl}/fr/stay/${room.slug}`
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [primaryImage?.imageUrl ?? SITE_OG_IMAGE]
     }
   };
 }
@@ -105,17 +128,19 @@ export default async function FrenchRoomDetailPage({
           </div>
 
           {primaryImage ? (
-            <div
-              aria-label={primaryImage.altText || `Image principale ${room.name}`}
-              className="room-detail-primary-image"
-              role="img"
-              style={{
-                backgroundImage: `url("${primaryImage.imageUrl}")`,
-                backgroundPosition: focalPositionToCss(
-                  primaryImage.focalPosition
-                )
-              }}
-            />
+            <div className="room-detail-primary-image">
+              <Image
+                alt={primaryImage.altText || `Image principale ${room.name}`}
+                fill
+                priority
+                quality={84}
+                sizes="(max-width: 880px) 100vw, 50vw"
+                src={primaryImage.imageUrl}
+                style={{
+                  objectPosition: focalPositionToCss(primaryImage.focalPosition)
+                }}
+              />
+            </div>
           ) : (
             <div
               aria-label={`Aperçu image ${room.name}`}
@@ -133,16 +158,18 @@ export default async function FrenchRoomDetailPage({
           {room.images.length > 0 ? (
             <div className="room-detail-gallery-grid">
               {room.images.map((image) => (
-                <div
-                  aria-label={image.altText || `Image galerie ${room.name}`}
-                  className="room-detail-gallery-image"
-                  key={image.id}
-                  role="img"
-                  style={{
-                    backgroundImage: `url("${image.imageUrl}")`,
-                    backgroundPosition: focalPositionToCss(image.focalPosition)
-                  }}
-                />
+                <div className="room-detail-gallery-image" key={image.id}>
+                  <Image
+                    alt={image.altText || `Image galerie ${room.name}`}
+                    fill
+                    quality={82}
+                    sizes="(max-width: 880px) 100vw, 33vw"
+                    src={image.imageUrl}
+                    style={{
+                      objectPosition: focalPositionToCss(image.focalPosition)
+                    }}
+                  />
+                </div>
               ))}
             </div>
           ) : (

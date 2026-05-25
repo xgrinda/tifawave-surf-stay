@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Container } from "@/components/primitives/container";
 import { focalPositionToCss } from "@/lib/image-position";
 import type { HomeImage } from "@/lib/home-media";
@@ -38,17 +39,21 @@ export async function PackagesPreview({
                 <div className="package-card-media">
                   <div
                     className={`package-card-image${image ? " has-image" : ""}`}
-                    style={
-                      image
-                        ? {
-                            backgroundImage: `url("${image.imageUrl}")`,
-                            backgroundPosition: focalPositionToCss(
-                              image.focalPosition
-                            )
-                          }
-                        : undefined
-                    }
-                  />
+                  >
+                    {image ? (
+                      <Image
+                        alt=""
+                        aria-hidden="true"
+                        fill
+                        quality={82}
+                        sizes="(max-width: 880px) 100vw, 33vw"
+                        src={image.imageUrl}
+                        style={{
+                          objectPosition: focalPositionToCss(image.focalPosition)
+                        }}
+                      />
+                    ) : null}
+                  </div>
                   {pkg.featured ? (
                     <span className="package-card-ribbon">{preview.featured}</span>
                   ) : null}

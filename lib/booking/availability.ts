@@ -7,6 +7,8 @@ const INVENTORY_BLOCKING_BOOKING_STATUSES: BookingStatus[] = [
   "pending",
   "confirmed"
 ];
+const AVAILABILITY_CHECK_FAILED_MESSAGE =
+  "We could not check those dates right now. Please try again, or message Tifawave and we will help.";
 
 export type AvailabilityReason =
   | "invalid_dates"
@@ -83,7 +85,7 @@ export async function isRangeAvailable({
     return {
       available: false,
       reason: "database_error",
-      message: activeBooking.error.message
+      message: AVAILABILITY_CHECK_FAILED_MESSAGE
     };
   }
 
@@ -91,7 +93,8 @@ export async function isRangeAvailable({
     return {
       available: false,
       reason: "active_booking",
-      message: "The selected dates overlap an active booking."
+      message:
+        "Those dates are already reserved. Please try another window or message Tifawave for help."
     };
   }
 
@@ -107,7 +110,7 @@ export async function isRangeAvailable({
     return {
       available: false,
       reason: "database_error",
-      message: blockedDate.error.message
+      message: AVAILABILITY_CHECK_FAILED_MESSAGE
     };
   }
 
@@ -115,7 +118,8 @@ export async function isRangeAvailable({
     return {
       available: false,
       reason: "blocked_dates",
-      message: "The selected dates overlap blocked dates."
+      message:
+        "Those dates are not open for online booking right now. Please try another window."
     };
   }
 
@@ -133,7 +137,7 @@ export async function isRangeAvailable({
     return {
       available: false,
       reason: "database_error",
-      message: expiredHolds.error.message
+      message: AVAILABILITY_CHECK_FAILED_MESSAGE
     };
   }
 
@@ -153,7 +157,7 @@ export async function isRangeAvailable({
     return {
       available: false,
       reason: "database_error",
-      message: activeHold.error.message
+      message: AVAILABILITY_CHECK_FAILED_MESSAGE
     };
   }
 
@@ -161,7 +165,8 @@ export async function isRangeAvailable({
     return {
       available: false,
       reason: "active_hold",
-      message: "The selected dates overlap an active hold."
+      message:
+        "Someone is already holding those dates. Please try another window or check back shortly."
     };
   }
 

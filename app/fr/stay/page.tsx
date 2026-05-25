@@ -1,6 +1,7 @@
 /* eslint-disable react/no-unescaped-entities -- French prose uses apostrophes heavily. */
 
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { Container } from "@/components/primitives/container";
 import { focalPositionToCss } from "@/lib/image-position";
@@ -86,23 +87,23 @@ export default async function FrenchStayPage() {
 
           {rooms.length > 0 ? (
             <div className="stay-room-grid">
-              {rooms.map((room) => {
+              {rooms.map((room, index) => {
                 const primaryImage = room.images[0] ?? null;
 
                 return (
                   <article className="stay-room-card" key={room.id}>
                     {primaryImage ? (
-                      <div
-                        aria-label={primaryImage.altText || `Image ${room.name}`}
-                        className="stay-room-card-media"
-                        role="img"
-                      >
-                        <span
-                          aria-hidden="true"
+                      <div className="stay-room-card-media">
+                        <Image
+                          alt={primaryImage.altText || `Image ${room.name}`}
                           className="stay-room-card-image"
+                          fill
+                          priority={index === 0}
+                          quality={82}
+                          sizes="(max-width: 880px) 100vw, 33vw"
+                          src={primaryImage.imageUrl}
                           style={{
-                            backgroundImage: `url("${primaryImage.imageUrl}")`,
-                            backgroundPosition: focalPositionToCss(
+                            objectPosition: focalPositionToCss(
                               primaryImage.focalPosition
                             )
                           }}

@@ -53,7 +53,10 @@ export async function POST(request: Request) {
   const body = await readJsonBody(request);
 
   if (!body) {
-    return errorResponse("invalid_json", "Expected a JSON request body.");
+    return errorResponse(
+      "invalid_json",
+      "Please complete the guest details before sending your request."
+    );
   }
 
   const result = await createPendingBookingFromHold({

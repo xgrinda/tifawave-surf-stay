@@ -10,6 +10,8 @@ const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_PATTERN = /^[+()\-\s\d]{6,40}$/;
+const BOOKING_REQUEST_FAILED_MESSAGE =
+  "We could not send your reservation request right now. Please try again, or message Tifawave and we will help.";
 
 type BookingHoldForConversion = {
   id: string;
@@ -80,7 +82,7 @@ function validatePendingBookingInput({
     return {
       ok: false,
       reason: "invalid_input",
-      message: "A valid holdId is required."
+      message: "Please hold dates before sending guest details."
     };
   }
 
@@ -88,7 +90,7 @@ function validatePendingBookingInput({
     return {
       ok: false,
       reason: "invalid_input",
-      message: "Guest name must be between 2 and 120 characters."
+      message: "Please enter your full name."
     };
   }
 
@@ -96,7 +98,7 @@ function validatePendingBookingInput({
     return {
       ok: false,
       reason: "invalid_input",
-      message: "A valid guest email is required."
+      message: "Please enter a valid email address."
     };
   }
 
@@ -104,7 +106,7 @@ function validatePendingBookingInput({
     return {
       ok: false,
       reason: "invalid_input",
-      message: "A valid phone or WhatsApp number is required."
+      message: "Please enter a valid phone or WhatsApp number."
     };
   }
 
@@ -152,7 +154,7 @@ export async function createPendingBookingFromHold(
     return {
       ok: false,
       reason: "database_error",
-      message: existingBooking.error.message
+      message: BOOKING_REQUEST_FAILED_MESSAGE
     };
   }
 
@@ -174,7 +176,7 @@ export async function createPendingBookingFromHold(
     return {
       ok: false,
       reason: "database_error",
-      message: hold.error.message
+      message: BOOKING_REQUEST_FAILED_MESSAGE
     };
   }
 
@@ -182,7 +184,7 @@ export async function createPendingBookingFromHold(
     return {
       ok: false,
       reason: "invalid_hold",
-      message: "No hold was found for the provided holdId."
+      message: "That temporary hold could not be found. Please check dates again."
     };
   }
 
@@ -192,7 +194,7 @@ export async function createPendingBookingFromHold(
     return {
       ok: false,
       reason: "invalid_hold",
-      message: "This hold has already been released."
+      message: "That temporary hold is no longer active. Please check dates again."
     };
   }
 
@@ -224,7 +226,7 @@ export async function createPendingBookingFromHold(
     return {
       ok: false,
       reason: "database_error",
-      message: room.error.message
+      message: BOOKING_REQUEST_FAILED_MESSAGE
     };
   }
 
@@ -232,7 +234,7 @@ export async function createPendingBookingFromHold(
     return {
       ok: false,
       reason: "invalid_hold",
-      message: "The held room could not be found."
+      message: "The selected room is not available online right now."
     };
   }
 
@@ -260,7 +262,8 @@ export async function createPendingBookingFromHold(
       return {
         ok: false,
         reason: "unavailable",
-        message: "These dates are no longer available."
+        message:
+          "Those dates were just taken by another request. Please try another window."
       };
     }
 
@@ -283,7 +286,7 @@ export async function createPendingBookingFromHold(
     return {
       ok: false,
       reason: "database_error",
-      message: booking.error.message
+      message: BOOKING_REQUEST_FAILED_MESSAGE
     };
   }
 
@@ -301,7 +304,7 @@ export async function createPendingBookingFromHold(
     return {
       ok: false,
       reason: "database_error",
-      message: release.error.message
+      message: BOOKING_REQUEST_FAILED_MESSAGE
     };
   }
 

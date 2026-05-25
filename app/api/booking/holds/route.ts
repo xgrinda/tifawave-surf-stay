@@ -61,7 +61,10 @@ export async function POST(request: Request) {
   const body = await readJsonBody(request);
 
   if (!body) {
-    return errorResponse("invalid_json", "Expected a JSON request body.");
+    return errorResponse(
+      "invalid_json",
+      "Please complete the booking details before holding dates."
+    );
   }
 
   const roomId = stringField(body, "roomId");
@@ -70,15 +73,15 @@ export async function POST(request: Request) {
   const sessionId = stringField(body, "sessionId");
 
   if (!roomId) {
-    return errorResponse("missing_param", "roomId is required.");
+    return errorResponse("missing_param", "Choose a room before holding dates.");
   }
 
   if (!checkIn) {
-    return errorResponse("missing_param", "checkIn is required.");
+    return errorResponse("missing_param", "Choose a check-in date before holding dates.");
   }
 
   if (!checkOut) {
-    return errorResponse("missing_param", "checkOut is required.");
+    return errorResponse("missing_param", "Choose a check-out date before holding dates.");
   }
 
   const result = await createBookingHold({
@@ -111,13 +114,13 @@ export async function DELETE(request: Request) {
   const body = await readJsonBody(request);
 
   if (!body) {
-    return errorResponse("invalid_json", "Expected a JSON request body.");
+    return errorResponse("invalid_json", "We could not find the hold to release.");
   }
 
   const holdId = stringField(body, "holdId");
 
   if (!holdId) {
-    return errorResponse("missing_param", "holdId is required.");
+    return errorResponse("missing_param", "We could not find the hold to release.");
   }
 
   const result = await releaseBookingHold(holdId);

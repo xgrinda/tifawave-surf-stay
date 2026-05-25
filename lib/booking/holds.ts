@@ -3,6 +3,8 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 const HOLD_DURATION_MINUTES = 12;
 const EXCLUSION_VIOLATION_CODE = "23P01";
+const HOLD_CHECK_FAILED_MESSAGE =
+  "We could not hold those dates right now. Please try again, or message Tifawave and we will help.";
 
 export type CreateBookingHoldInput = {
   roomId: string;
@@ -62,7 +64,7 @@ export async function createBookingHold({
     return {
       ok: false,
       reason: "invalid_input",
-      message: "roomId is required."
+      message: "Please choose a room before holding dates."
     };
   }
 
@@ -70,7 +72,7 @@ export async function createBookingHold({
     return {
       ok: false,
       reason: "invalid_input",
-      message: "guests must be a positive integer."
+      message: "Please choose at least 1 guest."
     };
   }
 
@@ -108,14 +110,15 @@ export async function createBookingHold({
       return {
         ok: false,
         reason: "unavailable",
-        message: "The selected dates are no longer available."
+        message:
+          "Those dates were just taken by another request. Please try another window."
       };
     }
 
     return {
       ok: false,
       reason: "database_error",
-      message: error.message
+      message: HOLD_CHECK_FAILED_MESSAGE
     };
   }
 
@@ -133,7 +136,7 @@ export async function releaseBookingHold(
     return {
       ok: false,
       reason: "invalid_input",
-      message: "holdId is required."
+      message: "We could not find the hold to release."
     };
   }
 
@@ -154,7 +157,7 @@ export async function releaseBookingHold(
     return {
       ok: false,
       reason: "database_error",
-      message: error.message
+      message: "We could not release that hold right now. Please try again."
     };
   }
 
@@ -162,7 +165,7 @@ export async function releaseBookingHold(
     return {
       ok: false,
       reason: "not_found",
-      message: "No active hold was found for the provided holdId."
+      message: "That temporary hold is no longer active."
     };
   }
 

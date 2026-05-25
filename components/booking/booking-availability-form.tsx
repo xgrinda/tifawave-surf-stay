@@ -179,7 +179,8 @@ const bookingCopy = {
       checking: "Checking these dates...",
       available: "These dates are available. You can place a short hold now.",
       notAvailable: "These dates are not available.",
-      requestFailed: "Availability could not be checked right now.",
+      requestFailed:
+        "We could not check those dates just now. Please try again, or message Tifawave and we will help.",
       holdSuccess: "Your dates are temporarily held. Add guest details next."
     },
     status: {
@@ -232,9 +233,11 @@ const bookingCopy = {
     hold: {
       checkBeforeHold: "Check the room and dates before holding them.",
       checkAvailabilityFirst: "Check availability before holding dates.",
-      couldNotHold: "These dates could not be held.",
-      noLongerAvailable: "These dates are no longer available.",
-      requestFailed: "The hold could not be created right now.",
+      couldNotHold: "We could not hold those dates. Please try one more time.",
+      noLongerAvailable:
+        "Those dates were just taken by another request. Please try another window.",
+      requestFailed:
+        "We could not hold those dates just now. Please try again, or message Tifawave.",
       holdDates: "Hold these dates",
       holdingDates: "Holding dates...",
       eyebrow: "Temporary hold confirmed",
@@ -252,8 +255,9 @@ const bookingCopy = {
     },
     guest: {
       fixFields: "Please fix the highlighted guest details.",
-      pendingCouldNotCreate: "The pending booking could not be created.",
-      pendingCouldNotCreateNow: "The pending booking could not be created right now.",
+      pendingCouldNotCreate: "We could not send your reservation request.",
+      pendingCouldNotCreateNow:
+        "We could not send your reservation request just now. Please try again, or message Tifawave.",
       eyebrow: "Guest details",
       title: "Create a pending booking.",
       name: "Name",
@@ -287,8 +291,8 @@ const bookingCopy = {
       checkoutCouldNotStart: "Stripe checkout could not be started.",
       checkoutCouldNotStartNow: "Stripe checkout could not be started right now.",
       checkoutNotStarted: "Checkout not started",
-      pendingNotCreated: "Pending booking not created",
-      holdNotCreated: "Hold not created"
+      pendingNotCreated: "Request not sent",
+      holdNotCreated: "Dates not held"
     }
   },
   fr: {
@@ -322,7 +326,8 @@ const bookingCopy = {
       checking: "Vérification des dates...",
       available: "Ces dates sont disponibles. Vous pouvez poser une courte option.",
       notAvailable: "Ces dates ne sont pas disponibles.",
-      requestFailed: "Impossible de vérifier les disponibilités pour le moment.",
+      requestFailed:
+        "Nous n'avons pas pu vérifier ces dates pour le moment. Réessayez ou contactez Tifawave.",
       holdSuccess: "Vos dates sont temporairement bloquées. Ajoutez vos coordonnées."
     },
     status: {
@@ -375,9 +380,11 @@ const bookingCopy = {
     hold: {
       checkBeforeHold: "Vérifiez la chambre et les dates avant de les bloquer.",
       checkAvailabilityFirst: "Vérifiez les disponibilités avant de bloquer les dates.",
-      couldNotHold: "Ces dates n'ont pas pu être bloquées.",
-      noLongerAvailable: "Ces dates ne sont plus disponibles.",
-      requestFailed: "Impossible de créer l'option pour le moment.",
+      couldNotHold: "Nous n'avons pas pu bloquer ces dates. Réessayez une fois.",
+      noLongerAvailable:
+        "Ces dates viennent d'être prises par une autre demande. Essayez une autre période.",
+      requestFailed:
+        "Nous n'avons pas pu bloquer ces dates pour le moment. Réessayez ou contactez Tifawave.",
       holdDates: "Bloquer ces dates",
       holdingDates: "Blocage des dates...",
       eyebrow: "Option temporaire confirmée",
@@ -395,9 +402,9 @@ const bookingCopy = {
     },
     guest: {
       fixFields: "Corrigez les coordonnées indiquées.",
-      pendingCouldNotCreate: "La réservation en attente n'a pas pu être créée.",
+      pendingCouldNotCreate: "Nous n'avons pas pu envoyer votre demande.",
       pendingCouldNotCreateNow:
-        "La réservation en attente n'a pas pu être créée pour le moment.",
+        "Nous n'avons pas pu envoyer votre demande pour le moment. Réessayez ou contactez Tifawave.",
       eyebrow: "Coordonnées",
       title: "Créer une réservation en attente.",
       name: "Nom",
@@ -431,8 +438,8 @@ const bookingCopy = {
       checkoutCouldNotStart: "Le paiement Stripe n'a pas pu démarrer.",
       checkoutCouldNotStartNow: "Le paiement Stripe n'a pas pu démarrer pour le moment.",
       checkoutNotStarted: "Paiement non démarré",
-      pendingNotCreated: "Réservation en attente non créée",
-      holdNotCreated: "Option non créée"
+      pendingNotCreated: "Demande non envoyée",
+      holdNotCreated: "Dates non bloquées"
     }
   }
 } as const;
@@ -1283,7 +1290,16 @@ export function BookingAvailabilityForm({
             </label>
           </div>
 
-          {selectedRoom ? (
+          {isLoadingRooms ? (
+            <div
+              aria-hidden="true"
+              className="booking-room-summary booking-room-summary-skeleton"
+            >
+              <span className="booking-skeleton-line booking-skeleton-line-wide" />
+              <span className="booking-skeleton-line" />
+              <span className="booking-skeleton-line booking-skeleton-line-short" />
+            </div>
+          ) : selectedRoom ? (
             <div className="booking-room-summary">
               <div className="booking-room-summary-heading">
                 <strong>{selectedRoom.name}</strong>
@@ -1298,7 +1314,9 @@ export function BookingAvailabilityForm({
           ) : null}
 
           {isLoadingRooms ? (
-            <p className="booking-muted-note">{copy.flow.loadingRoomOptions}</p>
+            <p className="sr-only" role="status">
+              {copy.flow.loadingRoomOptions}
+            </p>
           ) : null}
 
           {roomLoadMessage ? (
@@ -1318,8 +1336,8 @@ export function BookingAvailabilityForm({
           className={`booking-status booking-status-${availability.status}${
             isChecking ? " booking-status-loading" : ""
           }`}
-          role="status"
-          aria-live="polite"
+          role={availability.status === "error" ? "alert" : "status"}
+          aria-live={availability.status === "error" ? "assertive" : "polite"}
         >
           <div className="booking-status-copy">
             <span>{statusLabel(availability, isChecking, copy.status)}</span>
@@ -1564,7 +1582,11 @@ export function BookingAvailabilityForm({
         ) : null}
 
         {payment.status === "error" ? (
-          <div className="booking-status booking-status-error" role="status">
+          <div
+            className="booking-status booking-status-error"
+            role="alert"
+            aria-live="assertive"
+          >
             <div className="booking-status-copy">
               <span>{copy.errors.checkoutNotStarted}</span>
               <p>{payment.message}</p>
@@ -1573,7 +1595,11 @@ export function BookingAvailabilityForm({
         ) : null}
 
         {booking.status === "error" ? (
-          <div className="booking-status booking-status-error" role="status">
+          <div
+            className="booking-status booking-status-error"
+            role="alert"
+            aria-live="assertive"
+          >
             <div className="booking-status-copy">
               <span>{copy.errors.pendingNotCreated}</span>
               <p>{booking.message}</p>
@@ -1582,7 +1608,11 @@ export function BookingAvailabilityForm({
         ) : null}
 
         {hold.status === "error" ? (
-          <div className="booking-status booking-status-error" role="status">
+          <div
+            className="booking-status booking-status-error"
+            role="alert"
+            aria-live="assertive"
+          >
             <div className="booking-status-copy">
               <span>{copy.errors.holdNotCreated}</span>
               <p>{hold.message}</p>

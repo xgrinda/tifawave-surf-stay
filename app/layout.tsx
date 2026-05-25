@@ -7,7 +7,7 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { getAnalyticsEnv } from "@/lib/env";
 import { getLocaleFromPathname } from "@/lib/i18n";
 import { getWebsiteSettings, getWhatsappHref } from "@/lib/settings";
-import { getSiteUrl, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
+import { getSiteUrl, SITE_DESCRIPTION, SITE_NAME, SITE_OG_IMAGE } from "@/lib/site";
 import { fraunces, inter } from "./fonts";
 import "./globals.css";
 
@@ -19,6 +19,15 @@ export const metadata: Metadata = {
   openGraph: {
     title: SITE_NAME,
     description: SITE_DESCRIPTION,
+    images: [
+      {
+        alt: "Surfer walking toward Atlantic waves near Tamraght",
+        height: 630,
+        url: SITE_OG_IMAGE,
+        width: 1200
+      }
+    ],
+    locale: "en_US",
     siteName: SITE_NAME,
     type: "website",
     url: getSiteUrl()
@@ -30,7 +39,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: SITE_NAME,
-    description: SITE_DESCRIPTION
+    description: SITE_DESCRIPTION,
+    images: [SITE_OG_IMAGE]
   }
 };
 

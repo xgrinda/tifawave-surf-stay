@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Container } from "@/components/primitives/container";
 import { focalPositionToCss } from "@/lib/image-position";
 import { getActiveRoomBySlug } from "@/lib/rooms";
-import { getSiteUrl } from "@/lib/site";
+import { getSiteUrl, SITE_OG_IMAGE } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
@@ -44,17 +45,39 @@ export async function generateMetadata({
     };
   }
 
+  const title = `${room.name} | Tifawave Surf Stay`;
+  const description =
+    room.description ??
+    `View ${room.name} details, capacity, room images, and direct booking.`;
+  const primaryImage = room.images[0] ?? null;
+
   return {
-    title: `${room.name} | Tifawave Surf Stay`,
-    description:
-      room.description ??
-      `View ${room.name} details, capacity, room images, and direct booking.`,
+    title,
+    description,
     alternates: {
       canonical: `${siteUrl}/stay/${room.slug}`,
       languages: {
         en: `${siteUrl}/stay/${room.slug}`,
         fr: `${siteUrl}/fr/stay/${room.slug}`
       }
+    },
+    openGraph: {
+      title,
+      description,
+      images: [
+        {
+          alt: primaryImage?.altText || `${room.name} at Tifawave`,
+          url: primaryImage?.imageUrl ?? SITE_OG_IMAGE
+        }
+      ],
+      type: "website",
+      url: `${siteUrl}/stay/${room.slug}`
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [primaryImage?.imageUrl ?? SITE_OG_IMAGE]
     }
   };
 }
@@ -101,17 +124,19 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
           </div>
 
           {primaryImage ? (
-            <div
-              aria-label={primaryImage.altText || `${room.name} primary image`}
-              className="room-detail-primary-image"
-              role="img"
-              style={{
-                backgroundImage: `url("${primaryImage.imageUrl}")`,
-                backgroundPosition: focalPositionToCss(
-                  primaryImage.focalPosition
-                )
-              }}
-            />
+            <div className="room-detail-primary-image">
+              <Image
+                alt={primaryImage.altText || `${room.name} primary image`}
+                fill
+                priority
+                quality={84}
+                sizes="(max-width: 880px) 100vw, 50vw"
+                src={primaryImage.imageUrl}
+                style={{
+                  objectPosition: focalPositionToCss(primaryImage.focalPosition)
+                }}
+              />
+            </div>
           ) : (
             <div
               aria-label={`${room.name} image preview`}
@@ -129,16 +154,18 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
           {room.images.length > 0 ? (
             <div className="room-detail-gallery-grid">
               {room.images.map((image) => (
-                <div
-                  aria-label={image.altText || `${room.name} gallery image`}
-                  className="room-detail-gallery-image"
-                  key={image.id}
-                  role="img"
-                  style={{
-                    backgroundImage: `url("${image.imageUrl}")`,
-                    backgroundPosition: focalPositionToCss(image.focalPosition)
-                  }}
-                />
+                <div className="room-detail-gallery-image" key={image.id}>
+                  <Image
+                    alt={image.altText || `${room.name} gallery image`}
+                    fill
+                    quality={82}
+                    sizes="(max-width: 880px) 100vw, 33vw"
+                    src={image.imageUrl}
+                    style={{
+                      objectPosition: focalPositionToCss(image.focalPosition)
+                    }}
+                  />
+                </div>
               ))}
             </div>
           ) : (

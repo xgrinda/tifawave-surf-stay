@@ -63,11 +63,29 @@ a {
   text-decoration: none;
 }
 
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--sun) 68%, white);
+  outline-offset: 3px;
+}
+
 button,
 input,
 textarea,
 select {
   font: inherit;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+  padding: 0;
 }
 
 .container-shell {
@@ -598,15 +616,16 @@ select {
   background-size: cover;
 }
 
+.package-card-image img {
+  object-fit: cover;
+  object-position: center center;
+}
+
 .package-card-image.has-image::after {
   content: "";
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg, rgb(11 31 42 / 8%), rgb(11 31 42 / 28%));
-}
-
-.package-card:hover .package-card-image {
-  transform: scale(1.06);
 }
 
 .package-card-ocean .package-card-image {
@@ -779,6 +798,13 @@ select {
 .stay-preview-media.has-image > div {
   background-repeat: no-repeat;
   background-size: cover;
+}
+
+.stay-preview-media img,
+.place-section-media img,
+.about-story-visual img {
+  object-fit: cover;
+  object-position: center center;
 }
 
 .stay-preview-copy h2 {
@@ -2117,6 +2143,8 @@ select {
   position: absolute;
   inset: 0;
   background: center / cover no-repeat;
+  object-fit: cover;
+  object-position: center center;
   transform: scale(1);
   transition: transform 520ms var(--ease-lux);
 }
@@ -2493,6 +2521,7 @@ select {
 }
 
 @media (hover: hover) and (pointer: fine) {
+  .package-card:hover .package-card-image,
   .stay-room-card:hover .stay-room-card-image,
   .stay-room-card:focus-within .stay-room-card-image,
   .gallery-tile:hover img,
@@ -2557,11 +2586,15 @@ select {
   box-shadow: 0 32px 120px -46px rgb(0 0 0 / 80%);
 }
 
-.gallery-lightbox-panel img {
+.gallery-lightbox-image {
+  position: relative;
   width: 100%;
-  max-height: 70vh;
-  object-fit: contain;
+  height: min(70vh, 720px);
   background: var(--ink-800);
+}
+
+.gallery-lightbox-image img {
+  object-fit: contain;
 }
 
 .gallery-lightbox-close {
@@ -2723,12 +2756,19 @@ select {
 }
 
 .room-detail-primary-image {
+  position: relative;
+  overflow: hidden;
   min-height: clamp(420px, 56vw, 680px);
   border-radius: 24px;
   background:
     linear-gradient(135deg, rgb(11 31 42 / 18%), rgb(46 139 139 / 12%)),
     center / cover no-repeat;
   box-shadow: 0 34px 80px -56px rgb(11 31 42 / 80%);
+}
+
+.room-detail-primary-image img {
+  object-fit: cover;
+  object-position: center center;
 }
 
 .room-detail-image-placeholder {
@@ -2752,10 +2792,17 @@ select {
 }
 
 .room-detail-gallery-image {
+  position: relative;
+  overflow: hidden;
   min-height: 330px;
   border-radius: 18px;
   background: center / cover no-repeat var(--sand);
   box-shadow: 0 24px 60px -48px rgb(11 31 42 / 70%);
+}
+
+.room-detail-gallery-image img {
+  object-fit: cover;
+  object-position: center center;
 }
 
 .room-detail-empty-gallery {
@@ -3351,6 +3398,28 @@ select {
   color: var(--ink-700);
   font-size: 0.8125rem;
   font-weight: 700;
+}
+
+.booking-room-summary-skeleton {
+  border-left-color: rgb(11 31 42 / 10%);
+  background: rgb(246 241 231 / 54%);
+}
+
+.booking-skeleton-line {
+  display: block;
+  width: 72%;
+  height: 12px;
+  border-radius: 999px;
+  background: rgb(11 31 42 / 10%);
+}
+
+.booking-skeleton-line-wide {
+  width: 88%;
+  height: 18px;
+}
+
+.booking-skeleton-line-short {
+  width: 46%;
 }
 
 .booking-muted-note {
