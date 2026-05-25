@@ -116,6 +116,7 @@ export type BookingPaymentReturn =
 export type BookingInitialParams = {
   checkIn?: string;
   checkOut?: string;
+  guests?: string;
   roomId?: string;
 };
 
@@ -133,6 +134,7 @@ type FieldErrors = {
   roomId?: string;
   checkIn?: string;
   checkOut?: string;
+  guests?: string;
 };
 
 type GuestFieldErrors = {
@@ -193,6 +195,8 @@ const bookingCopy = {
       checkInPast: "Check-in cannot be before today.",
       chooseCheckOut: "Choose a check-out date.",
       checkOutAfter: "Check-out must be after check-in.",
+      guestsPositive: "Choose at least 1 guest.",
+      guestsCapacity: "Guest count is above this room's capacity.",
       guestName: "Enter a guest name between 2 and 120 characters.",
       guestEmail: "Enter a valid email address.",
       guestPhone: "Enter a valid phone or WhatsApp number.",
@@ -215,6 +219,7 @@ const bookingCopy = {
       noActiveRooms: "No active rooms",
       checkIn: "Check-in",
       checkOut: "Check-out",
+      guestCount: "Guests",
       loadingRoomOptions: "Loading room options...",
       checkAvailability: "Check availability",
       checking: "Checking...",
@@ -333,6 +338,8 @@ const bookingCopy = {
       checkInPast: "L'arrivée ne peut pas être avant aujourd'hui.",
       chooseCheckOut: "Choisissez une date de départ.",
       checkOutAfter: "Le départ doit être après l'arrivée.",
+      guestsPositive: "Choisissez au moins 1 personne.",
+      guestsCapacity: "Le nombre de personnes dépasse la capacité de cette chambre.",
       guestName: "Indiquez un nom entre 2 et 120 caractères.",
       guestEmail: "Indiquez une adresse email valide.",
       guestPhone: "Indiquez un téléphone ou WhatsApp valide.",
@@ -355,6 +362,7 @@ const bookingCopy = {
       noActiveRooms: "Aucune chambre active",
       checkIn: "Arrivée",
       checkOut: "Départ",
+      guestCount: "Voyageurs",
       loadingRoomOptions: "Chargement des options de chambre...",
       checkAvailability: "Vérifier les disponibilités",
       checking: "Vérification...",
@@ -479,6 +487,16 @@ function toDateInputValue(date: Date): string {
 
 function normalizeDateInput(value: string | undefined): string {
   return value && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : "";
+}
+
+function normalizeGuestCountInput(value: string | undefined): string {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? String(parsed) : "1";
+}
+
+function parseGuestCount(value: string): number {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : 1;
 }
 
 function addDaysToDateInput(value: string, days: number): string {
@@ -629,10 +647,12 @@ export function BookingAvailabilityForm({
   const initialRoomId = initialParams.roomId?.trim() ?? "";
   const initialCheckIn = normalizeDateInput(initialParams.checkIn);
   const initialCheckOut = normalizeDateInput(initialParams.checkOut);
+  const initialGuests = normalizeGuestCountInput(initialParams.guests);
   const [rooms, setRooms] = useState<RoomOption[]>([]);
   const [roomId, setRoomId] = useState(initialRoomId);
   const [checkIn, setCheckIn] = useState(initialCheckIn);
   const [checkOut, setCheckOut] = useState(initialCheckOut);
+  const [guests, setGuests] = useState(initialGuests);
   const [isLoadingRooms, setIsLoadingRooms] = useState(true);
   const [isChecking, setIsChecking] = useState(false);
   const [isHolding, setIsHolding] = useState(false);
@@ -669,6 +689,7 @@ export function BookingAvailabilityForm({
   const canUseFields =
     !isLoadingRooms && !isBusy && rooms.length > 0 && booking.status !== "confirmed";
   const checkOutMin = checkIn ? addDaysToDateInput(checkIn, 1) : today;
+  const guestCount = parseGuestCount(guests);
 
   useEffect(() => {
     let isMounted = true;
@@ -758,6 +779,12 @@ export function BookingAvailabilityForm({
       errors.checkOut = copy.validation.chooseCheckOut;
     } else if (checkIn && checkOut <= checkIn) {
       errors.checkOut = copy.validation.checkOutAfter;
+    }
+
+    if (!Number.isInteger(guestCount) || guestCount < 1) {
+      errors.guests = copy.validation.guestsPositive;
+    } else if (selectedRoom && guestCount > selectedRoom.max_guests) {
+      errors.guests = copy.validation.guestsCapacity;
     }
 
     return errors;
@@ -919,7 +946,8 @@ export function BookingAvailabilityForm({
         body: JSON.stringify({
           roomId,
           checkIn,
-          checkOut
+          checkOut,
+          guests: guestCount
         }),
         headers: {
           "content-type": "application/json"
@@ -1223,6 +1251,33 @@ export function BookingAvailabilityForm({
                   id="booking-check-out-error"
                 >
                   {fieldErrors.checkOut}
+                </small>
+              ) : null}
+            </label>
+
+            <label className="booking-field" htmlFor="booking-guests">
+              <span>{copy.flow.guestCount}</span>
+              <input
+                aria-describedby={
+                  fieldErrors.guests ? "booking-guests-error" : undefined
+                }
+                aria-invalid={Boolean(fieldErrors.guests)}
+                disabled={!canUseFields}
+                id="booking-guests"
+                max={selectedRoom?.max_guests}
+                min="1"
+                onChange={(event) => {
+                  setGuests(event.target.value);
+                  clearFieldError("guests");
+                  resetResultState();
+                }}
+                required
+                type="number"
+                value={guests}
+              />
+              {fieldErrors.guests ? (
+                <small className="booking-field-error" id="booking-guests-error">
+                  {fieldErrors.guests}
                 </small>
               ) : null}
             </label>

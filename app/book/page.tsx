@@ -29,6 +29,7 @@ type BookPageProps = {
     bookingId?: string;
     checkIn?: string;
     checkOut?: string;
+    guests?: string;
     payment?: string;
     roomId?: string;
   }>;
@@ -85,6 +86,7 @@ export default async function BookPage({ searchParams }: BookPageProps) {
   const initialParams: BookingInitialParams = {
     checkIn: params?.checkIn,
     checkOut: params?.checkOut,
+    guests: params?.guests,
     roomId: params?.roomId
   };
 

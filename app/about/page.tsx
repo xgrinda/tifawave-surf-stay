@@ -58,7 +58,8 @@ export default async function AboutPage() {
     "rooms",
     "tamraght",
     "place",
-    "sunset"
+    "sunset",
+    "view"
   ]);
 
   return (

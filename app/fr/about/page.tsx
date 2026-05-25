@@ -60,7 +60,8 @@ export default async function FrenchAboutPage() {
     "rooms",
     "tamraght",
     "place",
-    "sunset"
+    "sunset",
+    "view"
   ]);
 
   return (

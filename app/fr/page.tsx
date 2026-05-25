@@ -9,6 +9,7 @@ import { StayPreview } from "@/components/home/stay-preview";
 import { TrustStrip } from "@/components/home/trust-strip";
 import { getActiveGalleryImages } from "@/lib/gallery";
 import {
+  getPlaceFallbackHomeImage,
   getPackageHomeImages,
   getPrimaryRoomHomeImage,
   getTaggedGalleryHomeImage
@@ -38,8 +39,9 @@ export default async function FrenchHome() {
   const placeImage = getTaggedGalleryHomeImage(galleryImages, [
     "tamraght",
     "place",
-    "sunset"
-  ]);
+    "sunset",
+    "view"
+  ]) ?? getPlaceFallbackHomeImage();
   const packageImages = getPackageHomeImages(galleryImages);
 
   return (

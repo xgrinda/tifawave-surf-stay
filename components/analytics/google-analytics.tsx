@@ -50,7 +50,9 @@ export function GoogleAnalytics({ measurementId }: GoogleAnalyticsProps) {
 
       const url = new URL(link.href);
 
-      if (url.origin !== window.location.origin || url.pathname !== "/book") {
+      const isBookingPath = url.pathname === "/book" || url.pathname === "/fr/book";
+
+      if (url.origin !== window.location.origin || !isBookingPath) {
         return;
       }
 

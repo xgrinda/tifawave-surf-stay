@@ -68,6 +68,7 @@ export async function isRangeAvailable({
   }
 
   const supabase = createSupabaseAdminClient();
+  const now = new Date().toISOString();
 
   const activeBooking = await supabase
     .from("bookings")
@@ -118,13 +119,32 @@ export async function isRangeAvailable({
     };
   }
 
-  // This intentionally matches the conservative database exclusion constraint.
-  // Expired holds still block until a future sweep/API marks released_at.
+  const expiredHolds = await supabase
+    .from("booking_holds")
+    .update({
+      released_at: now,
+      updated_at: now
+    })
+    .eq("room_id", roomId)
+    .is("released_at", null)
+    .lte("expires_at", now);
+
+  if (expiredHolds.error) {
+    return {
+      available: false,
+      reason: "database_error",
+      message: expiredHolds.error.message
+    };
+  }
+
+  // Keep this aligned with the database exclusion constraint: only unreleased,
+  // unexpired holds should block inventory.
   const activeHold = await supabase
     .from("booking_holds")
     .select("id")
     .eq("room_id", roomId)
     .is("released_at", null)
+    .gt("expires_at", now)
     .lt("check_in", checkOut)
     .gt("check_out", checkIn)
     .limit(1);
