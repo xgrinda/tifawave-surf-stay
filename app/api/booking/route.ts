@@ -61,6 +61,7 @@ export async function POST(request: Request) {
 
   const result = await createPendingBookingFromHold({
     holdId: stringField(body, "holdId"),
+    packageId: optionalStringField(body, "packageId"),
     guestName: stringField(body, "guestName"),
     guestEmail: stringField(body, "guestEmail"),
     guestPhone: stringField(body, "guestPhone"),

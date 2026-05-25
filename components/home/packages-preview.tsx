@@ -89,7 +89,7 @@ export async function PackagesPreview({
                     </p>
                     <a
                       className="btn btn-primary"
-                      href={localizedPath(locale, "/book")}
+                      href={`${localizedPath(locale, "/book")}?packageId=${pkg.id}`}
                     >
                       {copy.common.book}
                     </a>

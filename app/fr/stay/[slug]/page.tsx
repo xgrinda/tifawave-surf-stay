@@ -118,7 +118,7 @@ export default async function FrenchRoomDetailPage({
               </div>
             </dl>
             <div className="room-detail-actions">
-              <Link className="btn btn-primary" href="/fr/book">
+              <Link className="btn btn-primary" href={`/fr/book?roomId=${room.id}`}>
                 Réserver cette chambre
               </Link>
               <Link className="btn btn-secondary" href="/fr/stay">

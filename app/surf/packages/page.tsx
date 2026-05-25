@@ -84,7 +84,10 @@ export default async function SurfPackagesPage() {
                     >
                       View details
                     </Link>
-                    <Link className="surf-package-book-link" href="/book">
+                    <Link
+                      className="surf-package-book-link"
+                      href={`/book?packageId=${pkg.id}`}
+                    >
                       Book
                     </Link>
                   </div>

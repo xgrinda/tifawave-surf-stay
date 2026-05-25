@@ -100,7 +100,7 @@ export default async function FrenchSurfPackageDetailPage({
             <h1 id="surf-package-detail-title">{pkg.name}</h1>
             <p>{pkg.fullDescription}</p>
             <div className="surf-package-detail-actions">
-              <Link className="btn btn-primary" href="/fr/book">
+              <Link className="btn btn-primary" href={`/fr/book?packageId=${pkg.id}`}>
                 Réserver ce séjour
               </Link>
               <Link className="btn btn-secondary" href="/fr/surf/packages">
@@ -202,7 +202,7 @@ export default async function FrenchSurfPackageDetailPage({
               pourra ajuster les détails du séjour autour de votre voyage.
             </p>
           </div>
-          <Link className="btn btn-primary" href="/fr/book">
+          <Link className="btn btn-primary" href={`/fr/book?packageId=${pkg.id}`}>
             Réserver maintenant
           </Link>
         </Container>

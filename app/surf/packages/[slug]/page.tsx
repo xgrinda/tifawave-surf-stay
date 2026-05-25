@@ -98,7 +98,7 @@ export default async function SurfPackageDetailPage({
             <h1 id="surf-package-detail-title">{pkg.name}</h1>
             <p>{pkg.fullDescription}</p>
             <div className="surf-package-detail-actions">
-              <Link className="btn btn-primary" href="/book">
+              <Link className="btn btn-primary" href={`/book?packageId=${pkg.id}`}>
                 Book this package
               </Link>
               <Link className="btn btn-secondary" href="/surf/packages">
@@ -198,7 +198,7 @@ export default async function SurfPackageDetailPage({
               package details around your stay.
             </p>
           </div>
-          <Link className="btn btn-primary" href="/book">
+          <Link className="btn btn-primary" href={`/book?packageId=${pkg.id}`}>
             Book now
           </Link>
         </Container>

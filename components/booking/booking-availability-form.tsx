@@ -18,6 +18,18 @@ type RoomOption = Pick<
   "id" | "slug" | "name" | "description" | "max_guests" | "base_price_cents"
 >;
 
+type SurfPackageOption = Pick<
+  Row<"packages">,
+  | "id"
+  | "slug"
+  | "name"
+  | "short_description"
+  | "full_description"
+  | "price_cents"
+  | "duration"
+  | "surf_level"
+>;
+
 type AvailabilityResponse = {
   available: boolean;
   reason: string | null;
@@ -117,6 +129,7 @@ export type BookingInitialParams = {
   checkIn?: string;
   checkOut?: string;
   guests?: string;
+  packageId?: string;
   roomId?: string;
 };
 
@@ -216,8 +229,12 @@ const bookingCopy = {
         "Start with a room and travel window. If the dates are free, Tifawave can place a short temporary hold for your stay.",
       roomPreviewAria: "Room options preview",
       room: "Room",
+      package: "Surf package",
+      stayOnly: "Stay only",
       loadingRooms: "Loading rooms...",
+      loadingPackages: "Loading packages...",
       noActiveRooms: "No active rooms",
+      noActivePackages: "Surf packages can be discussed after your request.",
       checkIn: "Check-in",
       checkOut: "Check-out",
       guestCount: "Guests",
@@ -228,6 +245,8 @@ const bookingCopy = {
       manualConfirmationNotice:
         "Your reservation request stays pending until the Tifawave team confirms it by email or WhatsApp.",
       night: "night",
+      packageUnit: "package",
+      packageSummaryEyebrow: "Surf package request",
       guests: (count: number) => `Up to ${count} guests`
     },
     hold: {
@@ -363,8 +382,13 @@ const bookingCopy = {
         "Commencez par une chambre et une fenêtre de voyage. Si les dates sont libres, Tifawave peut poser une courte option temporaire.",
       roomPreviewAria: "Aperçu des chambres",
       room: "Chambre",
+      package: "Séjour surf",
+      stayOnly: "Séjour seulement",
       loadingRooms: "Chargement des chambres...",
+      loadingPackages: "Chargement des séjours...",
       noActiveRooms: "Aucune chambre active",
+      noActivePackages:
+        "Les séjours surf peuvent être discutés après votre demande.",
       checkIn: "Arrivée",
       checkOut: "Départ",
       guestCount: "Voyageurs",
@@ -375,6 +399,8 @@ const bookingCopy = {
       manualConfirmationNotice:
         "Votre demande reste en attente jusqu'à confirmation par l'équipe Tifawave par email ou WhatsApp.",
       night: "nuit",
+      packageUnit: "séjour",
+      packageSummaryEyebrow: "Demande de séjour surf",
       guests: (count: number) => `Jusqu'à ${count} personnes`
     },
     hold: {
@@ -652,20 +678,25 @@ export function BookingAvailabilityForm({
 }) {
   const copy = bookingCopy[locale];
   const initialRoomId = initialParams.roomId?.trim() ?? "";
+  const initialPackageId = initialParams.packageId?.trim() ?? "";
   const initialCheckIn = normalizeDateInput(initialParams.checkIn);
   const initialCheckOut = normalizeDateInput(initialParams.checkOut);
   const initialGuests = normalizeGuestCountInput(initialParams.guests);
   const [rooms, setRooms] = useState<RoomOption[]>([]);
+  const [packages, setPackages] = useState<SurfPackageOption[]>([]);
   const [roomId, setRoomId] = useState(initialRoomId);
+  const [packageId, setPackageId] = useState(initialPackageId);
   const [checkIn, setCheckIn] = useState(initialCheckIn);
   const [checkOut, setCheckOut] = useState(initialCheckOut);
   const [guests, setGuests] = useState(initialGuests);
   const [isLoadingRooms, setIsLoadingRooms] = useState(true);
+  const [isLoadingPackages, setIsLoadingPackages] = useState(true);
   const [isChecking, setIsChecking] = useState(false);
   const [isHolding, setIsHolding] = useState(false);
   const [isCreatingBooking, setIsCreatingBooking] = useState(false);
   const [isStartingCheckout, setIsStartingCheckout] = useState(false);
   const [roomLoadMessage, setRoomLoadMessage] = useState("");
+  const [packageLoadMessage, setPackageLoadMessage] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [guestErrors, setGuestErrors] = useState<GuestFieldErrors>({});
   const [guestName, setGuestName] = useState("");
@@ -690,20 +721,27 @@ export function BookingAvailabilityForm({
     () => rooms.find((room) => room.id === roomId) ?? null,
     [roomId, rooms]
   );
+  const selectedPackage = useMemo(
+    () => packages.find((pkg) => pkg.id === packageId) ?? null,
+    [packageId, packages]
+  );
   const today = useMemo(() => toDateInputValue(new Date()), []);
   const isBusy =
     isChecking || isHolding || isCreatingBooking || isStartingCheckout;
   const canUseFields =
     !isLoadingRooms && !isBusy && rooms.length > 0 && booking.status !== "confirmed";
+  const canUsePackageField =
+    !isLoadingPackages && !isBusy && booking.status !== "confirmed";
   const checkOutMin = checkIn ? addDaysToDateInput(checkIn, 1) : today;
   const guestCount = parseGuestCount(guests);
 
   useEffect(() => {
     let isMounted = true;
 
-    async function loadRooms() {
+    async function loadBookingOptions() {
+      const supabase = createSupabaseBrowserClient();
+
       try {
-        const supabase = createSupabaseBrowserClient();
         const { data, error } = await supabase
           .from("rooms")
           .select("id, slug, name, description, max_guests, base_price_cents")
@@ -743,14 +781,64 @@ export function BookingAvailabilityForm({
           setIsLoadingRooms(false);
         }
       }
+
+      try {
+        const { data, error } = await supabase
+          .from("packages")
+          .select(
+            "id, slug, name, short_description, full_description, price_cents, duration, surf_level"
+          )
+          .eq("is_active", true)
+          .order("display_order", { ascending: true })
+          .order("name", { ascending: true });
+
+        if (error) {
+          throw error;
+        }
+
+        if (!isMounted) {
+          return;
+        }
+
+        const activePackages = data ?? [];
+        setPackages(activePackages);
+        setPackageId((currentPackageId) => {
+          const requestedPackageId = currentPackageId || initialPackageId;
+
+          if (activePackages.some((pkg) => pkg.id === requestedPackageId)) {
+            return requestedPackageId;
+          }
+
+          return "";
+        });
+        setPackageLoadMessage(
+          activePackages.length > 0 ? "" : copy.flow.noActivePackages
+        );
+      } catch {
+        if (!isMounted) {
+          return;
+        }
+
+        setPackageLoadMessage(copy.flow.noActivePackages);
+      } finally {
+        if (isMounted) {
+          setIsLoadingPackages(false);
+        }
+      }
     }
 
-    loadRooms();
+    loadBookingOptions();
 
     return () => {
       isMounted = false;
     };
-  }, [copy.roomLoad.envMissing, copy.roomLoad.noActiveRooms, initialRoomId]);
+  }, [
+    copy.flow.noActivePackages,
+    copy.roomLoad.envMissing,
+    copy.roomLoad.noActiveRooms,
+    initialPackageId,
+    initialRoomId
+  ]);
 
   function resetResultState() {
     setAvailability({
@@ -1031,6 +1119,7 @@ export function BookingAvailabilityForm({
       const response = await fetch("/api/booking", {
         body: JSON.stringify({
           holdId: hold.holdId,
+          packageId: selectedPackage?.id ?? null,
           guestName,
           guestEmail,
           guestPhone,
@@ -1203,6 +1292,32 @@ export function BookingAvailabilityForm({
             ) : null}
           </label>
 
+          <label className="booking-field" htmlFor="booking-package">
+            <span>{copy.flow.package}</span>
+            <select
+              disabled={!canUsePackageField}
+              id="booking-package"
+              onChange={(event) => {
+                setPackageId(event.target.value);
+                setBooking({ status: "idle" });
+                setPayment({ status: "idle" });
+              }}
+              value={packageId}
+            >
+              <option value="">
+                {isLoadingPackages
+                  ? copy.flow.loadingPackages
+                  : copy.flow.stayOnly}
+              </option>
+              {packages.map((pkg) => (
+                <option key={pkg.id} value={pkg.id}>
+                  {pkg.name} - {formatPrice(pkg.price_cents, locale)} /{" "}
+                  {pkg.duration || copy.flow.packageUnit}
+                </option>
+              ))}
+            </select>
+          </label>
+
           <div className="booking-date-grid">
             <label className="booking-field" htmlFor="booking-check-in">
               <span>{copy.flow.checkIn}</span>
@@ -1311,6 +1426,28 @@ export function BookingAvailabilityForm({
               <p>{selectedRoom.description}</p>
               <span>{copy.flow.guests(selectedRoom.max_guests)}</span>
             </div>
+          ) : null}
+
+          {selectedPackage ? (
+            <div className="booking-package-summary">
+              <p className="eyebrow">{copy.flow.packageSummaryEyebrow}</p>
+              <div className="booking-room-summary-heading">
+                <strong>{selectedPackage.name}</strong>
+                <span>
+                  {formatPrice(selectedPackage.price_cents, locale)} /{" "}
+                  {selectedPackage.duration || copy.flow.packageUnit}
+                </span>
+              </div>
+              <p>
+                {selectedPackage.short_description ||
+                  selectedPackage.full_description}
+              </p>
+              <span>{selectedPackage.surf_level}</span>
+            </div>
+          ) : null}
+
+          {packageLoadMessage && !selectedPackage ? (
+            <p className="booking-muted-note">{packageLoadMessage}</p>
           ) : null}
 
           {isLoadingRooms ? (

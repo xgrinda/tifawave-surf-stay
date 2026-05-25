@@ -30,6 +30,7 @@ type FrenchBookPageProps = {
     checkIn?: string;
     checkOut?: string;
     guests?: string;
+    packageId?: string;
     payment?: string;
     roomId?: string;
   }>;
@@ -87,6 +88,7 @@ export default async function FrenchBookPage({ searchParams }: FrenchBookPagePro
     checkIn: params?.checkIn,
     checkOut: params?.checkOut,
     guests: params?.guests,
+    packageId: params?.packageId,
     roomId: params?.roomId
   };
 

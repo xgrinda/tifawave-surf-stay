@@ -9,6 +9,7 @@ export type AdminBooking = {
   guestName: string;
   guestEmail: string;
   roomName: string;
+  packageName: string | null;
   checkIn: string;
   checkOut: string;
   status: BookingStatus;
@@ -21,7 +22,9 @@ export async function getAdminBookings(
   const supabase = createSupabaseAdminClient();
   let query = supabase
     .from("bookings")
-    .select("id, room_id, guest_name, guest_email, check_in, check_out, status, created_at")
+    .select(
+      "id, room_id, package_id, guest_name, guest_email, check_in, check_out, status, created_at"
+    )
     .order("created_at", { ascending: false });
 
   if (filter !== "all") {
@@ -49,12 +52,38 @@ export async function getAdminBookings(
   }
 
   const roomNames = new Map(rooms.map((room) => [room.id, room.name]));
+  const packageIds = Array.from(
+    new Set(
+      bookings
+        .map((booking) => booking.package_id)
+        .filter((packageId): packageId is string => Boolean(packageId))
+    )
+  );
+  const packageNames = new Map<string, string>();
+
+  if (packageIds.length > 0) {
+    const { data: packages, error: packagesError } = await supabase
+      .from("packages")
+      .select("id, name")
+      .in("id", packageIds);
+
+    if (packagesError) {
+      throw new Error(packagesError.message);
+    }
+
+    for (const pkg of packages) {
+      packageNames.set(pkg.id, pkg.name);
+    }
+  }
 
   return bookings.map((booking) => ({
     id: booking.id,
     guestName: booking.guest_name ?? "Guest",
     guestEmail: booking.guest_email ?? "No email",
     roomName: roomNames.get(booking.room_id) ?? "Room unavailable",
+    packageName: booking.package_id
+      ? packageNames.get(booking.package_id) ?? "Package unavailable"
+      : null,
     checkIn: booking.check_in,
     checkOut: booking.check_out,
     status: booking.status,

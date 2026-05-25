@@ -2247,6 +2247,12 @@ select {
   text-align: right;
 }
 
+.stay-room-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 18px;
+}
+
 .stay-room-link {
   display: inline-flex;
   align-items: center;
@@ -3358,13 +3364,23 @@ select {
   font-weight: 700;
 }
 
-.booking-room-summary {
+.booking-room-summary,
+.booking-package-summary {
   display: grid;
   gap: 10px;
   border-left: 3px solid var(--sun);
   background: rgb(246 241 231 / 68%);
   color: var(--muted);
   padding: 14px 16px;
+}
+
+.booking-package-summary {
+  border-left-color: var(--seaglass);
+  background: rgb(46 139 139 / 8%);
+}
+
+.booking-package-summary .eyebrow {
+  color: var(--seaglass);
 }
 
 .booking-room-summary-heading {
@@ -3389,12 +3405,14 @@ select {
   white-space: nowrap;
 }
 
-.booking-room-summary p {
+.booking-room-summary p,
+.booking-package-summary p:not(.eyebrow) {
   margin: 0;
   font-size: 0.9375rem;
 }
 
-.booking-room-summary > span {
+.booking-room-summary > span,
+.booking-package-summary > span {
   color: var(--ink-700);
   font-size: 0.8125rem;
   font-weight: 700;

@@ -137,20 +137,42 @@ export default async function FrenchStayPage() {
                         </div>
                       </dl>
 
-                      <Link className="stay-room-link" href={`/fr/stay/${room.slug}`}>
-                        Voir la chambre
-                        <svg
-                          aria-hidden="true"
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
+                      <div className="stay-room-actions">
+                        <Link
+                          className="stay-room-link"
+                          href={`/fr/stay/${room.slug}`}
                         >
-                          <path d="M5 12h14M13 6l6 6-6 6" />
-                        </svg>
-                      </Link>
+                          Voir la chambre
+                          <svg
+                            aria-hidden="true"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <path d="M5 12h14M13 6l6 6-6 6" />
+                          </svg>
+                        </Link>
+                        <Link
+                          className="stay-room-link"
+                          href={`/fr/book?roomId=${room.id}`}
+                        >
+                          Réserver cette chambre
+                          <svg
+                            aria-hidden="true"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <path d="M5 12h14M13 6l6 6-6 6" />
+                          </svg>
+                        </Link>
+                      </div>
                     </div>
                   </article>
                 );

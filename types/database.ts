@@ -175,6 +175,7 @@ export type Database = {
         Row: {
           id: string;
           room_id: string;
+          package_id: string | null;
           reference: string | null;
           status: Database["public"]["Enums"]["booking_status"];
           check_in: string;
@@ -197,6 +198,7 @@ export type Database = {
         Insert: {
           id?: string;
           room_id: string;
+          package_id?: string | null;
           reference?: string | null;
           status?: Database["public"]["Enums"]["booking_status"];
           check_in: string;
@@ -218,6 +220,7 @@ export type Database = {
         Update: {
           id?: string;
           room_id?: string;
+          package_id?: string | null;
           reference?: string | null;
           status?: Database["public"]["Enums"]["booking_status"];
           check_in?: string;

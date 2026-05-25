@@ -114,7 +114,7 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
               </div>
             </dl>
             <div className="room-detail-actions">
-              <Link className="btn btn-primary" href="/book">
+              <Link className="btn btn-primary" href={`/book?roomId=${room.id}`}>
                 Book this room
               </Link>
               <Link className="btn btn-secondary" href="/stay">

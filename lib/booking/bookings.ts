@@ -30,6 +30,7 @@ type BookingRoomForNotification = {
 
 export type CreatePendingBookingInput = {
   holdId: string;
+  packageId?: string | null;
   guestName: string;
   guestEmail: string;
   guestPhone: string;
@@ -68,6 +69,7 @@ function holdReference(holdId: string): string {
 
 function validatePendingBookingInput({
   holdId,
+  packageId,
   guestName,
   guestEmail,
   guestPhone,
@@ -83,6 +85,14 @@ function validatePendingBookingInput({
       ok: false,
       reason: "invalid_input",
       message: "Please hold dates before sending guest details."
+    };
+  }
+
+  if (packageId && !UUID_PATTERN.test(packageId)) {
+    return {
+      ok: false,
+      reason: "invalid_input",
+      message: "Please choose a current surf package or stay only."
     };
   }
 
@@ -239,11 +249,40 @@ export async function createPendingBookingFromHold(
   }
 
   const heldRoom: BookingRoomForNotification = room.data;
+  let selectedPackageId: string | null = null;
+
+  if (input.packageId) {
+    const selectedPackage = await supabase
+      .from("packages")
+      .select("id")
+      .eq("id", input.packageId)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (selectedPackage.error) {
+      return {
+        ok: false,
+        reason: "database_error",
+        message: BOOKING_REQUEST_FAILED_MESSAGE
+      };
+    }
+
+    if (!selectedPackage.data) {
+      return {
+        ok: false,
+        reason: "invalid_input",
+        message: "That surf package is not available right now. Please choose another option or stay only."
+      };
+    }
+
+    selectedPackageId = selectedPackage.data.id;
+  }
 
   const booking = await supabase
     .from("bookings")
     .insert({
       room_id: activeHold.room_id,
+      package_id: selectedPackageId,
       reference,
       status: "pending",
       check_in: activeHold.check_in,

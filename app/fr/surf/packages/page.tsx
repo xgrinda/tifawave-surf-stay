@@ -84,7 +84,10 @@ export default async function FrenchSurfPackagesPage() {
                     >
                       Voir les détails
                     </Link>
-                    <Link className="surf-package-book-link" href="/fr/book">
+                    <Link
+                      className="surf-package-book-link"
+                      href={`/fr/book?packageId=${pkg.id}`}
+                    >
                       Réserver
                     </Link>
                   </div>

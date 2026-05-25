@@ -97,6 +97,7 @@ export default async function AdminBookingsPage({
                   <th scope="col">Guest</th>
                   <th scope="col">Email</th>
                   <th scope="col">Room</th>
+                  <th scope="col">Package</th>
                   <th scope="col">Dates</th>
                   <th scope="col">Status</th>
                   <th scope="col">Created</th>
@@ -113,6 +114,7 @@ export default async function AdminBookingsPage({
                       </a>
                     </td>
                     <td>{booking.roomName}</td>
+                    <td>{booking.packageName ?? "Stay only"}</td>
                     <td>
                       {formatDate(booking.checkIn)} to{" "}
                       {formatDate(booking.checkOut)}
