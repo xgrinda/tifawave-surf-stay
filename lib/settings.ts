@@ -10,6 +10,7 @@ export type WebsiteSettings = {
   whatsappNumber: string;
   address: string;
   googleMapsUrl: string;
+  googleMapsEmbedUrl: string;
   instagramUrl: string;
   defaultCurrency: string;
   stripeDepositAmountDisplay: string;
@@ -37,6 +38,7 @@ export const DEFAULT_WEBSITE_SETTINGS: WebsiteSettings = {
   whatsappNumber: "",
   address: "Tamraght, Morocco",
   googleMapsUrl: "",
+  googleMapsEmbedUrl: "",
   instagramUrl: "",
   defaultCurrency: "USD",
   stripeDepositAmountDisplay: "Deposit due at checkout",
@@ -76,6 +78,7 @@ function rowToSettings(row: SettingsRow): WebsiteSettings {
     whatsappNumber: row.whatsapp_number,
     address: row.address,
     googleMapsUrl: row.google_maps_url,
+    googleMapsEmbedUrl: row.google_maps_embed_url,
     instagramUrl: row.instagram_url,
     defaultCurrency: row.default_currency,
     stripeDepositAmountDisplay: row.stripe_deposit_amount_display,
@@ -96,6 +99,7 @@ function normalizeSettings(
     whatsappNumber: optionalText(input.whatsappNumber),
     address: requiredText(input.address, DEFAULT_WEBSITE_SETTINGS.address),
     googleMapsUrl: optionalUrl(input.googleMapsUrl),
+    googleMapsEmbedUrl: optionalUrl(input.googleMapsEmbedUrl),
     instagramUrl: optionalUrl(input.instagramUrl),
     defaultCurrency: requiredText(
       input.defaultCurrency,
@@ -130,6 +134,7 @@ function settingsToRow(settings: WebsiteSettings) {
     whatsapp_number: settings.whatsappNumber,
     address: settings.address,
     google_maps_url: settings.googleMapsUrl,
+    google_maps_embed_url: settings.googleMapsEmbedUrl,
     instagram_url: settings.instagramUrl,
     default_currency: settings.defaultCurrency,
     stripe_deposit_amount_display: settings.stripeDepositAmountDisplay,

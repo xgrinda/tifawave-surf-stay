@@ -23,6 +23,7 @@ export async function updateSettingsAction(formData: FormData) {
     businessName: stringField(formData, "businessName"),
     contactEmail: stringField(formData, "contactEmail"),
     defaultCurrency: stringField(formData, "defaultCurrency"),
+    googleMapsEmbedUrl: stringField(formData, "googleMapsEmbedUrl"),
     googleMapsUrl: stringField(formData, "googleMapsUrl"),
     instagramUrl: stringField(formData, "instagramUrl"),
     stripeDepositAmountDisplay: stringField(
@@ -40,7 +41,11 @@ export async function updateSettingsAction(formData: FormData) {
   }
 
   revalidatePath("/");
+  revalidatePath("/about");
   revalidatePath("/book");
+  revalidatePath("/faq");
+  revalidatePath("/fr/about");
+  revalidatePath("/fr/faq");
   revalidatePath("/admin/settings");
   redirectWithMessage({
     saved: "1"

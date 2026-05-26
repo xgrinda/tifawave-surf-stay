@@ -377,6 +377,7 @@ export type Database = {
           whatsapp_number: string;
           address: string;
           google_maps_url: string;
+          google_maps_embed_url: string;
           instagram_url: string;
           default_currency: string;
           stripe_deposit_amount_display: string;
@@ -392,6 +393,7 @@ export type Database = {
           whatsapp_number?: string;
           address?: string;
           google_maps_url?: string;
+          google_maps_embed_url?: string;
           instagram_url?: string;
           default_currency?: string;
           stripe_deposit_amount_display?: string;
@@ -407,6 +409,7 @@ export type Database = {
           whatsapp_number?: string;
           address?: string;
           google_maps_url?: string;
+          google_maps_embed_url?: string;
           instagram_url?: string;
           default_currency?: string;
           stripe_deposit_amount_display?: string;

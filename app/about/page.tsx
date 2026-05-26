@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { LocationSection } from "@/components/location/location-section";
 import { Container } from "@/components/primitives/container";
 import { getActiveGalleryImages } from "@/lib/gallery";
 import { getTaggedGalleryHomeImage } from "@/lib/home-media";
@@ -210,6 +211,8 @@ export default async function AboutPage() {
           </ul>
         </Container>
       </section>
+
+      <LocationSection settings={settings} />
 
       <section className="about-cta" aria-labelledby="about-cta-title">
         <Container className="about-cta-inner">

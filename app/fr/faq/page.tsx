@@ -3,6 +3,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { LocationSection } from "@/components/location/location-section";
 import { Container } from "@/components/primitives/container";
 import { getWebsiteSettings, getWhatsappHref } from "@/lib/settings";
 import { getSiteUrl } from "@/lib/site";
@@ -328,6 +329,8 @@ export default async function FrenchFaqPage() {
           </div>
         </Container>
       </section>
+
+      <LocationSection locale="fr" settings={settings} />
 
       <section className="faq-cta" aria-labelledby="faq-cta-title">
         <Container className="faq-cta-inner">

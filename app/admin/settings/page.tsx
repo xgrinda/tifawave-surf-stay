@@ -141,6 +141,21 @@ export default async function AdminSettingsPage({
                   placeholder="https://maps.google.com/..."
                   type="url"
                 />
+                <small>
+                  Used as the simple public link in the footer and location cards.
+                </small>
+              </label>
+              <label className="admin-field admin-field-wide">
+                <span>Google Maps Embed URL</span>
+                <input
+                  defaultValue={settings.googleMapsEmbedUrl}
+                  name="googleMapsEmbedUrl"
+                  placeholder="https://www.google.com/maps/embed?pb=..."
+                  type="url"
+                />
+                <small>
+                  Optional. Used only on About and FAQ for the lazy-loaded map.
+                </small>
               </label>
               <label className="admin-field admin-field-wide">
                 <span>Instagram URL</span>
