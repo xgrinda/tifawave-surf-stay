@@ -157,6 +157,38 @@ export default async function AdminSettingsPage({
                   Optional. Used only on About and FAQ for the lazy-loaded map.
                 </small>
               </label>
+              <label className="admin-field">
+                <span>Google account ID</span>
+                <input
+                  defaultValue={settings.googleBusinessAccountId}
+                  name="googleBusinessAccountId"
+                  placeholder="123456789"
+                  type="text"
+                />
+                <small>Used server-side for official Google review sync.</small>
+              </label>
+              <label className="admin-field">
+                <span>Google location ID</span>
+                <input
+                  defaultValue={settings.googleBusinessLocationId}
+                  name="googleBusinessLocationId"
+                  placeholder="987654321"
+                  type="text"
+                />
+                <small>Use the verified Business Profile location ID.</small>
+              </label>
+              <label className="admin-field admin-field-wide">
+                <span>Google reviews profile URL</span>
+                <input
+                  defaultValue={settings.googleReviewsProfileUrl}
+                  name="googleReviewsProfileUrl"
+                  placeholder="https://www.google.com/search?q=Tifawave..."
+                  type="url"
+                />
+                <small>
+                  Public link used on the homepage reviews section and synced rows.
+                </small>
+              </label>
               <label className="admin-field admin-field-wide">
                 <span>Instagram URL</span>
                 <input

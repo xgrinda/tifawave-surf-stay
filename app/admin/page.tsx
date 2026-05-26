@@ -27,6 +27,11 @@ const quickLinks = [
     label: "Packages"
   },
   {
+    description: "Sync official Google reviews and monitor public review rows.",
+    href: "/admin/reviews",
+    label: "Reviews"
+  },
+  {
     description: "Add gallery images and control public visibility.",
     href: "/admin/gallery",
     label: "Gallery"

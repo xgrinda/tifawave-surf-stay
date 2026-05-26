@@ -7,6 +7,7 @@ type AdminNavKey =
   | "bookings"
   | "rooms"
   | "packages"
+  | "reviews"
   | "gallery"
   | "blocked-dates"
   | "settings";
@@ -48,6 +49,12 @@ const adminNavItems: Array<{
     href: "/admin/packages",
     key: "packages",
     label: "Packages"
+  },
+  {
+    description: "Google sync",
+    href: "/admin/reviews",
+    key: "reviews",
+    label: "Reviews"
   },
   {
     description: "Public image library",

@@ -33,6 +33,13 @@ type BookingFlowEnv = {
   depositsEnabled: boolean;
 };
 
+type GoogleBusinessProfileEnv = {
+  clientId: string;
+  clientSecret: string;
+  refreshToken: string;
+  configured: boolean;
+};
+
 function readRequiredValue(name: string, value: string | undefined): string {
   if (!value) {
     throw new Error(`Missing required environment variable: ${name}`);
@@ -141,5 +148,18 @@ export function getAnalyticsEnv(): AnalyticsEnv {
 export function getBookingFlowEnv(): BookingFlowEnv {
   return {
     depositsEnabled: readBooleanEnv("ENABLE_DEPOSITS", false)
+  };
+}
+
+export function getGoogleBusinessProfileEnv(): GoogleBusinessProfileEnv {
+  const clientId = process.env.GOOGLE_BUSINESS_CLIENT_ID?.trim() ?? "";
+  const clientSecret = process.env.GOOGLE_BUSINESS_CLIENT_SECRET?.trim() ?? "";
+  const refreshToken = process.env.GOOGLE_BUSINESS_REFRESH_TOKEN?.trim() ?? "";
+
+  return {
+    clientId,
+    clientSecret,
+    refreshToken,
+    configured: Boolean(clientId && clientSecret && refreshToken)
   };
 }

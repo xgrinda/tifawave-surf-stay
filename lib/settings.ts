@@ -11,6 +11,9 @@ export type WebsiteSettings = {
   address: string;
   googleMapsUrl: string;
   googleMapsEmbedUrl: string;
+  googleBusinessAccountId: string;
+  googleBusinessLocationId: string;
+  googleReviewsProfileUrl: string;
   instagramUrl: string;
   defaultCurrency: string;
   stripeDepositAmountDisplay: string;
@@ -39,6 +42,9 @@ export const DEFAULT_WEBSITE_SETTINGS: WebsiteSettings = {
   address: "Tamraght, Morocco",
   googleMapsUrl: "",
   googleMapsEmbedUrl: "",
+  googleBusinessAccountId: "",
+  googleBusinessLocationId: "",
+  googleReviewsProfileUrl: "",
   instagramUrl: "",
   defaultCurrency: "USD",
   stripeDepositAmountDisplay: "Deposit due at checkout",
@@ -77,8 +83,11 @@ function rowToSettings(row: SettingsRow): WebsiteSettings {
     contactEmail: row.contact_email,
     whatsappNumber: row.whatsapp_number,
     address: row.address,
-    googleMapsUrl: row.google_maps_url,
-    googleMapsEmbedUrl: row.google_maps_embed_url,
+    googleMapsUrl: row.google_maps_url ?? "",
+    googleMapsEmbedUrl: row.google_maps_embed_url ?? "",
+    googleBusinessAccountId: row.google_business_account_id ?? "",
+    googleBusinessLocationId: row.google_business_location_id ?? "",
+    googleReviewsProfileUrl: row.google_reviews_profile_url ?? "",
     instagramUrl: row.instagram_url,
     defaultCurrency: row.default_currency,
     stripeDepositAmountDisplay: row.stripe_deposit_amount_display,
@@ -100,6 +109,9 @@ function normalizeSettings(
     address: requiredText(input.address, DEFAULT_WEBSITE_SETTINGS.address),
     googleMapsUrl: optionalUrl(input.googleMapsUrl),
     googleMapsEmbedUrl: optionalUrl(input.googleMapsEmbedUrl),
+    googleBusinessAccountId: optionalText(input.googleBusinessAccountId),
+    googleBusinessLocationId: optionalText(input.googleBusinessLocationId),
+    googleReviewsProfileUrl: optionalUrl(input.googleReviewsProfileUrl),
     instagramUrl: optionalUrl(input.instagramUrl),
     defaultCurrency: requiredText(
       input.defaultCurrency,
@@ -135,6 +147,9 @@ function settingsToRow(settings: WebsiteSettings) {
     address: settings.address,
     google_maps_url: settings.googleMapsUrl,
     google_maps_embed_url: settings.googleMapsEmbedUrl,
+    google_business_account_id: settings.googleBusinessAccountId,
+    google_business_location_id: settings.googleBusinessLocationId,
+    google_reviews_profile_url: settings.googleReviewsProfileUrl,
     instagram_url: settings.instagramUrl,
     default_currency: settings.defaultCurrency,
     stripe_deposit_amount_display: settings.stripeDepositAmountDisplay,

@@ -369,6 +369,48 @@ export type Database = {
         };
         Relationships: [];
       };
+      reviews: {
+        Row: {
+          id: string;
+          source: "google" | "manual";
+          external_review_id: string | null;
+          reviewer_name: string;
+          rating: number;
+          review_text: string;
+          review_date: string;
+          source_url: string;
+          active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          source?: "google" | "manual";
+          external_review_id?: string | null;
+          reviewer_name?: string;
+          rating: number;
+          review_text?: string;
+          review_date?: string;
+          source_url?: string;
+          active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          source?: "google" | "manual";
+          external_review_id?: string | null;
+          reviewer_name?: string;
+          rating?: number;
+          review_text?: string;
+          review_date?: string;
+          source_url?: string;
+          active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       settings: {
         Row: {
           id: boolean;
@@ -378,6 +420,9 @@ export type Database = {
           address: string;
           google_maps_url: string;
           google_maps_embed_url: string;
+          google_business_account_id: string;
+          google_business_location_id: string;
+          google_reviews_profile_url: string;
           instagram_url: string;
           default_currency: string;
           stripe_deposit_amount_display: string;
@@ -394,6 +439,9 @@ export type Database = {
           address?: string;
           google_maps_url?: string;
           google_maps_embed_url?: string;
+          google_business_account_id?: string;
+          google_business_location_id?: string;
+          google_reviews_profile_url?: string;
           instagram_url?: string;
           default_currency?: string;
           stripe_deposit_amount_display?: string;
@@ -410,6 +458,9 @@ export type Database = {
           address?: string;
           google_maps_url?: string;
           google_maps_embed_url?: string;
+          google_business_account_id?: string;
+          google_business_location_id?: string;
+          google_reviews_profile_url?: string;
           instagram_url?: string;
           default_currency?: string;
           stripe_deposit_amount_display?: string;

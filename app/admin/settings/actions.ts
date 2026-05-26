@@ -23,8 +23,11 @@ export async function updateSettingsAction(formData: FormData) {
     businessName: stringField(formData, "businessName"),
     contactEmail: stringField(formData, "contactEmail"),
     defaultCurrency: stringField(formData, "defaultCurrency"),
+    googleBusinessAccountId: stringField(formData, "googleBusinessAccountId"),
+    googleBusinessLocationId: stringField(formData, "googleBusinessLocationId"),
     googleMapsEmbedUrl: stringField(formData, "googleMapsEmbedUrl"),
     googleMapsUrl: stringField(formData, "googleMapsUrl"),
+    googleReviewsProfileUrl: stringField(formData, "googleReviewsProfileUrl"),
     instagramUrl: stringField(formData, "instagramUrl"),
     stripeDepositAmountDisplay: stringField(
       formData,
@@ -44,6 +47,7 @@ export async function updateSettingsAction(formData: FormData) {
   revalidatePath("/about");
   revalidatePath("/book");
   revalidatePath("/faq");
+  revalidatePath("/fr");
   revalidatePath("/fr/about");
   revalidatePath("/fr/faq");
   revalidatePath("/admin/settings");
