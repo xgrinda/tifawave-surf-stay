@@ -146,6 +146,29 @@ before(async () => {
 });
 after(async () => root.end());
 
+test("hosted default function grants cannot expose staff or private commands", async () => {
+  const signatures = [
+    "public.staff_role()",
+    "public.create_manual_request(jsonb,text,uuid)",
+    "public.manage_reservation(uuid,text,jsonb,integer)",
+    "public.manage_inventory_block(uuid[],date,date,text,uuid)",
+    "public.release_inventory_block(uuid)",
+    "public.retry_failed_booking_emails(uuid)",
+  ];
+  for (const signature of signatures) {
+    const result = await root.query(
+      "select has_function_privilege('anon',$1,'execute') anon, has_function_privilege('authenticated',$1,'execute') staff, has_function_privilege('service_role',$1,'execute') service",
+      [signature],
+    );
+    assert.deepEqual(result.rows[0], { anon: false, staff: true, service: false }, signature);
+  }
+  await rejectsCode(as("anon", (c) => c.query("select public.staff_role()")), "42501");
+  const helpers = await root.query(
+    "select count(*)::int n from pg_proc p join pg_namespace ns on ns.oid=p.pronamespace where ns.nspname='ops_private' and (has_function_privilege('anon',p.oid,'execute') or has_function_privilege('authenticated',p.oid,'execute') or has_function_privilege('service_role',p.oid,'execute'))",
+  );
+  assert.equal(helpers.rows[0].n, 0);
+});
+
 test("inventory is 9 physical rooms, 12 bookable units, and 23 guest places", async () => {
   assert.equal(
     (await root.query("select count(*)::int n from public.physical_rooms"))

@@ -21,5 +21,7 @@ alter default privileges in schema public grant all on tables to service_role;
 alter default privileges in schema public grant all on sequences to service_role;
 -- Mimic Supabase's default public table grants. Migrations must narrow them.
 alter default privileges in schema public grant all on tables to anon,authenticated;
+-- Hosted Supabase grants API-role function execution explicitly, not only PUBLIC.
+alter default privileges in schema public grant execute on functions to anon,authenticated,service_role;
 grant all on storage.objects,storage.buckets to service_role;
 grant all on storage.objects to authenticated;

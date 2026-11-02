@@ -2,6 +2,11 @@
 
 Existing Next.js / Supabase / Vercel website. Development branch: `dev/hostel-admin`.
 
+Automatic Git deployment of this branch is disabled in `vercel.json` while
+staging is provisioned. Use an explicit Preview deployment after verifying all
+branch-scoped environment overrides. This prevents an initial branch push from
+inheriting production credentials before the branch-specific settings exist.
+
 The current milestone implements a manual reservation system. There are no online
 payments. Public requests always start pending; only an active Owner account
 with MFA may confirm or decline, after recording manual Booking.com/Airbnb checks
@@ -49,6 +54,10 @@ historical migrations remain intact. New migrations:
    immutable operational history, and database approval/allocation guards.
 3. `202611020003_manual_reservation_commands.sql` — narrow intake, decision,
    change/reassignment, reconciliation, maintenance, email and calendar RPCs.
+4. `20261102122254_harden_hosted_operations_permissions.sql` — explicitly
+   revokes hosted default API-role function grants, keeps staff commands
+   authenticated-only, protects private helpers, relocates the extension and
+   adds supporting foreign-key indexes.
 
 Existing booking IDs, guest records, statuses, payment-history columns, and
 historical SQL are preserved. No historical reservation is assigned a physical
