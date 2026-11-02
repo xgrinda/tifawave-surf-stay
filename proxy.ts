@@ -7,6 +7,21 @@ export async function proxy(request: NextRequest) {
   const headers = new Headers(request.headers);
   headers.set("x-pathname", request.nextUrl.pathname);
   let response = NextResponse.next({ request: { headers } });
+  // Explicitly reject retired payment URLs. The deployed streamed not-found
+  // fallback can otherwise return a soft 200 for POST despite no route existing.
+  if (
+    ["/api/booking/checkout", "/api/stripe/webhook"].includes(
+      request.nextUrl.pathname,
+    )
+  ) {
+    response = NextResponse.json(
+      { message: "Not found." },
+      {
+        status: 404,
+        headers: { "cache-control": "no-store" },
+      },
+    );
+  }
   if (request.nextUrl.pathname.startsWith("/admin")) {
     try {
       assertDatabaseTarget();

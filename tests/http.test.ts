@@ -23,6 +23,9 @@ test("removed payment endpoints return 404 for POST", async () => {
       body: "{}",
     });
     assert.equal(r.status, 404, path);
+    assert.match(r.headers.get("content-type") || "", /application\/json/);
+    assert.match(r.headers.get("cache-control") || "", /no-store/);
+    assert.deepEqual(await r.json(), { message: "Not found." });
   }
 });
 test("legacy payment-success URLs show request intake, never a confirmed receipt", async () => {
