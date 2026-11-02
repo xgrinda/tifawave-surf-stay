@@ -24,6 +24,8 @@ export const currentStaff = cache(async () => {
       error,
     } = await client.auth.getUser();
     if (error || !user) return null;
+    const session = await client.rpc("staff_session_active", {});
+    if (session.error || !session.data) return null;
     const { data: member, error: staffError } = await client
       .from("staff_members")
       .select("user_id,display_name,role,is_active,created_at")

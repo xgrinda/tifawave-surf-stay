@@ -44,15 +44,14 @@ export async function processEmailBatch(
         const parsed = emailSnapshotSchema.safeParse(job.payload);
         if (!parsed.success) throw new DeliveryError("payload_invalid", true);
         const snapshot = parsed.data;
+        const ownerAlert =
+          job.event === "owner_alert" || job.event === "enquiry_alert";
         candidate = validateDelivery(
           {
             ...reservationEmail(job.event, snapshot),
             from: env.BOOKING_EMAIL_FROM,
-            to:
-              job.event === "owner_alert"
-                ? env.BOOKING_NOTIFICATION_EMAIL
-                : snapshot.email,
-            ...(job.event === "owner_alert" && snapshot.email
+            to: ownerAlert ? env.BOOKING_NOTIFICATION_EMAIL : snapshot.email,
+            ...(ownerAlert && snapshot.email
               ? { reply_to: snapshot.email }
               : {}),
           },

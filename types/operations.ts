@@ -60,7 +60,8 @@ export type Activity = {
 };
 export type Notification = {
   id: string;
-  booking_id: string;
+  booking_id: string | null;
+  enquiry_id: string | null;
   event: string;
   created_at: string;
 };
@@ -70,8 +71,11 @@ export type OutboxEmail = {
   provider_message_id: string | null;
   needs_review: boolean;
   id: string;
-  booking_id: string;
+  booking_id: string | null;
+  enquiry_id: string | null;
   event:
+    | "enquiry_received"
+    | "enquiry_alert"
     | "received"
     | "owner_alert"
     | "confirmed"
@@ -137,6 +141,10 @@ export type OperationTables = {
   }>;
 };
 export type OperationFunctions = {
+  claim_enquiry_emails: {
+    Args: { p_enquiry_id: string };
+    Returns: OutboxEmail[];
+  };
   operations_workspace: {
     Args: { p_start: string; p_end: string };
     Returns: Json;

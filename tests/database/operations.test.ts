@@ -40,6 +40,8 @@ async function as<T>(role: Role, fn: (c: Client) => Promise<T>, aal = "aal2") {
         uid,
         JSON.stringify({
           sub: uid,
+          session_id: uid,
+          iss: "https://local.supabase.co/auth/v1",
           aal,
           role: "authenticated",
           user_role: "owner",
@@ -132,6 +134,14 @@ before(async () => {
       id,
       role + "@example.invalid",
     ]);
+    await root.query("insert into auth.sessions(id,user_id) values($1,$1)", [
+      id,
+    ]);
+    if (role === "owner")
+      await root.query(
+        "insert into auth.mfa_factors(id,user_id,status) values($1,$2,'verified')",
+        [randomUUID(), id],
+      );
     if (role !== "stranger")
       await root.query(
         "insert into public.staff_members(user_id,display_name,role) values($1,$2,$2)",
@@ -1358,4 +1368,566 @@ test("calendar events expose only the requested unit ledger and are not publicly
   );
   assert.ok(result.rows.every((r) => r.unit_id === units.T02));
   assert.ok(result.rows.some((r) => r.booking_id === id));
+});
+
+test("revoked, expired and missing staff sessions lose database privileges immediately", async () => {
+  for (const sql of [
+    "delete from auth.sessions where id=$1",
+    "update auth.sessions set not_after=now()-interval '1 minute' where id=$1",
+  ]) {
+    if (sql.startsWith("update"))
+      await root.query("insert into auth.sessions(id,user_id) values($1,$1)", [
+        people.reception,
+      ]);
+    await root.query(sql, [people.reception]);
+    const result = await as("reception", (c) =>
+      c.query(
+        "select public.staff_role() role,public.staff_session_active() active",
+      ),
+    );
+    assert.equal(result.rows[0].role, null);
+    assert.equal(result.rows[0].active, false);
+    await rejectsCode(
+      as("reception", (c) =>
+        c.query(
+          "select public.operations_workspace('2099-01-01','2099-01-03')",
+        ),
+      ),
+      "42501",
+    );
+  }
+  await root.query("update auth.sessions set not_after=null where id=$1", [
+    people.reception,
+  ]);
+});
+test("CMS publication isolates drafts, permissions and revisions without rendering unsafe HTML", async () => {
+  const save = (
+    role: Role,
+    id: string | null,
+    version: number,
+    draft: Record<string, unknown>,
+    action = "draft",
+    kind = "page",
+    slug = "home",
+  ) =>
+    as(role, (c) =>
+      c.query(
+        "select public.save_content_document($1,$2,$3,$4,'en',$5,$6) id",
+        [id, version, kind, slug, draft, action],
+      ),
+    );
+  await rejectsCode(
+    save("reception", null, 0, { title: "Not permitted" }),
+    "42501",
+  );
+  const id = (
+    await save("content_editor", null, 0, {
+      title: "Verified draft",
+      body: "<script>never HTML</script>",
+    })
+  ).rows[0].id;
+  assert.equal(
+    (
+      await as("anon", (c) =>
+        c.query("select published from public.content_documents where id=$1", [
+          id,
+        ]),
+      )
+    ).rowCount,
+    0,
+  );
+  await save(
+    "content_editor",
+    id,
+    1,
+    { title: "Published title", body: "Verified text" },
+    "publish",
+  );
+  await save("content_editor", id, 2, { title: "Private newer draft" });
+  const visible = (
+    await as("anon", (c) =>
+      c.query("select published from public.content_documents where id=$1", [
+        id,
+      ]),
+    )
+  ).rows[0].published;
+  assert.equal(visible.title, "Published title");
+  await rejectsCode(
+    as("anon", (c) => c.query("select draft from public.content_documents")),
+    "42501",
+  );
+  const revision = (
+    await root.query(
+      "select id from public.content_revisions where document_id=$1 and version=1",
+      [id],
+    )
+  ).rows[0].id;
+  await as("content_editor", (c) =>
+    c.query("select public.restore_content_revision($1,3)", [revision]),
+  );
+  const restored = (
+    await root.query("select * from public.content_documents where id=$1", [id])
+  ).rows[0];
+  assert.equal(restored.version, 4);
+  assert.equal(restored.draft.title, "Verified draft");
+  assert.equal(restored.published.title, "Published title");
+  await rejectsCode(save("owner", id, 3, { title: "Stale edit" }), "40001");
+  await rejectsCode(
+    save(
+      "owner",
+      id,
+      4,
+      { title: "Video", heroVideo: "/media/real.mp4" },
+      "publish",
+    ),
+    "23514",
+  );
+  await rejectsCode(
+    save("owner", id, 4, {
+      title: "Bad source",
+      heroImage: "https://untrusted.example/stock.jpg",
+    }),
+    "22023",
+  );
+  await rejectsCode(
+    save("owner", id, 4, { title: "Bad path", ctaPath: "//external.example" }),
+    "22023",
+  );
+  await rejectsCode(
+    save("owner", id, 4, { title: "Bad sections", sections: [{}] }),
+    "22023",
+  );
+  await rejectsCode(
+    save(
+      "content_editor",
+      null,
+      0,
+      { body: "Change booking state" },
+      "draft",
+      "email",
+      "received",
+    ),
+    "42501",
+  );
+  await save(
+    "owner",
+    null,
+    0,
+    { body: "Verified practical information" },
+    "publish",
+    "email",
+    "received",
+  );
+  assert.equal(
+    (
+      await as("anon", (c) =>
+        c.query("select slug from public.content_documents where kind='email'"),
+      )
+    ).rowCount,
+    0,
+  );
+  await save("owner", id, 4, { title: "Hidden again" }, "unpublish");
+  assert.equal(
+    (
+      await as("anon", (c) =>
+        c.query("select published from public.content_documents where id=$1", [
+          id,
+        ]),
+      )
+    ).rowCount,
+    0,
+  );
+});
+test("public enquiry intake is idempotent, rate limited and never creates confirmed inventory", async () => {
+  const input = {
+    kind: "group",
+    contactName: "Disposable organizer",
+    email: "enquiry@example.invalid",
+    phone: "",
+    organization: "Test group",
+    message: "Please discuss a real custom stay.",
+    checkIn: "2098-01-01",
+    checkOut: "2098-01-04",
+    groupSize: 23,
+    locale: "fr",
+  };
+  const key = randomUUID();
+  const rate = createHash("sha256").update(randomUUID()).digest("hex");
+  const intake = (k = key, r = rate, v = input) =>
+    as("service", (c) =>
+      c.query("select public.submit_enquiry($1,$2,$3) id", [v, k, r]),
+    );
+  const id = (await intake()).rows[0].id;
+  assert.equal((await intake()).rows[0].id, id);
+  assert.equal(
+    (
+      await root.query(
+        "select count(*)::int n from public.email_outbox where enquiry_id=$1",
+        [id],
+      )
+    ).rows[0].n,
+    2,
+  );
+  const e = (
+    await root.query("select * from public.enquiries where id=$1", [id])
+  ).rows[0];
+  assert.equal(e.stage, "new");
+  assert.equal(e.booking_id, null);
+  const bid = (
+    await as("reception", (c) =>
+      c.query("select public.reservation_from_enquiry($1,1) id", [id]),
+    )
+  ).rows[0].id;
+  assert.equal(
+    (await root.query("select status from public.bookings where id=$1", [bid]))
+      .rows[0].status,
+    "pending",
+  );
+  assert.equal(
+    (
+      await root.query(
+        "select count(*)::int n from public.reservation_allocations where booking_id=$1",
+        [bid],
+      )
+    ).rows[0].n,
+    0,
+  );
+  assert.equal(
+    (
+      await as("reception", (c) =>
+        c.query("select public.reservation_from_enquiry($1,1) id", [id]),
+      )
+    ).rows[0].id,
+    bid,
+  );
+  await rejectsCode(
+    as("content_editor", (c) =>
+      c.query("select public.reservation_from_enquiry($1,2)", [id]),
+    ),
+    "42501",
+  );
+  for (let i = 0; i < 4; i++) await intake(randomUUID());
+  await rejectsCode(intake(randomUUID()), "P0429");
+  await rejectsCode(
+    intake(
+      randomUUID(),
+      createHash("sha256").update(randomUUID()).digest("hex"),
+      { ...input, status: "confirmed" } as typeof input,
+    ),
+    "22023",
+  );
+  await rejectsCode(
+    as("anon", (c) =>
+      c.query("select public.submit_enquiry($1,$2,$3)", [
+        input,
+        randomUUID(),
+        rate,
+      ]),
+    ),
+    "42501",
+  );
+});
+test("Owner settings persist, enforce public booking rules and preserve manual operational intake", async () => {
+  await rejectsCode(
+    as("reception", (c) =>
+      c.query("select public.save_operations_settings(1,2,30,1,730)"),
+    ),
+    "42501",
+  );
+  await as("owner", (c) =>
+    c.query("select public.save_operations_settings(1,3,30,0,730)"),
+  );
+  await rejectsCode(submit(request()), "22023");
+  const d = request();
+  await as("reception", (c) =>
+    c.query("select public.create_manual_request($1,'direct',$2)", [
+      d,
+      randomUUID(),
+    ]),
+  );
+  await rejectsCode(
+    as("owner", (c) =>
+      c.query("select public.save_operations_settings(1,1,365,0,730)"),
+    ),
+    "40001",
+  );
+  await as("owner", (c) =>
+    c.query("select public.save_operations_settings(2,1,365,0,730)"),
+  );
+  assert.equal(
+    (
+      await as("anon", (c) =>
+        c.query("select minimum_nights from public.operations_settings"),
+      )
+    ).rows[0].minimum_nights,
+    1,
+  );
+  await rejectsCode(
+    as("anon", (c) =>
+      c.query("select retention_review_days from public.operations_settings"),
+    ),
+    "42501",
+  );
+});
+test("reports separate nominal room and bed capacity and exports require audited MFA Owner access", async () => {
+  const report = (
+    await as("owner", (c) =>
+      c.query(
+        "select public.operations_report('2097-01-01','2097-01-03') value",
+      ),
+    )
+  ).rows[0].value;
+  assert.equal(
+    report.occupancy.find((v: { kind: string }) => v.kind === "private_room")
+      .nominal_nights,
+    16,
+  );
+  assert.equal(
+    report.occupancy.find((v: { kind: string }) => v.kind === "dorm_bed")
+      .nominal_nights,
+    8,
+  );
+  assert.equal(
+    report.occupancy.reduce(
+      (n: number, v: { blocked_nights: number }) =>
+        n + Number(v.blocked_nights),
+      0,
+    ),
+    0,
+  );
+  for (const role of [
+    "anon",
+    "service",
+    "reception",
+    "housekeeping",
+    "content_editor",
+    "stranger",
+  ] as const)
+    await rejectsCode(
+      as(role, (c) =>
+        c.query(
+          "select public.export_workspace('guests','2097-01-01','2097-01-03')",
+        ),
+      ),
+      "42501",
+    );
+  await rejectsCode(
+    as(
+      "owner",
+      (c) =>
+        c.query(
+          "select public.export_workspace('guests','2097-01-01','2097-01-03')",
+        ),
+      "aal1",
+    ),
+    "42501",
+  );
+  await as("owner", (c) =>
+    c.query(
+      "select public.export_workspace('guests','2097-01-01','2097-01-03')",
+    ),
+  );
+  assert.ok(
+    (
+      await root.query(
+        "select 1 from public.workspace_audit where entity='exports' and actor_id=$1",
+        [people.owner],
+      )
+    ).rowCount,
+  );
+  await rejectsCode(
+    as("owner", (c) =>
+      c.query("select public.operations_report('2097-01-01','2099-01-01')"),
+    ),
+    "22023",
+  );
+});
+test("staff changes enforce verified Owner promotion, last-Owner safety and immediate session revocation", async () => {
+  await rejectsCode(
+    as("reception", (c) =>
+      c.query("select public.manage_staff_member($1,'No','owner',true)", [
+        people.reception,
+      ]),
+    ),
+    "42501",
+  );
+  await rejectsCode(
+    as("owner", (c) =>
+      c.query(
+        "select public.manage_staff_member($1,'Owner','reception',true)",
+        [people.owner],
+      ),
+    ),
+    "23514",
+  );
+  await rejectsCode(
+    as("owner", (c) =>
+      c.query(
+        "select public.manage_staff_member($1,'New owner','owner',true)",
+        [people.stranger],
+      ),
+    ),
+    "23514",
+  );
+  await as("owner", (c) =>
+    c.query(
+      "select public.manage_staff_member($1,'Disabled fixture','reception',false)",
+      [people.reception],
+    ),
+  );
+  assert.equal(
+    (
+      await root.query("select 1 from auth.sessions where user_id=$1", [
+        people.reception,
+      ])
+    ).rowCount,
+    0,
+  );
+  await as("owner", (c) =>
+    c.query(
+      "select public.manage_staff_member($1,'reception','reception',true)",
+      [people.reception],
+    ),
+  );
+  await root.query("insert into auth.sessions(id,user_id) values($1,$1)", [
+    people.reception,
+  ]);
+});
+
+test("published physical-room descriptions expose verified public details without operational notes", async () => {
+  const listing = randomUUID();
+  await root.query(
+    "insert into public.rooms(id,name,slug,max_guests,base_price_cents,is_active) values($1,'Disposable listing',$2,2,0,true)",
+    [listing, "qa-" + listing],
+  );
+  const room = (
+    await root.query("select * from public.physical_rooms where code='D01'")
+  ).rows[0];
+  await as("owner", (c) =>
+    c.query("select public.update_physical_inventory($1,false,true,$2,$3)", [
+      room.id,
+      room.name,
+      listing,
+    ]),
+  );
+  const read = () =>
+    as("anon", (c) =>
+      c.query("select public.room_listing_details($1,'fr') value", [listing]),
+    );
+  assert.deepEqual((await read()).rows[0].value, []);
+  const details = (
+    await root.query(
+      "select version from public.property_room_details where id=$1",
+      [room.id],
+    )
+  ).rows[0];
+  await saveEntity(
+    "property_room_details",
+    {
+      description_en: "Verified English description",
+      description_fr: "Description vérifiée",
+      amenities: ["Owner verified amenity"],
+      is_published: true,
+    },
+    "content_editor",
+    room.id,
+    details.version,
+  );
+  const result = (await read()).rows[0].value;
+  assert.equal(result[0].description, "Description vérifiée");
+  assert.equal(result[0].capacity, 2);
+  assert.equal(result[0].room_notes, undefined);
+  await rejectsCode(
+    as("anon", (c) => c.query("select * from public.room_readiness")),
+    "42501",
+  );
+  await as("owner", (c) =>
+    c.query("select public.update_physical_inventory($1,false,true,$2,$3)", [
+      room.id,
+      room.name,
+      room.listing_id,
+    ]),
+  );
+});
+test("staff recovery lookup is private, rate limited and ignores disabled identities", async () => {
+  const rate = createHash("sha256").update(randomUUID()).digest("hex");
+  await rejectsCode(
+    as("anon", (c) =>
+      c.query(
+        "select public.staff_recovery_allowed('owner@example.invalid',$1)",
+        [rate],
+      ),
+    ),
+    "42501",
+  );
+  for (let i = 0; i < 5; i++) {
+    const result = await as("service", (c) =>
+      c.query(
+        "select public.staff_recovery_allowed('owner@example.invalid',$1) allowed",
+        [rate],
+      ),
+    );
+    assert.equal(result.rows[0].allowed, true);
+  }
+  assert.equal(
+    (
+      await as("service", (c) =>
+        c.query(
+          "select public.staff_recovery_allowed('owner@example.invalid',$1) allowed",
+          [rate],
+        ),
+      )
+    ).rows[0].allowed,
+    false,
+  );
+  assert.equal(
+    (
+      await as("service", (c) =>
+        c.query(
+          "select public.staff_recovery_allowed('nobody@example.invalid',$1) allowed",
+          [createHash("sha256").update(randomUUID()).digest("hex")],
+        ),
+      )
+    ).rows[0].allowed,
+    false,
+  );
+});
+
+test("immediate enquiry mail claims cannot consume unrelated booking or enquiry jobs", async () => {
+  const before = await root.query(
+    "select count(*)::int n from public.email_outbox where booking_id is not null and status='queued'",
+  );
+  const rate = createHash("sha256").update(randomUUID()).digest("hex");
+  const e = (
+    await as("service", (c) =>
+      c.query("select public.submit_enquiry($1,$2,$3) id", [
+        {
+          kind: "agency",
+          contactName: "Agency fixture",
+          email: "agency@example.invalid",
+          message: "Please discuss a real partnership.",
+          locale: "en",
+        },
+        randomUUID(),
+        rate,
+      ]),
+    )
+  ).rows[0].id;
+  const claimed = await as("service", (c) =>
+    c.query("select * from public.claim_enquiry_emails($1)", [e]),
+  );
+  assert.equal(claimed.rowCount, 2);
+  assert.ok(claimed.rows.every((r) => r.enquiry_id === e));
+  assert.equal(
+    (
+      await root.query(
+        "select count(*)::int n from public.email_outbox where booking_id is not null and status='queued'",
+      )
+    ).rows[0].n,
+    before.rows[0].n,
+  );
+  await rejectsCode(
+    as("owner", (c) => c.query("select public.claim_enquiry_emails($1)", [e])),
+    "42501",
+  );
 });

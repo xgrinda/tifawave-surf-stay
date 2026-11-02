@@ -21,9 +21,13 @@ export const emailSnapshotSchema = z.object({
   bookingType: z.string(),
   package: z.string().nullable(),
   units: z.array(z.string()),
+  templateAdditions: z.record(z.string(), z.string().max(4000)).optional(),
+  contactEmail: z.string().email().nullable().optional(),
 });
 export type EmailSnapshot = z.infer<typeof emailSnapshotSchema>;
 type Event =
+  | "enquiry_received"
+  | "enquiry_alert"
   | "received"
   | "owner_alert"
   | "confirmed"
@@ -96,14 +100,38 @@ export function reservationEmail(
   event: Event,
   data: EmailSnapshot,
 ): EmailTemplate {
-  const [subject, intro] = copy[data.locale][event];
+  const enquiry = event === "enquiry_received" || event === "enquiry_alert";
+  const alert = event === "owner_alert" || event === "enquiry_alert";
+  const [subject, intro] = enquiry
+    ? data.locale === "fr"
+      ? alert
+        ? [
+            "Nouvelle demande de contact Tifawave",
+            "Une demande attend votre réponse. Aucun séjour n’est réservé ou confirmé.",
+          ]
+        : [
+            "Votre message à Tifawave",
+            "Nous avons reçu votre message et vous répondrons personnellement. Aucun séjour n’est réservé ou confirmé.",
+          ]
+      : alert
+        ? [
+            "New Tifawave enquiry",
+            "An enquiry needs your reply. No stay has been reserved or confirmed.",
+          ]
+        : [
+            "Your message to Tifawave",
+            "We received your message and will reply personally. No stay has been reserved or confirmed.",
+          ]
+    : copy[data.locale][event as keyof typeof copy.en];
   const fr = data.locale === "fr";
   const rows = [
     [fr ? "Référence" : "Reference", data.reference],
     [fr ? "Voyageur" : "Guest", data.name],
-    [fr ? "Arrivée" : "Arrival", data.checkIn],
-    [fr ? "Départ" : "Departure", data.checkOut],
-    [fr ? "Voyageurs" : "Guests", String(data.guests)],
+    ...(data.checkIn ? [[fr ? "Arrivée" : "Arrival", data.checkIn]] : []),
+    ...(data.checkOut ? [[fr ? "Départ" : "Departure", data.checkOut]] : []),
+    ...(data.guests
+      ? [[fr ? "Voyageurs" : "Guests", String(data.guests)]]
+      : []),
     ...(data.package
       ? [[fr ? "Séjour surf" : "Surf package", data.package]]
       : []),
@@ -111,17 +139,20 @@ export function reservationEmail(
       ? [[fr ? "Attribution" : "Allocation", data.units.join(", ")]]
       : []),
   ];
-  if (event === "owner_alert") {
+  if (alert) {
     rows.push(["Email", data.email], ["Phone / WhatsApp", data.phone || "—"]);
     if (data.preference) rows.push(["Preference", data.preference]);
     if (data.notes) rows.push(["Guest message", data.notes]);
   }
+  const addition = data.templateAdditions?.[event] || "";
+  const contact = data.contactEmail || "";
   const text = [
     intro,
     "",
     ...rows.map(([k, v]) => k + ": " + v),
     "",
-    "Tifawave Surf Stay · hello@tifawave.com",
+    addition,
+    "Tifawave Surf Stay" + (contact ? " · " + contact : ""),
   ].join("\n");
   return {
     subject,
@@ -142,6 +173,12 @@ export function reservationEmail(
             "</td></tr>",
         )
         .join("") +
-      "</table><p>hello@tifawave.com</p></div>",
+      "</table>" +
+      (addition
+        ? "<p>" + escape(addition).replaceAll("\n", "<br>") + "</p>"
+        : "") +
+      "<p>" +
+      escape(contact) +
+      "</p></div>",
   };
 }

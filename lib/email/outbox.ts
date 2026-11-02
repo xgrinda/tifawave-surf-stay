@@ -4,15 +4,22 @@ import { processEmailBatch } from "./processor";
 import { deliverEmail } from "./delivery";
 
 /** Claims are leased, retries are idempotent, and reservations never roll back. */
-export async function dispatchBookingEmails(bookingId?: string) {
+export async function dispatchBookingEmails(
+  bookingId?: string,
+  enquiryId?: string,
+) {
   const client = createSupabaseAdminClient();
   return processEmailBatch(
     {
       claim: async () => {
-        const { data, error } = await client.rpc(
-          "claim_booking_emails",
-          bookingId ? { p_booking_id: bookingId } : {},
-        );
+        const { data, error } = enquiryId
+          ? await client.rpc("claim_enquiry_emails", {
+              p_enquiry_id: enquiryId,
+            })
+          : await client.rpc(
+              "claim_booking_emails",
+              bookingId ? { p_booking_id: bookingId } : {},
+            );
         if (error) throw new Error("Email queue unavailable.");
         return data || [];
       },
@@ -40,4 +47,8 @@ export async function dispatchBookingEmails(bookingId?: string) {
     },
     process.env,
   );
+}
+
+export async function dispatchEnquiryEmails(enquiryId: string) {
+  return dispatchBookingEmails(undefined, enquiryId);
 }

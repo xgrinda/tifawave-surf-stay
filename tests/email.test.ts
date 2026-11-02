@@ -260,3 +260,50 @@ test("Supabase production worker refuses a staged built-in project URL", async (
     503,
   );
 });
+
+test("enquiry receipts and alerts use the same durable pipeline without claiming a reservation", async () => {
+  const sent: Delivery[] = [];
+  const port: EmailPort = {
+    claim: async () => [
+      {
+        ...job(),
+        event: "enquiry_received",
+        payload: {
+          ...snapshot,
+          checkIn: "",
+          checkOut: "",
+          guests: 0,
+          templateAdditions: {
+            enquiry_received: "Owner-authored <practical> information",
+          },
+          contactEmail: "contact@tifawave.com",
+        },
+      },
+      {
+        ...job(),
+        id: "another-job",
+        event: "enquiry_alert",
+        payload: { ...snapshot, email: "organizer@example.invalid" },
+      },
+    ],
+    prepare: async (_j, d) => d,
+    send: async (d) => {
+      sent.push(d);
+      return "provider";
+    },
+    finish: async () => {},
+  };
+  assert.deepEqual(await processEmailBatch(port, env), {
+    sent: 2,
+    failed: 0,
+    deferred: 0,
+  });
+  assert.equal(sent[0].to, "admin@tifawave.com");
+  assert.equal(sent[1].to, "admin@tifawave.com");
+  assert.equal(sent[1].reply_to, "organizer@example.invalid");
+  assert.match(sent[0].text, /No stay has been reserved or confirmed/);
+  assert.ok(!sent[0].html.includes("<practical>"));
+  assert.ok(sent[0].html.includes("&lt;practical&gt;"));
+  assert.ok(sent[0].text.includes("contact@tifawave.com"));
+  assert.ok(!sent[0].text.includes("private note"));
+});

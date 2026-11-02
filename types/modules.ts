@@ -54,6 +54,7 @@ export type WorkItem = Row & {
   priority: string;
 };
 export type RoomDetails = Row & {
+  is_published: boolean;
   description_en: string;
   description_fr: string;
   amenities: string[];
@@ -80,7 +81,38 @@ export type PackagePhoto = Row & {
   alt_text: string;
   sort_order: number;
 };
+export type ContentDocument = {
+  id: string;
+  kind: "page" | "room" | "package" | "email";
+  slug: string;
+  locale: "en" | "fr";
+  draft: Json;
+  published: Json | null;
+  version: number;
+  published_version: number | null;
+  published_at: string | null;
+  updated_at: string;
+};
 export type ModuleTables = {
+  content_documents: Table<ContentDocument>;
+  content_revisions: Table<{
+    id: string;
+    document_id: string;
+    version: number;
+    action: string;
+    payload: Json;
+    actor_id: string;
+    created_at: string;
+  }>;
+  operations_settings: Table<{
+    id: boolean;
+    minimum_nights: number;
+    maximum_nights: number;
+    notice_days: number;
+    retention_review_days: number;
+    version: number;
+    updated_at: string;
+  }>;
   guest_profiles: Table<GuestProfile>;
   guest_reservations: Table<{ booking_id: string; guest_id: string }>;
   enquiries: Table<Enquiry>;
@@ -112,9 +144,71 @@ export type ModuleTables = {
 };
 export type WorkspaceEntity = Exclude<
   keyof ModuleTables,
-  "guest_reservations" | "workspace_audit" | "stay_progress"
+  | "guest_reservations"
+  | "workspace_audit"
+  | "stay_progress"
+  | "content_documents"
+  | "content_revisions"
+  | "operations_settings"
 >;
 export type ModuleFunctions = {
+  room_listing_details: {
+    Args: { p_listing: string; p_locale: string };
+    Returns: Json;
+  };
+  staff_recovery_allowed: {
+    Args: { p_email: string; p_rate_key: string };
+    Returns: boolean;
+  };
+  staff_session_active: { Args: Record<string, never>; Returns: boolean };
+  save_operations_settings: {
+    Args: {
+      p_version: number;
+      p_minimum: number;
+      p_maximum: number;
+      p_notice: number;
+      p_retention: number;
+    };
+    Returns: undefined;
+  };
+  save_content_document: {
+    Args: {
+      p_id: string | null;
+      p_version: number;
+      p_kind: string;
+      p_slug: string;
+      p_locale: string;
+      p_draft: Json;
+      p_action: string;
+    };
+    Returns: string;
+  };
+  restore_content_revision: {
+    Args: { p_revision: string; p_version: number };
+    Returns: undefined;
+  };
+  manage_staff_member: {
+    Args: { p_user: string; p_name: string; p_role: string; p_active: boolean };
+    Returns: undefined;
+  };
+  submit_enquiry: {
+    Args: { p_input: Json; p_request_key: string; p_rate_key: string };
+    Returns: string;
+  };
+  reservation_from_enquiry: {
+    Args: { p_id: string; p_version: number };
+    Returns: string;
+  };
+  operations_report: {
+    Args: { p_start: string; p_end: string };
+    Returns: Json;
+  };
+  export_workspace: {
+    Args: { p_kind: string; p_start: string; p_end: string };
+    Returns: Json;
+  };
+  retention_review: { Args: Record<string, never>; Returns: Json };
+
   update_physical_inventory: {
     Args: {
       p_id: string;

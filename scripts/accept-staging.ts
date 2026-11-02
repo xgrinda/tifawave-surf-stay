@@ -86,7 +86,12 @@ async function previewGet(path: string, client: SupabaseClient) {
   assert.ok(session);
   const values: { name: string; value: string }[] = [];
   const ssr = createServerClient(url, key, {
-    cookies: { getAll: () => [], setAll: (cs) => { values.push(...cs); } },
+    cookies: {
+      getAll: () => [],
+      setAll: (cs) => {
+        values.push(...cs);
+      },
+    },
   });
   const r = await ssr.auth.setSession(session);
   assert.equal(r.error, null);
@@ -198,12 +203,39 @@ async function cleanup() {
       "operation_notifications",
     ])
       await ok(admin.from(table).delete().in("booking_id", ids));
+    const guestLinks = await ok(
+      admin.from("guest_reservations").select("guest_id").in("booking_id", ids),
+    );
+    await ok(admin.from("guest_reservations").delete().in("booking_id", ids));
+    await ok(admin.from("stay_progress").delete().in("id", ids));
     await ok(admin.from("bookings").delete().in("id", ids));
+    for (const gid of new Set(guestLinks.map((g) => g.guest_id))) {
+      const links = await ok(
+        admin
+          .from("guest_reservations")
+          .select("booking_id")
+          .eq("guest_id", gid),
+      );
+      if (!links.length) {
+        await ok(
+          admin
+            .from("workspace_audit")
+            .delete()
+            .eq("entity", "guest_profiles")
+            .eq("record_id", gid),
+        );
+        await ok(admin.from("guest_profiles").delete().eq("id", gid));
+      }
+    }
   }
   if (packages.length)
     await ok(admin.from("packages").delete().in("id", packages));
+  if (packages.length)
+    await ok(admin.from("workspace_audit").delete().in("record_id", packages));
   for (const c of sessions)
     await c.auth.signOut({ scope: "global" }).catch(() => {});
+  if (users.length)
+    await ok(admin.from("workspace_audit").delete().in("actor_id", users));
   if (users.length)
     await ok(admin.from("staff_members").delete().in("user_id", users));
   for (const id of users) {
