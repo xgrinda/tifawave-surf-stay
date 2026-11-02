@@ -6,6 +6,7 @@ import { getReservation } from "@/lib/admin/bookings";
 import { AdminShell } from "../../_components/admin-shell";
 import { reservationAction, retryReservationEmailAction } from "../actions";
 import { CommandForm } from "./command-form";
+import { saveQuote, recordStay } from "../operations-actions";
 export default async function Detail({
   params,
   searchParams,
@@ -27,6 +28,16 @@ export default async function Detail({
       description={b.status + " · " + b.booking_source.replaceAll("_", " ")}
     >
       <Link href="/admin/bookings">← All reservations</Link>
+      <div className="ops-toolbar">
+        <Link href={"/admin/calendar?date=" + b.check_in}>
+          View dates in calendar →
+        </Link>
+        {detail.guestId && (
+          <Link href={"/admin/guests/" + detail.guestId}>
+            Guest profile & history →
+          </Link>
+        )}
+      </div>
       {feedback.error && (
         <p role="alert" className="admin-error">
           {feedback.error.slice(0, 300)}
@@ -37,6 +48,86 @@ export default async function Detail({
           Operation saved. Current status: {b.status}.
         </p>
       )}
+      <section className="desk-panel">
+        <h2>Quote & stay progress</h2>
+        <p>
+          {b.quoted_amount_cents !== null
+            ? `${(b.quoted_amount_cents / 100).toFixed(2)} ${b.quote_currency} · Owner-entered estimate`
+            : "No quote recorded. Prices are not inferred from current rates."}
+        </p>
+        {staff.role === "owner" && (
+          <form action={saveQuote} className="ops-filters">
+            <input type="hidden" name="bookingId" value={b.id} />
+            <input type="hidden" name="version" value={b.version} />
+            <label>
+              Total quote amount
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                max="1000000"
+                name="amount"
+                defaultValue={
+                  b.quoted_amount_cents !== null
+                    ? b.quoted_amount_cents / 100
+                    : ""
+                }
+              />
+            </label>
+            <label>
+              Currency
+              <input
+                name="currency"
+                maxLength={3}
+                defaultValue={b.quote_currency || ""}
+              />
+            </label>
+            <button className="btn btn-secondary">Save quote</button>
+          </form>
+        )}
+        {b.status === "confirmed" && (
+          <>
+            <p>
+              Check-in:{" "}
+              {detail.progress?.checked_in_at
+                ? new Date(detail.progress.checked_in_at).toLocaleString(
+                    "en-GB",
+                    { timeZone: "Africa/Casablanca" },
+                  )
+                : "Not recorded"}{" "}
+              · Check-out:{" "}
+              {detail.progress?.checked_out_at
+                ? new Date(detail.progress.checked_out_at).toLocaleString(
+                    "en-GB",
+                    { timeZone: "Africa/Casablanca" },
+                  )
+                : "Not recorded"}
+            </p>
+            <form action={recordStay} className="ops-toolbar">
+              <input type="hidden" name="bookingId" value={b.id} />
+              {!detail.progress?.checked_in_at && (
+                <button className="btn btn-secondary" name="checkout" value="0">
+                  Record check-in
+                </button>
+              )}
+              {detail.progress?.checked_in_at &&
+                !detail.progress.checked_out_at && (
+                  <button
+                    className="btn btn-secondary"
+                    name="checkout"
+                    value="1"
+                  >
+                    Record check-out
+                  </button>
+                )}
+            </form>
+            <p className="desk-muted">
+              Early departure does not release future inventory. The Owner must
+              update the reservation dates or allocations.
+            </p>
+          </>
+        )}
+      </section>
       <section className="ops-card">
         <h2>{b.guest_name || "Guest"}</h2>
         <p>

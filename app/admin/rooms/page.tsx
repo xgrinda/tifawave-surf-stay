@@ -170,7 +170,7 @@ export default async function AdminRoomsPage({
                 >
                   <summary className="admin-room-card-header admin-collapsible-summary">
                     <div>
-                      <h3>{room.name}</h3>
+                      <h3 id={room.id}>{room.name}</h3>
                       <p>{room.slug}</p>
                     </div>
                     <div className="admin-collapsible-summary-meta">

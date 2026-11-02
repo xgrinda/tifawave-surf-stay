@@ -144,60 +144,484 @@ before(async () => {
     ),
   );
 });
-test("operations workspace rejects unauthorized roles and returns complete calendar inventory",async()=>{
- for(const role of ["anon","service","housekeeping","content_editor","stranger"] as const)await rejectsCode(as(role,c=>c.query("select public.operations_workspace('2099-01-01','2099-02-01')")),"42501");
- const result=await as("owner",c=>c.query("select public.operations_workspace('2099-01-01','2099-02-01') value"));
- const data=result.rows[0].value;assert.equal(data.units.length,12);assert.equal(data.units.filter((u:{kind:string})=>u.kind==="dorm_bed").length,4);
- assert.equal(data.occupancy.reduce((n:number,x:{total:number})=>n+x.total,0),12);
- await rejectsCode(as("reception",c=>c.query("select public.operations_workspace('2099-01-01','2099-04-01')")),"22023");
+test("operations workspace rejects unauthorized roles and returns complete calendar inventory", async () => {
+  for (const role of [
+    "anon",
+    "service",
+    "housekeeping",
+    "content_editor",
+    "stranger",
+  ] as const)
+    await rejectsCode(
+      as(role, (c) =>
+        c.query(
+          "select public.operations_workspace('2099-01-01','2099-02-01')",
+        ),
+      ),
+      "42501",
+    );
+  const result = await as("owner", (c) =>
+    c.query(
+      "select public.operations_workspace('2099-01-01','2099-02-01') value",
+    ),
+  );
+  const data = result.rows[0].value;
+  assert.equal(data.units.length, 12);
+  assert.equal(
+    data.units.filter((u: { kind: string }) => u.kind === "dorm_bed").length,
+    4,
+  );
+  assert.equal(
+    data.occupancy.reduce((n: number, x: { total: number }) => n + x.total, 0),
+    12,
+  );
+  await rejectsCode(
+    as("reception", (c) =>
+      c.query("select public.operations_workspace('2099-01-01','2099-04-01')"),
+    ),
+    "22023",
+  );
 });
 after(async () => root.end());
-
-test("all nine physical rooms and four independent dorm beds can be allocated for a 23-person group", async()=>{
- const id=await submit(request({bookingType:"group_request",guests:23}));
- await rejectsCode(command(id,"confirm",approved([])),"23514");
- await command(id,"confirm",approved(Object.keys(units)));
- const r=await root.query("select count(*)::int units,count(distinct u.physical_room_id)::int rooms,sum(u.capacity)::int capacity,count(*) filter(where u.kind='dorm_bed')::int beds from public.reservation_allocations a join public.inventory_units u on u.id=a.unit_id where a.booking_id=$1 and a.active",[id]);
- assert.deepEqual(r.rows[0],{units:12,rooms:9,capacity:23,beds:4});
- await command(id,"cancel",{note:"Disposable group fixture complete"},"owner",2);
- assert.equal((await root.query("select count(*)::int n from public.reservation_allocations where booking_id=$1 and active",[id])).rows[0].n,0);
+async function saveEntity(
+  entity: string,
+  data: Record<string, unknown>,
+  role: Role = "owner",
+  id: string | null = null,
+  version = 0,
+) {
+  return as(
+    role,
+    async (c) =>
+      (
+        await c.query("select public.save_workspace_record($1,$2,$3,$4) id", [
+          entity,
+          id,
+          version,
+          data,
+        ])
+      ).rows[0].id as string,
+  );
+}
+test("guest associations preserve booking snapshots and reject non-operational readers", async () => {
+  const bid = await submit();
+  const link = (
+    await root.query(
+      "select guest_id from public.guest_reservations where booking_id=$1",
+      [bid],
+    )
+  ).rows[0];
+  assert.ok(link);
+  const g = (
+    await as("reception", (c) =>
+      c.query("select * from public.guest_profiles where id=$1", [
+        link.guest_id,
+      ]),
+    )
+  ).rows[0];
+  await saveEntity(
+    "guest_profiles",
+    { notes: "Internal contact preference" },
+    "reception",
+    g.id,
+    g.version,
+  );
+  for (const role of ["housekeeping", "content_editor", "stranger"] as const)
+    assert.equal(
+      (await as(role, (c) => c.query("select * from public.guest_profiles")))
+        .rowCount,
+      0,
+    );
+  assert.equal(
+    (
+      await root.query("select guest_name from public.bookings where id=$1", [
+        bid,
+      ])
+    ).rows[0].guest_name,
+    "Isolated test fixture",
+  );
+});
+test("workspace saves enforce optimistic versions, allowlists and audit actors", async () => {
+  const id = await saveEntity(
+    "guest_profiles",
+    { full_name: "Version fixture", email: "", phone: "", notes: "" },
+    "reception",
+  );
+  await saveEntity("guest_profiles", { notes: "Reviewed" }, "reception", id, 1);
+  await rejectsCode(
+    saveEntity("guest_profiles", { notes: "Stale" }, "reception", id, 1),
+    "40001",
+  );
+  await rejectsCode(saveEntity("bookings", { status: "confirmed" }), "22023");
+  await rejectsCode(
+    saveEntity("guest_profiles", {
+      full_name: "Spoof",
+      created_by: people.owner,
+    }),
+    "22023",
+  );
+  await rejectsCode(
+    saveEntity("guest_profiles", { full_name: "Forbidden" }, "content_editor"),
+    "42501",
+  );
+  const audit = (
+    await as("owner", (c) =>
+      c.query(
+        "select actor_id from public.workspace_audit where record_id=$1 order by created_at desc limit 1",
+        [id],
+      ),
+    )
+  ).rows[0];
+  assert.equal(audit.actor_id, people.reception);
+  assert.equal(
+    (
+      await as("reception", (c) =>
+        c.query("select * from public.workspace_audit"),
+      )
+    ).rowCount,
+    0,
+  );
+});
+test("housekeeping sees assigned room tasks and cannot reassign or read guest links", async () => {
+  const room = (
+    await root.query("select id from public.physical_rooms where code='D01'")
+  ).rows[0].id;
+  const id = await saveEntity("work_items", {
+    kind: "housekeeping",
+    title: "Clean test room",
+    room_id: room,
+    assigned_to: people.housekeeping,
+    status: "todo",
+  });
+  const hidden = await saveEntity("work_items", {
+    kind: "follow_up",
+    title: "Private guest follow-up",
+    assigned_to: people.reception,
+  });
+  assert.equal(
+    (
+      await as("housekeeping", (c) =>
+        c.query("select id from public.work_items where id=$1", [hidden]),
+      )
+    ).rowCount,
+    0,
+  );
+  await saveEntity(
+    "work_items",
+    { status: "done", notes: "Room task complete" },
+    "housekeeping",
+    id,
+    1,
+  );
+  await rejectsCode(
+    saveEntity(
+      "work_items",
+      { assigned_to: people.owner },
+      "housekeeping",
+      id,
+      2,
+    ),
+    "22023",
+  );
+  assert.equal(
+    (
+      await as("housekeeping", (c) =>
+        c.query("select * from public.guest_reservations"),
+      )
+    ).rowCount,
+    0,
+  );
+  const rid = (
+    await root.query(
+      "select id,version from public.room_readiness where id=$1",
+      [room],
+    )
+  ).rows[0];
+  await saveEntity(
+    "room_readiness",
+    { status: "ready", room_notes: "Room inspected" },
+    "housekeeping",
+    rid.id,
+    rid.version,
+  );
+  assert.equal(
+    (
+      await as("content_editor", (c) =>
+        c.query("select * from public.room_readiness"),
+      )
+    ).rowCount,
+    0,
+  );
+});
+test("a group enquiry cannot be won with missing or insufficient approved inventory", async () => {
+  const d = request({ bookingType: "group_request" });
+  const bid = await submit(d);
+  await command(bid, "confirm", approved());
+  const input = {
+    kind: "group",
+    contact_name: "Group test",
+    email: "group@example.invalid",
+    group_size: 23,
+    booking_id: bid,
+    check_in: d.checkIn,
+    check_out: d.checkOut,
+    stage: "won",
+  };
+  await rejectsCode(saveEntity("enquiries", input, "reception"), "23514");
+  await rejectsCode(
+    saveEntity("enquiries", { ...input, booking_id: null }),
+    "23514",
+  );
+  const id = await saveEntity(
+    "enquiries",
+    { ...input, group_size: 2 },
+    "reception",
+  );
+  assert.ok(id);
+  await command(bid, "cancel", { note: "Test cleanup" }, "owner", 2);
+});
+test("seasonal rates reject overlap and never rewrite quoted reservation values", async () => {
+  const input = {
+    unit_id: units.D04,
+    label: "Real test fixture",
+    starts_on: "2098-01-01",
+    ends_on: "2098-02-01",
+    nightly_cents: 10000,
+    currency: "MAD",
+  };
+  const id = await saveEntity("season_rates", input);
+  await rejectsCode(
+    saveEntity("season_rates", { ...input, starts_on: "2098-01-20" }),
+    "23P01",
+  );
+  await rejectsCode(saveEntity("season_rates", input, "reception"), "42501");
+  const bid = await submit();
+  await as("owner", (c) =>
+    c.query("select public.set_reservation_quote($1,1,50000,'MAD')", [bid]),
+  );
+  await saveEntity("season_rates", { nightly_cents: 12000 }, "owner", id, 1);
+  assert.equal(
+    (
+      await root.query(
+        "select quoted_amount_cents,status from public.bookings where id=$1",
+        [bid],
+      )
+    ).rows[0].quoted_amount_cents,
+    50000,
+  );
+  await rejectsCode(
+    as("reception", (c) =>
+      c.query("select public.set_reservation_quote($1,2,60000,'MAD')", [bid]),
+    ),
+    "42501",
+  );
+});
+test("concurrent deactivation and confirmation cannot leave inactive allocated inventory", async () => {
+  const bid = await submit(request({ preferredKind: "twin" }));
+  await Promise.allSettled([
+    command(bid, "confirm", approved(["T02"])),
+    as("owner", (c) =>
+      c.query(
+        "select public.update_physical_inventory($1,true,false,null,null)",
+        [units.T02],
+      ),
+    ),
+  ]);
+  const state = (
+    await root.query(
+      "select b.status,u.is_active from public.bookings b cross join public.inventory_units u where b.id=$1 and u.id=$2",
+      [bid, units.T02],
+    )
+  ).rows[0];
+  assert.ok(!(state.status === "confirmed" && !state.is_active));
+  if (state.status === "confirmed") {
+    await rejectsCode(
+      as("owner", (c) =>
+        c.query(
+          "select public.update_physical_inventory($1,true,false,null,null)",
+          [units.T02],
+        ),
+      ),
+      "23514",
+    );
+    await command(bid, "cancel", { note: "Test cleanup" }, "owner", 2);
+  }
+  await as("owner", (c) =>
+    c.query("select public.update_physical_inventory($1,true,true,null,null)", [
+      units.T02,
+    ]),
+  );
 });
 
-test("email delivery bodies are frozen before sending and cannot change on retry",async()=>{
- const id=await submit();
- const jobs=await as("service",async c=>(await c.query("select * from public.claim_booking_emails($1)",[id])).rows);
- const j=jobs[0],payload={from:"Staging <admin@tifawave.com>",to:"admin@tifawave.com",subject:"Test",html:"Test",text:"Test"};
- const prep=(value:unknown)=>as("service",async c=>(await c.query("select public.prepare_booking_email($1,$2,$3) message",[j.id,j.lease_token,value])).rows[0].message);
- assert.deepEqual(await prep(payload),payload);
- assert.deepEqual(await prep({...payload,subject:"Changed"}),payload);
- await rejectsCode(as("reception",c=>c.query("select public.prepare_booking_email($1,$2,$3)",[j.id,j.lease_token,payload])),"42501");
- await rejectsCode(as("service",c=>c.query("select public.prepare_booking_email($1,$2,$3)",[j.id,randomUUID(),payload])),"40001");
+test("all nine physical rooms and four independent dorm beds can be allocated for a 23-person group", async () => {
+  const id = await submit(
+    request({ bookingType: "group_request", guests: 23 }),
+  );
+  await rejectsCode(command(id, "confirm", approved([])), "23514");
+  await command(id, "confirm", approved(Object.keys(units)));
+  const r = await root.query(
+    "select count(*)::int units,count(distinct u.physical_room_id)::int rooms,sum(u.capacity)::int capacity,count(*) filter(where u.kind='dorm_bed')::int beds from public.reservation_allocations a join public.inventory_units u on u.id=a.unit_id where a.booking_id=$1 and a.active",
+    [id],
+  );
+  assert.deepEqual(r.rows[0], { units: 12, rooms: 9, capacity: 23, beds: 4 });
+  await command(
+    id,
+    "cancel",
+    { note: "Disposable group fixture complete" },
+    "owner",
+    2,
+  );
+  assert.equal(
+    (
+      await root.query(
+        "select count(*)::int n from public.reservation_allocations where booking_id=$1 and active",
+        [id],
+      )
+    ).rows[0].n,
+    0,
+  );
 });
 
-test("expired idempotency windows and a crashed final lease stop for provider review",async()=>{
- for(const aged of [true,false]){
-  const id=await submit();
-  const j=(await as("service",async c=>(await c.query("select * from public.claim_booking_emails($1)",[id])).rows))[0];
-  await root.query("update public.email_outbox set first_attempt_at=now()-$2::interval,status='processing',attempts=5,lease_until=now()-interval '1 minute' where id=$1",[j.id,aged?"25 hours":"5 minutes"]);
-  const claimed=await as("service",async c=>(await c.query("select * from public.claim_booking_emails($1)",[id])).rows);
-  assert.ok(!claimed.some(row=>row.id===j.id));
-  const row=(await root.query("select status,needs_review,lease_token from public.email_outbox where id=$1",[j.id])).rows[0];
-  assert.deepEqual(row,{status:"failed",needs_review:true,lease_token:null});
-  await rejectsCode(as("owner",c=>c.query("select public.retry_failed_booking_emails($1)",[id])),"23514");
- }
+test("email delivery bodies are frozen before sending and cannot change on retry", async () => {
+  const id = await submit();
+  const jobs = await as(
+    "service",
+    async (c) =>
+      (await c.query("select * from public.claim_booking_emails($1)", [id]))
+        .rows,
+  );
+  const j = jobs[0],
+    payload = {
+      from: "Staging <admin@tifawave.com>",
+      to: "admin@tifawave.com",
+      subject: "Test",
+      html: "Test",
+      text: "Test",
+    };
+  const prep = (value: unknown) =>
+    as(
+      "service",
+      async (c) =>
+        (
+          await c.query(
+            "select public.prepare_booking_email($1,$2,$3) message",
+            [j.id, j.lease_token, value],
+          )
+        ).rows[0].message,
+    );
+  assert.deepEqual(await prep(payload), payload);
+  assert.deepEqual(await prep({ ...payload, subject: "Changed" }), payload);
+  await rejectsCode(
+    as("reception", (c) =>
+      c.query("select public.prepare_booking_email($1,$2,$3)", [
+        j.id,
+        j.lease_token,
+        payload,
+      ]),
+    ),
+    "42501",
+  );
+  await rejectsCode(
+    as("service", (c) =>
+      c.query("select public.prepare_booking_email($1,$2,$3)", [
+        j.id,
+        randomUUID(),
+        payload,
+      ]),
+    ),
+    "40001",
+  );
 });
 
-test("scheduler authentication is project-scoped, private and records durable outcomes",async()=>{
- const token="a".repeat(64),ref="cjtrnnpqwkorxwqhtjeq";
- await root.query("insert into ops_private.email_scheduler_config(singleton,project_ref,token_hash,enabled) values(true,$1,sha256(convert_to($2,'UTF8')),true)",[ref,token]);
- const authorize=(t:string,p=ref)=>as("service",async c=>(await c.query("select public.authorize_email_scheduler($1,$2) id",[t,p])).rows[0].id);
- assert.equal(await authorize("b".repeat(64)),null);
- assert.equal(await authorize(token,"tuzefzcosvvhzffbxhpm"),null);
- const id=await authorize(token);assert.ok(id);
- await as("service",c=>c.query("select public.finish_email_scheduler_run($1,2,1,0,false)",[id]));
- assert.deepEqual((await root.query("select status,sent,failed,deferred,finished_at is not null finished from ops_private.email_scheduler_runs where id=$1",[id])).rows[0],{status:"partial",sent:2,failed:1,deferred:0,finished:true});
- for(const role of ["anon","owner","reception","housekeeping","content_editor"] as const)
-  await rejectsCode(as(role,c=>c.query("select public.authorize_email_scheduler($1,$2)",[token,ref])),"42501");
+test("expired idempotency windows and a crashed final lease stop for provider review", async () => {
+  for (const aged of [true, false]) {
+    const id = await submit();
+    const j = (
+      await as(
+        "service",
+        async (c) =>
+          (await c.query("select * from public.claim_booking_emails($1)", [id]))
+            .rows,
+      )
+    )[0];
+    await root.query(
+      "update public.email_outbox set first_attempt_at=now()-$2::interval,status='processing',attempts=5,lease_until=now()-interval '1 minute' where id=$1",
+      [j.id, aged ? "25 hours" : "5 minutes"],
+    );
+    const claimed = await as(
+      "service",
+      async (c) =>
+        (await c.query("select * from public.claim_booking_emails($1)", [id]))
+          .rows,
+    );
+    assert.ok(!claimed.some((row) => row.id === j.id));
+    const row = (
+      await root.query(
+        "select status,needs_review,lease_token from public.email_outbox where id=$1",
+        [j.id],
+      )
+    ).rows[0];
+    assert.deepEqual(row, {
+      status: "failed",
+      needs_review: true,
+      lease_token: null,
+    });
+    await rejectsCode(
+      as("owner", (c) =>
+        c.query("select public.retry_failed_booking_emails($1)", [id]),
+      ),
+      "23514",
+    );
+  }
+});
+
+test("scheduler authentication is project-scoped, private and records durable outcomes", async () => {
+  const token = "a".repeat(64),
+    ref = "cjtrnnpqwkorxwqhtjeq";
+  await root.query(
+    "insert into ops_private.email_scheduler_config(singleton,project_ref,token_hash,enabled) values(true,$1,sha256(convert_to($2,'UTF8')),true)",
+    [ref, token],
+  );
+  const authorize = (t: string, p = ref) =>
+    as(
+      "service",
+      async (c) =>
+        (
+          await c.query("select public.authorize_email_scheduler($1,$2) id", [
+            t,
+            p,
+          ])
+        ).rows[0].id,
+    );
+  assert.equal(await authorize("b".repeat(64)), null);
+  assert.equal(await authorize(token, "tuzefzcosvvhzffbxhpm"), null);
+  const id = await authorize(token);
+  assert.ok(id);
+  await as("service", (c) =>
+    c.query("select public.finish_email_scheduler_run($1,2,1,0,false)", [id]),
+  );
+  assert.deepEqual(
+    (
+      await root.query(
+        "select status,sent,failed,deferred,finished_at is not null finished from ops_private.email_scheduler_runs where id=$1",
+        [id],
+      )
+    ).rows[0],
+    { status: "partial", sent: 2, failed: 1, deferred: 0, finished: true },
+  );
+  for (const role of [
+    "anon",
+    "owner",
+    "reception",
+    "housekeeping",
+    "content_editor",
+  ] as const)
+    await rejectsCode(
+      as(role, (c) =>
+        c.query("select public.authorize_email_scheduler($1,$2)", [token, ref]),
+      ),
+      "42501",
+    );
 });
 
 test("hosted default function grants cannot expose staff or private commands", async () => {
@@ -214,9 +638,16 @@ test("hosted default function grants cannot expose staff or private commands", a
       "select has_function_privilege('anon',$1,'execute') anon, has_function_privilege('authenticated',$1,'execute') staff, has_function_privilege('service_role',$1,'execute') service",
       [signature],
     );
-    assert.deepEqual(result.rows[0], { anon: false, staff: true, service: false }, signature);
+    assert.deepEqual(
+      result.rows[0],
+      { anon: false, staff: true, service: false },
+      signature,
+    );
   }
-  await rejectsCode(as("anon", (c) => c.query("select public.staff_role()")), "42501");
+  await rejectsCode(
+    as("anon", (c) => c.query("select public.staff_role()")),
+    "42501",
+  );
   const helpers = await root.query(
     "select count(*)::int n from pg_proc p join pg_namespace ns on ns.oid=p.pronamespace where ns.nspname='ops_private' and (has_function_privilege('anon',p.oid,'execute') or has_function_privilege('authenticated',p.oid,'execute') or has_function_privilege('service_role',p.oid,'execute'))",
   );

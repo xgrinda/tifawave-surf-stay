@@ -90,6 +90,8 @@ export type OutboxEmail = {
   created_at: string;
 };
 export type BookingOperations = {
+  quoted_amount_cents: number | null;
+  quote_currency: string | null;
   booking_source:
     | "legacy"
     | "website"

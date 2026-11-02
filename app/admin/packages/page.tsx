@@ -158,7 +158,7 @@ export default async function AdminPackagesPage({
                 >
                   <summary className="admin-room-card-header admin-collapsible-summary">
                     <div>
-                      <h3>{pkg.name}</h3>
+                      <h3 id={pkg.id}>{pkg.name}</h3><a href={"/admin/packages/"+pkg.id}>Manage activities & photographs →</a>
                       <p>{pkg.slug}</p>
                     </div>
                     <div className="admin-collapsible-summary-meta">

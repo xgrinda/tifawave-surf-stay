@@ -21,7 +21,8 @@ export type AdminNavKey =
   | "housekeeping"
   | "content"
   | "reports"
-  | "staff";
+  | "staff"
+  | "tasks";
 const navigation: {
   group: string;
   items: { key: AdminNavKey; label: string; href: string; roles: string[] }[];
@@ -29,6 +30,18 @@ const navigation: {
   {
     group: "Daily operations",
     items: [
+      {
+        key: "housekeeping",
+        label: "Housekeeping",
+        href: "/admin/housekeeping",
+        roles: ["owner", "reception", "housekeeping"],
+      },
+      {
+        key: "tasks",
+        label: "Tasks & follow-ups",
+        href: "/admin/tasks",
+        roles: ["owner", "reception"],
+      },
       {
         key: "dashboard",
         label: "Operations desk",
@@ -56,12 +69,35 @@ const navigation: {
     ],
   },
   {
+    group: "Guests & sales",
+    items: [
+      {
+        key: "guests",
+        label: "Guests",
+        href: "/admin/guests",
+        roles: ["owner", "reception"],
+      },
+      {
+        key: "groups",
+        label: "Groups & retreats",
+        href: "/admin/groups",
+        roles: ["owner", "reception"],
+      },
+      {
+        key: "partners",
+        label: "Partners & sponsors",
+        href: "/admin/partners",
+        roles: ["owner", "reception"],
+      },
+    ],
+  },
+  {
     group: "Property & website",
     items: [
       {
         key: "rooms",
         label: "Rooms & inventory",
-        href: "/admin/rooms",
+        href: "/admin/inventory",
         roles: ["owner", "content_editor"],
       },
       {
@@ -168,7 +204,14 @@ export async function AdminShell({
         </aside>
         <section className="admin-main-panel">
           <div className="desk-utility-bar">
-            <form action="/admin/search" role="search">
+            <form
+              action={
+                staff.role === "housekeeping"
+                  ? "/admin/housekeeping"
+                  : "/admin/search"
+              }
+              role="search"
+            >
               <label className="sr-only" htmlFor="desk-search">
                 Search workspace
               </label>

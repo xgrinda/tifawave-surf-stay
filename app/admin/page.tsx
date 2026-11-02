@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function Dashboard() {
   const staff = await requireStaff();
   if (staff.role === "content_editor") redirect("/admin/gallery");
-  if (staff.role === "housekeeping") redirect("/admin/access");
+  if (staff.role === "housekeeping") redirect("/admin/housekeeping");
   await requireAdmin("reservations");
   const today = propertyToday();
   const data = await getWorkspace(today, addDays(today, 7));

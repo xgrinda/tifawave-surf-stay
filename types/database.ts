@@ -492,11 +492,13 @@ import type {
   OperationFunctions,
   BookingOperations,
 } from "./operations";
+import type { ModuleTables, ModuleFunctions } from "./modules";
 type LegacyTables = LegacyDatabase["public"]["Tables"];
 export type Database = {
   public: Omit<LegacyDatabase["public"], "Tables" | "Functions"> & {
     Tables: Omit<LegacyTables, "bookings" | "blocked_dates"> &
-      OperationTables & {
+      OperationTables &
+      ModuleTables & {
         bookings: Omit<
           LegacyTables["bookings"],
           "Row" | "Insert" | "Update"
@@ -522,6 +524,6 @@ export type Database = {
           };
         };
       };
-    Functions: OperationFunctions;
+    Functions: OperationFunctions & ModuleFunctions;
   };
 };

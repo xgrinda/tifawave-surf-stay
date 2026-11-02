@@ -1,7 +1,7 @@
 import "server-only";
 import { createSupabaseStaffClient } from "@/lib/supabase/staff";
 const fields =
-  "id,reference,status,version,locale,booking_source,external_reference,booking_type,guest_name,guest_email,guest_phone,guests,check_in,check_out,notes,surf_level,group_size,room_preference,package_id,preferred_kind,preferred_listing_id,retreat_name,airport_transfer,board_rental,wetsuit_rental,meals_needed,yoga_interest,private_coaching,coworking_interest,booking_com_checked_at,airbnb_checked_at,decision_at,created_at" as const;
+  "id,reference,status,version,locale,booking_source,external_reference,booking_type,guest_name,guest_email,guest_phone,guests,check_in,check_out,notes,surf_level,group_size,room_preference,package_id,preferred_kind,preferred_listing_id,retreat_name,airport_transfer,board_rental,wetsuit_rental,meals_needed,yoga_interest,private_coaching,coworking_interest,booking_com_checked_at,airbnb_checked_at,decision_at,created_at,quoted_amount_cents,quote_currency" as const;
 export const bookingStatuses = [
   "pending",
   "confirmed",
@@ -118,6 +118,12 @@ export async function getReservation(id: string) {
       )
       .eq("booking_id", id)
       .order("created_at", { ascending: false }),
+    client.from("stay_progress").select("*").eq("id", id).maybeSingle(),
+    client
+      .from("guest_reservations")
+      .select("guest_id")
+      .eq("booking_id", id)
+      .maybeSingle(),
   ]);
   for (const result of results)
     if (result.error)
@@ -130,6 +136,8 @@ export async function getReservation(id: string) {
     rooms: results[3].data!,
     busy: results[4].data!,
     emails: results[5].data!,
+    progress: results[6].data,
+    guestId: results[7].data?.guest_id,
   };
 }
 export function operationError(error: { code?: string; message?: string }) {
