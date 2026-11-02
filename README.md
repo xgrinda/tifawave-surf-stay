@@ -58,6 +58,9 @@ historical migrations remain intact. New migrations:
    revokes hosted default API-role function grants, keeps staff commands
    authenticated-only, protects private helpers, relocates the extension and
    adds supporting foreign-key indexes.
+5. `20261102134701_reliable_email_retry_scheduler.sql` — freezes provider
+   messages, records provider outcomes, stops unsafe retries, and adds private
+   scheduler authentication and delivery-health telemetry.
 
 Existing booking IDs, guest records, statuses, payment-history columns, and
 historical SQL are preserved. No historical reservation is assigned a physical
@@ -126,18 +129,31 @@ entry does not send a confusing new-request receipt to an already-booked guest.
 Owner decisions queue confirmation/decline/change/cancellation messages in the
 recorded English/French language when a real email exists.
 
-Jobs are committed with the decision, claimed with exclusive leases, and sent
-after the HTTP response using Next.js `after`. Failures stay visible with
-backoff and a five-attempt limit. Owner-authorized retries can reset failed jobs
-without resending jobs already marked sent. Provider idempotency keys reduce
-duplicates; “sent” means provider acceptance, not verified inbox delivery.
+Jobs are committed with the decision and sent after the HTTP response using
+Next.js `after`. Independent Supabase Cron retries run every minute through the
+`email-outbox` Edge Function, including when nobody opens the dashboard. Both
+runtimes share the same processor, exclusive two-minute leases, frozen provider
+body and stable per-job Resend idempotency key. Failed attempts back off by
+1/4/9/16/25 minutes with a five-attempt limit. Sent jobs are never reset.
 
-Configure an authenticated POST scheduler for `/api/internal/email` with
-`Authorization: Bearer <NOTIFICATION_WORKER_SECRET>` to process due retries
-without staff intervention. GET performs no mutation. Until that scheduler is
-configured, immediate attempts and the Owner's retry control work, but unattended
-retry scheduling is not complete. Resend domain/sender and actual delivery must
-be verified in staging before a milestone is declared complete.
+Resend's deduplication window is finite. Uncertain jobs older than 23 hours,
+crashed final attempts, and payload/idempotency errors stop for provider review;
+even the Owner retry control cannot bypass that stop. Check the provider log
+before making a separately reviewed repair. “Sent” means provider acceptance;
+check the provider's delivery event for inbox delivery. Dashboard health reports
+the last run, stalled workers, failed jobs and outcomes requiring review.
+
+Staging setup is documented in `supabase/staging/README.md`. Its fixed-target
+script is **not** a production migration. Production scheduling remains a
+separate release action. Cron uses a private Vault token plus gateway JWT
+verification; API callers cannot choose the project, recipients or message body.
+No Vercel protection setting is weakened. Vercel Cron only runs on Production,
+so it cannot provide an independently testable Preview retry schedule.
+
+`POST /api/internal/email` remains an authenticated compatibility/manual trigger
+using `NOTIFICATION_WORKER_SECRET`; GET does not mutate data. Do not configure a
+second timer for it. Verify actual timer failure/recovery and controlled-inbox
+delivery before considering any environment configured.
 
 ## Calendar compatibility
 
@@ -181,3 +197,15 @@ It verifies removed payment routes, legacy URL behavior, unauthenticated access,
 origin checks, private endpoints, and security headers without booking writes.
 
 See `docs/production-qa-checklist.md` for the remaining staging/release gates.
+
+For real hosted authorization, MFA and inventory tests, use
+`scripts/accept-staging.ts` with an ignored `.env.staging-acceptance.local`
+(mode 0600) and `node --env-file=.env.staging-acceptance.local --import tsx`.
+The harness refuses any project other than the isolated Tifawave staging ref,
+requires an empty booking queue and a paused email scheduler, journals exact
+fixture IDs, and removes its disposable identities/records in `finally`.
+`TIFAWAVE_PREVIEW_ACCESS_FILE` optionally names an ignored JSON file containing
+`{"url":"<temporary authenticated Preview share URL>"}` to also exercise the
+actual Preview using test staff SSR sessions. Never commit that URL or tokens.
+Re-enable the scheduler and verify a completed run after bulk tests. The personal
+Owner account is never modified by the harness.

@@ -65,6 +65,10 @@ export type Notification = {
   created_at: string;
 };
 export type OutboxEmail = {
+  first_attempt_at: string | null;
+  delivery_payload: Json | null;
+  provider_message_id: string | null;
+  needs_review: boolean;
   id: string;
   booking_id: string;
   event:
@@ -131,6 +135,22 @@ export type OperationTables = {
   }>;
 };
 export type OperationFunctions = {
+  email_scheduler_health: { Args: Record<string, never>; Returns: Json };
+  prepare_booking_email: {
+    Args: { p_id: string; p_lease_token: string; p_delivery: Json };
+    Returns: Json;
+  };
+  finish_booking_email_delivery: {
+    Args: {
+      p_id: string;
+      p_lease_token: string;
+      p_success: boolean;
+      p_provider_id: string | null;
+      p_error_code: string | null;
+      p_review: boolean;
+    };
+    Returns: undefined;
+  };
   unit_calendar_events: { Args: { p_unit_id: string }; Returns: Allocation[] };
   staff_role: { Args: Record<string, never>; Returns: StaffRole | null };
   submit_booking_request: {

@@ -146,6 +146,53 @@ before(async () => {
 });
 after(async () => root.end());
 
+test("all nine physical rooms and four independent dorm beds can be allocated for a 23-person group", async()=>{
+ const id=await submit(request({bookingType:"group_request",guests:23}));
+ await rejectsCode(command(id,"confirm",approved([])),"23514");
+ await command(id,"confirm",approved(Object.keys(units)));
+ const r=await root.query("select count(*)::int units,count(distinct u.physical_room_id)::int rooms,sum(u.capacity)::int capacity,count(*) filter(where u.kind='dorm_bed')::int beds from public.reservation_allocations a join public.inventory_units u on u.id=a.unit_id where a.booking_id=$1 and a.active",[id]);
+ assert.deepEqual(r.rows[0],{units:12,rooms:9,capacity:23,beds:4});
+ await command(id,"cancel",{note:"Disposable group fixture complete"},"owner",2);
+ assert.equal((await root.query("select count(*)::int n from public.reservation_allocations where booking_id=$1 and active",[id])).rows[0].n,0);
+});
+
+test("email delivery bodies are frozen before sending and cannot change on retry",async()=>{
+ const id=await submit();
+ const jobs=await as("service",async c=>(await c.query("select * from public.claim_booking_emails($1)",[id])).rows);
+ const j=jobs[0],payload={from:"Staging <admin@tifawave.com>",to:"admin@tifawave.com",subject:"Test",html:"Test",text:"Test"};
+ const prep=(value:unknown)=>as("service",async c=>(await c.query("select public.prepare_booking_email($1,$2,$3) message",[j.id,j.lease_token,value])).rows[0].message);
+ assert.deepEqual(await prep(payload),payload);
+ assert.deepEqual(await prep({...payload,subject:"Changed"}),payload);
+ await rejectsCode(as("reception",c=>c.query("select public.prepare_booking_email($1,$2,$3)",[j.id,j.lease_token,payload])),"42501");
+ await rejectsCode(as("service",c=>c.query("select public.prepare_booking_email($1,$2,$3)",[j.id,randomUUID(),payload])),"40001");
+});
+
+test("expired idempotency windows and a crashed final lease stop for provider review",async()=>{
+ for(const aged of [true,false]){
+  const id=await submit();
+  const j=(await as("service",async c=>(await c.query("select * from public.claim_booking_emails($1)",[id])).rows))[0];
+  await root.query("update public.email_outbox set first_attempt_at=now()-$2::interval,status='processing',attempts=5,lease_until=now()-interval '1 minute' where id=$1",[j.id,aged?"25 hours":"5 minutes"]);
+  const claimed=await as("service",async c=>(await c.query("select * from public.claim_booking_emails($1)",[id])).rows);
+  assert.ok(!claimed.some(row=>row.id===j.id));
+  const row=(await root.query("select status,needs_review,lease_token from public.email_outbox where id=$1",[j.id])).rows[0];
+  assert.deepEqual(row,{status:"failed",needs_review:true,lease_token:null});
+  await rejectsCode(as("owner",c=>c.query("select public.retry_failed_booking_emails($1)",[id])),"23514");
+ }
+});
+
+test("scheduler authentication is project-scoped, private and records durable outcomes",async()=>{
+ const token="a".repeat(64),ref="cjtrnnpqwkorxwqhtjeq";
+ await root.query("insert into ops_private.email_scheduler_config(singleton,project_ref,token_hash,enabled) values(true,$1,sha256(convert_to($2,'UTF8')),true)",[ref,token]);
+ const authorize=(t:string,p=ref)=>as("service",async c=>(await c.query("select public.authorize_email_scheduler($1,$2) id",[t,p])).rows[0].id);
+ assert.equal(await authorize("b".repeat(64)),null);
+ assert.equal(await authorize(token,"tuzefzcosvvhzffbxhpm"),null);
+ const id=await authorize(token);assert.ok(id);
+ await as("service",c=>c.query("select public.finish_email_scheduler_run($1,2,1,0,false)",[id]));
+ assert.deepEqual((await root.query("select status,sent,failed,deferred,finished_at is not null finished from ops_private.email_scheduler_runs where id=$1",[id])).rows[0],{status:"partial",sent:2,failed:1,deferred:0,finished:true});
+ for(const role of ["anon","owner","reception","housekeeping","content_editor"] as const)
+  await rejectsCode(as(role,c=>c.query("select public.authorize_email_scheduler($1,$2)",[token,ref])),"42501");
+});
+
 test("hosted default function grants cannot expose staff or private commands", async () => {
   const signatures = [
     "public.staff_role()",

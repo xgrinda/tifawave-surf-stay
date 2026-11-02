@@ -30,6 +30,8 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run test:db
+      - name: Scheduled worker types
+        run: npm exec --yes --package=deno@2.9.6 -- deno check --config supabase/functions/email-outbox/deno.json supabase/functions/email-outbox/index.ts
       - run: npm audit --omit=dev
       - run: npm run build
       - name: Unconfigured local HTTP safety checks

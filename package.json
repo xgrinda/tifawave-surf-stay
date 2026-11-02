@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "tsx --test tests/security.test.ts",
+    "test": "tsx --test tests/security.test.ts tests/email.test.ts",
     "test:db": "node scripts/test-database.mjs --fresh && node scripts/test-database.mjs",
     "test:http": "tsx --test tests/http.test.ts"
   },
@@ -32,6 +32,7 @@
     "@types/react-dom": "19.2.3",
     "eslint": "9.39.4",
     "eslint-config-next": "^16.4.3",
+    "otpauth": "9.5.2",
     "pg": "^8.23.1",
     "postcss": "^8.5.32",
     "tailwindcss": "4.3.0",

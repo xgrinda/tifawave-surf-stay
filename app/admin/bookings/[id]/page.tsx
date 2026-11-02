@@ -185,6 +185,11 @@ export default async function Detail({
             {emails.map((e) => (
               <li key={e.id}>
                 {e.event} · {e.status} · {e.attempts} attempts{" "}
+                {e.needs_review && (
+                  <strong className="admin-error">
+                    Provider review required. Automatic resend is blocked.{" "}
+                  </strong>
+                )}
                 {e.last_error && <small>{e.last_error}</small>}
               </li>
             ))}

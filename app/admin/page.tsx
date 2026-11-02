@@ -1,4 +1,5 @@
 import { RefreshRequests } from "./_components/refresh-requests";
+import { EmailHealth } from "./_components/email-health";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { requireStaff, requireAdmin } from "@/lib/admin/auth";
@@ -95,6 +96,7 @@ export default async function AdminDashboardPage() {
     >
       <RefreshRequests />
       <OperationNotifications />
+      <EmailHealth />
       <section className="admin-dashboard-section" aria-label="Admin overview">
         <div className="admin-dashboard-stats">
           {statCards.map((stat) => (

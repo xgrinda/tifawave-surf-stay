@@ -93,7 +93,7 @@ export async function getReservation(id: string) {
       .eq("active", true),
     client
       .from("email_outbox")
-      .select("id,event,status,attempts,last_error,created_at,sent_at")
+      .select("id,event,status,attempts,last_error,created_at,sent_at,needs_review")
       .eq("booking_id", id)
       .order("created_at", { ascending: false }),
   ]);

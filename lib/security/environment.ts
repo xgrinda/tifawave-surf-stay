@@ -1,7 +1,12 @@
 type Environment = Record<string, string | undefined>;
+declare const process: { env: Environment };
+const runtimeEnv = () => (typeof process === "undefined" ? {} : process.env);
 
 /** Fail closed: no local/Preview mutations against an arbitrary remote project. */
-export function assertDatabaseTarget(env: Environment = process.env): void {
+export function assertDatabaseTarget(
+  env: Environment = runtimeEnv(),
+  runtime: "vercel" | "supabase" = "vercel",
+): void {
   const mode = env.TIFAWAVE_ENV;
   const url = new URL(
     env.NEXT_PUBLIC_SUPABASE_URL || "https://configuration.invalid",
@@ -14,7 +19,11 @@ export function assertDatabaseTarget(env: Environment = process.env): void {
   }
   if (mode === "production") {
     if (
-      env.VERCEL_ENV !== "production" ||
+      !(
+        env.VERCEL_ENV === "production" ||
+        (runtime === "supabase" &&
+          env.SUPABASE_URL === env.NEXT_PUBLIC_SUPABASE_URL)
+      ) ||
       !env.TIFAWAVE_PRODUCTION_PROJECT_REF ||
       url.hostname !== env.TIFAWAVE_PRODUCTION_PROJECT_REF + ".supabase.co"
     ) {
@@ -53,7 +62,7 @@ export function assertDatabaseTarget(env: Environment = process.env): void {
 
 export function assertStagingRecipient(
   to: string | string[],
-  env: Environment = process.env,
+  env: Environment = runtimeEnv(),
 ): void {
   if (env.TIFAWAVE_ENV === "production") return;
   const allowed = (env.STAGING_EMAIL_ALLOWLIST || "")
