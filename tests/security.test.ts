@@ -160,7 +160,9 @@ test("calendar dates and maximum hostel capacity are validated, not only formatt
     );
 });
 test("today follows Morocco local time near a UTC date boundary", () => {
-  assert.equal(propertyToday(new Date("2026-11-01T23:30:00Z")), "2026-11-02");
+  // Use settled historical rules. Newer IANA releases can change future offsets.
+  assert.equal(propertyToday(new Date("2025-11-01T23:30:00Z")), "2025-11-02");
+  assert.equal(propertyToday(new Date("2025-03-15T23:30:00Z")), "2025-03-15");
 });
 test("emails escape guest HTML and receipts cannot imply an approved stay", () => {
   const data = {
