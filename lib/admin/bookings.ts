@@ -1,152 +1,138 @@
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import type { Database } from "@/types/database";
-
-type BookingStatus = Database["public"]["Enums"]["booking_status"];
-export type AdminBookingFilter = "pending" | "confirmed" | "cancelled" | "all";
-
-export type AdminBooking = {
-  id: string;
-  bookingType: "stay_only" | "surf_package" | "group_request";
-  guestName: string;
-  guestEmail: string;
-  guestPhone: string | null;
-  roomName: string;
-  packageName: string | null;
-  surfLevel: string | null;
-  groupSize: number | null;
-  airportTransfer: boolean;
-  boardRental: boolean;
-  wetsuitRental: boolean;
-  coworkingInterest: boolean;
-  roomPreference: string | null;
-  privateCoaching: boolean;
-  yogaInterest: boolean;
-  mealsNeeded: boolean;
-  retreatName: string | null;
-  notes: string | null;
-  checkIn: string;
-  checkOut: string;
-  status: BookingStatus;
-  createdAt: string;
-};
-
+import "server-only";
+import { createSupabaseStaffClient } from "@/lib/supabase/staff";
+const fields =
+  "id,reference,status,version,locale,booking_source,external_reference,booking_type,guest_name,guest_email,guest_phone,guests,check_in,check_out,notes,surf_level,group_size,room_preference,package_id,preferred_kind,preferred_listing_id,retreat_name,airport_transfer,board_rental,wetsuit_rental,meals_needed,yoga_interest,private_coaching,coworking_interest,booking_com_checked_at,airbnb_checked_at,decision_at,created_at" as const;
+export const bookingStatuses = [
+  "pending",
+  "confirmed",
+  "declined",
+  "cancelled",
+  "completed",
+  "no_show",
+] as const;
 export async function getAdminBookings(
-  filter: AdminBookingFilter = "pending"
-): Promise<AdminBooking[]> {
-  const supabase = createSupabaseAdminClient();
-  let query = supabase
-    .from("bookings")
-    .select(
-      "id, room_id, package_id, booking_type, guest_name, guest_email, guest_phone, check_in, check_out, status, surf_level, group_size, airport_transfer, board_rental, wetsuit_rental, coworking_interest, room_preference, private_coaching, yoga_interest, meals_needed, retreat_name, notes, created_at"
-    )
-    .order("created_at", { ascending: false });
-
-  if (filter !== "all") {
-    query = query.eq("status", filter);
-  }
-
-  const { data: bookings, error: bookingsError } = await query;
-
-  if (bookingsError) {
-    throw new Error(bookingsError.message);
-  }
-
-  if (bookings.length === 0) {
-    return [];
-  }
-
-  const roomIds = Array.from(
-    new Set(
-      bookings
-        .map((booking) => booking.room_id)
-        .filter((roomId): roomId is string => Boolean(roomId))
-    )
+  params: {
+    status?: string;
+    q?: string;
+    source?: string;
+    page?: string;
+    sort?: string;
+  } = {},
+) {
+  const client = await createSupabaseStaffClient();
+  const page = Math.min(
+    Math.max(Number.parseInt(params.page || "1") || 1, 1),
+    10000,
   );
-  const roomNames = new Map<string, string>();
-
-  if (roomIds.length > 0) {
-    const { data: rooms, error: roomsError } = await supabase
-      .from("rooms")
-      .select("id, name")
-      .in("id", roomIds);
-
-    if (roomsError) {
-      throw new Error(roomsError.message);
-    }
-
-    for (const room of rooms) {
-      roomNames.set(room.id, room.name);
-    }
-  }
-  const packageIds = Array.from(
-    new Set(
-      bookings
-        .map((booking) => booking.package_id)
-        .filter((packageId): packageId is string => Boolean(packageId))
-    )
-  );
-  const packageNames = new Map<string, string>();
-
-  if (packageIds.length > 0) {
-    const { data: packages, error: packagesError } = await supabase
-      .from("packages")
-      .select("id, name")
-      .in("id", packageIds);
-
-    if (packagesError) {
-      throw new Error(packagesError.message);
-    }
-
-    for (const pkg of packages) {
-      packageNames.set(pkg.id, pkg.name);
-    }
-  }
-
-  return bookings.map((booking) => ({
-    id: booking.id,
-    bookingType: booking.booking_type,
-    guestName: booking.guest_name ?? "Guest",
-    guestEmail: booking.guest_email ?? "No email",
-    guestPhone: booking.guest_phone,
-    roomName: booking.room_id
-      ? roomNames.get(booking.room_id) ?? "Room unavailable"
-      : "Custom room plan",
-    packageName: booking.package_id
-      ? packageNames.get(booking.package_id) ?? "Package unavailable"
-      : null,
-    surfLevel: booking.surf_level,
-    groupSize: booking.group_size,
-    airportTransfer: booking.airport_transfer,
-    boardRental: booking.board_rental,
-    wetsuitRental: booking.wetsuit_rental,
-    coworkingInterest: booking.coworking_interest,
-    roomPreference: booking.room_preference,
-    privateCoaching: booking.private_coaching,
-    yogaInterest: booking.yoga_interest,
-    mealsNeeded: booking.meals_needed,
-    retreatName: booking.retreat_name,
-    notes: booking.notes,
-    checkIn: booking.check_in,
-    checkOut: booking.check_out,
-    status: booking.status,
-    createdAt: booking.created_at
-  }));
+  const q = (params.q || "").replace(/[^\p{L}\p{N}@._ -]/gu, "").slice(0, 100);
+  let query = client.from("bookings").select(fields, { count: "exact" });
+  const status = bookingStatuses.find((x) => x === params.status);
+  if (status) query = query.eq("status", status);
+  if (
+    [
+      "website",
+      "booking_com",
+      "airbnb",
+      "direct",
+      "walk_in",
+      "legacy",
+    ].includes(params.source || "")
+  )
+    query = query.eq("booking_source", params.source as "website");
+  if (q)
+    query = query.or(
+      "guest_name.ilike.%" +
+        q +
+        "%,guest_email.ilike.%" +
+        q +
+        "%,reference.ilike.%" +
+        q +
+        "%",
+    );
+  const sort = ["created_at", "check_in", "guest_name"].includes(
+    params.sort || "",
+  )
+    ? (params.sort as "created_at")
+    : "created_at";
+  const { data, error, count } = await query
+    .order(sort, { ascending: sort !== "created_at" })
+    .order("id")
+    .range((page - 1) * 25, page * 25 - 1);
+  if (error)
+    throw new Error(
+      "Reservations could not be loaded. Check staff permissions and migrations.",
+    );
+  return { bookings: data || [], count: count || 0, page };
 }
-
-export async function updateAdminBookingStatus(
-  bookingId: string,
-  status: Extract<BookingStatus, "pending" | "confirmed" | "cancelled">
-): Promise<void> {
-  const supabase = createSupabaseAdminClient();
-  const { error } = await supabase
+export async function getReservation(id: string) {
+  const client = await createSupabaseStaffClient();
+  const { data: booking, error } = await client
     .from("bookings")
-    .update({
-      status,
-      updated_at: new Date().toISOString()
-    })
-    .eq("id", bookingId);
-
-  if (error) {
-    throw new Error(error.message);
+    .select(fields)
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error("Reservation could not be loaded.");
+  if (!booking) return null;
+  const results = await Promise.all([
+    client
+      .from("reservation_activity")
+      .select("*")
+      .eq("booking_id", id)
+      .order("created_at", { ascending: false })
+      .limit(100),
+    client
+      .from("reservation_allocations")
+      .select("*")
+      .eq("booking_id", id)
+      .order("created_at", { ascending: false }),
+    client.from("inventory_units").select("*").order("code"),
+    client.from("physical_rooms").select("*").order("code"),
+    client
+      .from("reservation_allocations")
+      .select("unit_id,booking_id,check_in,check_out")
+      .eq("active", true),
+    client
+      .from("email_outbox")
+      .select("id,event,status,attempts,last_error,created_at,sent_at")
+      .eq("booking_id", id)
+      .order("created_at", { ascending: false }),
+  ]);
+  for (const result of results)
+    if (result.error)
+      throw new Error("Operational detail could not be loaded.");
+  return {
+    booking,
+    activity: results[0].data!,
+    allocations: results[1].data!,
+    units: results[2].data!,
+    rooms: results[3].data!,
+    busy: results[4].data!,
+    emails: results[5].data!,
+  };
+}
+export function operationError(error: { code?: string; message?: string }) {
+  if (error.code === "23P01")
+    return "Those rooms or beds conflict with a reservation or maintenance block. Nothing was changed.";
+  if (error.code === "42501")
+    return "Your current staff identity is not authorized for this action.";
+  if (error.code === "40001")
+    return "This record changed. Refresh and review before trying again.";
+  if (error.code === "23514" || error.code === "22023") {
+    const safe = [
+      "Record both manual",
+      "Allocated rooms",
+      "Select distinct",
+      "Reconcile overlapping",
+      "Only pending",
+      "Choose a confirmed",
+      "Invalid reservation",
+      "Arrival cannot",
+      "Add a decision",
+      "Invalid maintenance",
+    ];
+    if (safe.some((prefix) => error.message?.startsWith(prefix)))
+      return error.message!;
+    return "Dates, capacity, status, or allocations are invalid. Nothing was changed.";
   }
+  return "The operation could not be saved. Nothing was changed.";
 }

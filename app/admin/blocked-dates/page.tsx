@@ -1,259 +1,193 @@
-import type { Metadata } from "next";
-import { requireAdmin } from "@/lib/admin/auth";
-import {
-  getAdminBlockedDates,
-  getAdminRoomOptions
-} from "@/lib/admin/blocked-dates";
-import { AdminShell } from "../_components/admin-shell";
-import {
-  createBlockedDateAction,
-  removeBlockedDateAction,
-  updateRoomIcalUrlsAction
-} from "./actions";
+import { unitFeedToken } from "@/lib/ical/unit-feed";
 import { getSiteUrl } from "@/lib/site";
-
-export const dynamic = "force-dynamic";
-
-export const metadata: Metadata = {
-  title: "Blocked Dates | Tifawave Admin",
-  description: "Protected Tifawave room blocked date management."
-};
-
-type AdminBlockedDatesPageProps = {
-  searchParams?: Promise<{
-    created?: string;
-    error?: string;
-    ical?: string;
-    removed?: string;
-  }>;
-};
-
-function formatDate(value: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeZone: "UTC"
-  }).format(new Date(`${value}T00:00:00Z`));
+import { requireAdmin } from "@/lib/admin/auth";
+import { createSupabaseStaffClient } from "@/lib/supabase/staff";
+import { AdminShell } from "../_components/admin-shell";
+import { createInventoryBlock, releaseInventoryBlock } from "./actions";
+import type { InventoryUnit, PhysicalRoom } from "@/types/operations";
+function UnitPicker({
+  units,
+  rooms,
+}: {
+  units: InventoryUnit[];
+  rooms: PhysicalRoom[];
+}) {
+  return (
+    <>
+      <label className="admin-field">
+        Whole physical room (blocks every bed/unit)
+        <select name="physicalRoomId">
+          <option value="">Choose individual units below</option>
+          {rooms.map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.name} · {r.kind}
+            </option>
+          ))}
+        </select>
+      </label>
+      <fieldset>
+        <legend>Individual units / dorm beds</legend>
+        <div className="ops-unit-grid">
+          {units.map((u) => (
+            <label className="ops-unit" key={u.id}>
+              <input type="checkbox" name="unitIds" value={u.id} />
+              {u.code} · {u.capacity} guests
+            </label>
+          ))}
+        </div>
+      </fieldset>
+    </>
+  );
 }
-
-function formatDateTime(value: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short"
-  }).format(new Date(value));
-}
-
-function getMessage(params: Awaited<AdminBlockedDatesPageProps["searchParams"]>) {
-  if (params?.error) {
-    return {
-      tone: "error",
-      text: params.error
-    };
-  }
-
-  if (params?.created) {
-    return {
-      tone: "success",
-      text: "Blocked date range created."
-    };
-  }
-
-  if (params?.removed) {
-    return {
-      tone: "success",
-      text: "Blocked date range removed."
-    };
-  }
-
-  if (params?.ical) {
-    return {
-      tone: "success",
-      text: "iCal feed URLs saved."
-    };
-  }
-
-  return null;
-}
-
-export default async function AdminBlockedDatesPage({
-  searchParams
-}: AdminBlockedDatesPageProps) {
-  await requireAdmin();
-
-  const params = await searchParams;
-  const [rooms, blockedDates] = await Promise.all([
-    getAdminRoomOptions(),
-    getAdminBlockedDates()
+export default async function Blocks({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; saved?: string }>;
+}) {
+  const staff = await requireAdmin("reservations");
+  const client = await createSupabaseStaffClient();
+  const [units, rooms, blocks, legacy] = await Promise.all([
+    client.from("inventory_units").select("*").order("code"),
+    client.from("physical_rooms").select("*").order("code"),
+    client
+      .from("reservation_allocations")
+      .select("*")
+      .is("booking_id", null)
+      .eq("active", true)
+      .order("check_in"),
+    client
+      .from("blocked_dates")
+      .select("*")
+      .is("reconciled_at", null)
+      .order("start_date"),
   ]);
-  const message = getMessage(params);
-  const today = new Date().toISOString().slice(0, 10);
-  const siteUrl = getSiteUrl();
-
+  for (const r of [units, rooms, blocks, legacy])
+    if (r.error) throw new Error("Inventory blocks could not be loaded.");
+  const feedback = await searchParams;
   return (
     <AdminShell
       active="blocked-dates"
-      className="admin-blocked-dates-page"
-      description="Close room inventory for dates that should not be bookable."
-      title="Blocked dates"
+      title="Inventory blocks"
+      description="Maintenance and closures use the same conflict protection as confirmed stays."
     >
-        <section className="admin-panel-section" aria-labelledby="block-room-title">
-          <div className="admin-section-heading">
-            <h2 id="block-room-title">Block a room</h2>
-            {message ? (
-              <p className={`admin-form-message admin-form-message-${message.tone}`}>
-                {message.text}
-              </p>
-            ) : null}
-          </div>
-
-          <form className="admin-block-form" action={createBlockedDateAction}>
+      {feedback.error && (
+        <p className="admin-error" role="alert">
+          {feedback.error.slice(0, 300)}
+        </p>
+      )}
+      {feedback.saved && (
+        <p className="ops-success" role="status">
+          Inventory updated.
+        </p>
+      )}
+      {staff.role === "owner" && (
+        <form action={createInventoryBlock} className="ops-card">
+          <h2>Block inventory</h2>
+          <UnitPicker units={units.data!} rooms={rooms.data!} />
+          <div className="request-grid">
             <label className="admin-field">
-              <span>Room</span>
-              <select
-                defaultValue={rooms[0]?.id ?? ""}
-                disabled={rooms.length === 0}
-                name="roomId"
-                required
-              >
-                {rooms.length === 0 ? (
-                  <option value="">No rooms found</option>
-                ) : (
-                  rooms.map((room) => (
-                    <option key={room.id} value={room.id}>
-                      {room.name}
-                      {room.isActive ? "" : " (inactive)"}
-                    </option>
-                  ))
+              Start
+              <input type="date" name="checkIn" required />
+            </label>
+            <label className="admin-field">
+              End (exclusive)
+              <input type="date" name="checkOut" required />
+            </label>
+          </div>
+          <label className="admin-field">
+            Internal reason
+            <input name="reason" minLength={2} maxLength={500} required />
+          </label>
+          <button className="btn btn-primary">Create block</button>
+        </form>
+      )}
+      <section className="ops-card">
+        <h2>Active unit blocks</h2>
+        {blocks.data!.length ? (
+          <ul>
+            {blocks.data!.map((b) => (
+              <li key={b.id}>
+                {units.data!.find((u) => u.id === b.unit_id)?.code} ·{" "}
+                {b.check_in} → {b.check_out} · {b.block_reason}
+                {staff.role === "owner" && (
+                  <form action={releaseInventoryBlock}>
+                    <input type="hidden" name="blockId" value={b.id} />
+                    <button className="btn btn-secondary">Release block</button>
+                  </form>
                 )}
-              </select>
-            </label>
-            <label className="admin-field">
-              <span>Start date</span>
-              <input min={today} name="startDate" required type="date" />
-            </label>
-            <label className="admin-field">
-              <span>End date</span>
-              <input min={today} name="endDate" required type="date" />
-            </label>
-            <button
-              className="btn btn-primary admin-block-submit"
-              disabled={rooms.length === 0}
-              type="submit"
-            >
-              Create block
-            </button>
-          </form>
-        </section>
-
-        <section className="admin-panel-section" aria-labelledby="ical-feeds-title">
-          <div className="admin-section-heading">
-            <div>
-              <h2 id="ical-feeds-title">iCal feeds</h2>
-              <p>Store external room feeds for import sync and share room export feeds.</p>
-            </div>
-          </div>
-
-          <div className="admin-ical-grid">
-            {rooms.map((room) => (
-              <form
-                action={updateRoomIcalUrlsAction}
-                className="admin-ical-card"
-                key={room.id}
-              >
-                <input name="roomId" type="hidden" value={room.id} />
-                <div className="admin-ical-card-heading">
-                  <h3>{room.name}</h3>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>No active unit blocks.</p>
+        )}
+      </section>
+      {staff.role === "owner" && (
+        <section className="ops-card">
+          <h2>Private unit calendar exports</h2>
+          <p>
+            Confirmed allocations and blocks only. Owner availability checks are
+            still required. Category-based legacy feed URLs must be replaced
+            before a production cutover.
+          </p>
+          {(process.env.ICAL_EXPORT_SECRET?.length || 0) >= 32 ? (
+            <ul>
+              {units.data!.map((u) => (
+                <li key={u.id}>
                   <a
-                    href={`${siteUrl}/api/ical/rooms/${room.slug}`}
+                    href={
+                      getSiteUrl() +
+                      "/api/ical/units/" +
+                      u.id +
+                      "?token=" +
+                      unitFeedToken(u.id)
+                    }
                     rel="noreferrer"
-                    target="_blank"
                   >
-                    Export feed
+                    {u.code} calendar
                   </a>
-                </div>
-                <label className="admin-field">
-                  <span>External iCal URLs</span>
-                  <textarea
-                    name="externalIcalUrls"
-                    placeholder="https://example.com/calendar.ics"
-                    rows={3}
-                    defaultValue={room.externalIcalUrls.join("\n")}
-                  />
-                </label>
-                <button className="admin-status-button" type="submit">
-                  Save feeds
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>
+              Calendar exports are not configured. Keep these URLs private when
+              enabled.
+            </p>
+          )}
+        </section>
+      )}
+      <section className="ops-card">
+        <h2>Legacy blocks awaiting physical mapping</h2>
+        <p>
+          These records are preserved. Overlapping new confirmations are paused
+          until the Owner maps them to actual inventory.
+        </p>
+        {legacy.data!.map((b) => (
+          <details key={b.id}>
+            <summary>
+              {b.start_date} → {b.end_date} · {b.reason}
+            </summary>
+            {staff.role === "owner" && (
+              <form action={createInventoryBlock}>
+                <input type="hidden" name="legacyBlockId" value={b.id} />
+                <input type="hidden" name="checkIn" value={b.start_date} />
+                <input type="hidden" name="checkOut" value={b.end_date} />
+                <input
+                  type="hidden"
+                  name="reason"
+                  value={"Legacy block: " + b.reason.slice(0, 450)}
+                />
+                <UnitPicker units={units.data!} rooms={rooms.data!} />
+                <button className="btn btn-secondary">
+                  Map this legacy block
                 </button>
               </form>
-            ))}
-          </div>
-        </section>
-
-        <section className="admin-panel-section" aria-labelledby="blocked-list-title">
-          <div className="admin-section-heading">
-            <h2 id="blocked-list-title">Existing blocks</h2>
-            <p>{blockedDates.length} blocked ranges currently closing inventory.</p>
-          </div>
-
-          <div className="admin-bookings-table-wrap">
-          {blockedDates.length > 0 ? (
-            <table className="admin-bookings-table admin-blocked-dates-table">
-              <thead>
-                <tr>
-                  <th scope="col">Room</th>
-                  <th scope="col">Dates</th>
-                  <th scope="col">Reason</th>
-                  <th scope="col">Source</th>
-                  <th scope="col">Created</th>
-                  <th scope="col">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {blockedDates.map((block) => (
-                  <tr key={block.id}>
-                    <td data-label="Room">{block.roomName}</td>
-                    <td data-label="Dates">
-                      {formatDate(block.startDate)} to{" "}
-                      {formatDate(block.endDate)}
-                    </td>
-                    <td data-label="Reason">
-                      <span className="admin-status-pill">{block.reason}</span>
-                    </td>
-                    <td data-label="Source">
-                      <span className="admin-source-cell">
-                        {block.source === "ical" ? "iCal import" : "Admin"}
-                        {block.sourceUrl ? (
-                          <small>{block.sourceUrl}</small>
-                        ) : null}
-                      </span>
-                    </td>
-                    <td data-label="Created">{formatDateTime(block.createdAt)}</td>
-                    <td data-label="Actions">
-                      <form action={removeBlockedDateAction}>
-                        <input
-                          name="blockedDateId"
-                          type="hidden"
-                          value={block.id}
-                        />
-                        <button
-                          className="admin-status-button admin-status-danger"
-                          type="submit"
-                        >
-                          Remove
-                        </button>
-                      </form>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <div className="admin-empty-state">
-              <p className="eyebrow">Open inventory</p>
-              <h2>No blocked dates.</h2>
-              <p>Blocked room ranges will appear here.</p>
-            </div>
-          )}
-          </div>
-        </section>
+            )}
+          </details>
+        ))}
+        {!legacy.data!.length && <p>No unresolved legacy blocks.</p>}
+      </section>
     </AdminShell>
   );
 }

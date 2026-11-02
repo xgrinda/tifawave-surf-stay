@@ -16,9 +16,9 @@ export const metadata: Metadata = {
     canonical: `${getSiteUrl()}/fr/faq`,
     languages: {
       en: `${getSiteUrl()}/faq`,
-      fr: `${getSiteUrl()}/fr/faq`
-    }
-  }
+      fr: `${getSiteUrl()}/fr/faq`,
+    },
+  },
 };
 
 type FaqItem = {
@@ -37,7 +37,7 @@ function buildFaqSections({
   businessName,
   contactEmail,
   hasWhatsapp,
-  whatsappHref
+  whatsappHref,
 }: {
   businessName: string;
   contactEmail: string;
@@ -60,17 +60,18 @@ function buildFaqSections({
     {
       id: "reservation-confirmation",
       title: "Réservation et confirmation",
-      intro: "Comment une réservation directe passe des dates à la confirmation.",
+      intro:
+        "Comment une réservation directe passe des dates à la confirmation.",
       items: [
         {
           question: "Comment fonctionne la réservation?",
           answer:
-            "Commencez par choisir une chambre et des dates. Si elles sont disponibles, Tifawave pose une option temporaire, recueille vos coordonnées, puis vérifie la demande manuellement."
+            "Commencez par choisir une chambre et des dates. Si elles sont disponibles, Tifawave pose une option temporaire, recueille vos coordonnées, puis vérifie la demande manuellement.",
         },
         {
           question: "Quand ma réservation est-elle confirmée?",
           answer:
-            "Votre demande reste en attente jusqu'à confirmation par l'équipe Tifawave, par email ou WhatsApp. Les informations d'arrivée sont partagées une fois la demande acceptée."
+            "Votre demande reste en attente jusqu'à confirmation par l'équipe Tifawave, par email ou WhatsApp. Les informations d'arrivée sont partagées une fois la demande acceptée.",
         },
         {
           question: "Puis-je poser une question avant d'envoyer la demande?",
@@ -80,9 +81,9 @@ function buildFaqSections({
               les transferts, contactez-nous {contactLink} avant d'envoyer la
               demande.
             </>
-          )
-        }
-      ]
+          ),
+        },
+      ],
     },
     {
       id: "chambres-arrivee",
@@ -92,19 +93,19 @@ function buildFaqSections({
         {
           question: "À quelle heure est le check-in?",
           answer:
-            "Les détails d'arrivée sont partagés après réservation pour s'adapter à votre horaire. Si vous arrivez tôt, prévenez l'équipe et elle vous guidera."
+            "Les détails d'arrivée sont partagés après réservation pour s'adapter à votre horaire. Si vous arrivez tôt, prévenez l'équipe et elle vous guidera.",
         },
         {
           question: "Puis-je choisir une chambre précise?",
           answer:
-            "Vous pouvez demander la chambre souhaitée pendant la réservation. L'attribution finale dépend de la disponibilité réelle, mais les pages chambres montrent les options actives."
+            "Vous pouvez demander la chambre souhaitée pendant la réservation. L'attribution finale dépend de la disponibilité réelle, mais les pages chambres montrent les options actives.",
         },
         {
           question: "Les chambres conviennent-elles aux voyageurs solo?",
           answer:
-            "Oui. Le séjour est pensé pour les voyageurs solo, couples et petits groupes, avec des espaces partagés pour rencontrer du monde et assez de calme pour se reposer."
-        }
-      ]
+            "Oui. Le séjour est pensé pour les voyageurs solo, couples et petits groupes, avec des espaces partagés pour rencontrer du monde et assez de calme pour se reposer.",
+        },
+      ],
     },
     {
       id: "surf-niveau",
@@ -114,19 +115,19 @@ function buildFaqSections({
         {
           question: "Quel séjour surf choisir?",
           answer:
-            "Comparez les pages séjours selon le niveau, la durée, les inclusions et le rythme type. Si vous êtes entre deux niveaux, choisissez celui qui correspond à votre objectif et indiquez votre expérience à la réservation."
+            "Comparez les pages séjours selon le niveau, la durée, les inclusions et le rythme type. Si vous êtes entre deux niveaux, choisissez celui qui correspond à votre objectif et indiquez votre expérience à la réservation.",
         },
         {
           question: "Je suis débutant. Est-ce possible?",
           answer:
-            "Oui. Tifawave peut orienter les débutants vers des sessions et conditions adaptées. L'objectif est de progresser sans pression, avec sécurité et confiance."
+            "Oui. Tifawave peut orienter les débutants vers des sessions et conditions adaptées. L'objectif est de progresser sans pression, avec sécurité et confiance.",
         },
         {
           question: "Comment le niveau est-il adapté?",
           answer:
-            "Le niveau tient compte de votre expérience, de votre aisance dans l'eau, des conditions et de vos envies. Le meilleur plan surf reste flexible."
-        }
-      ]
+            "Le niveau tient compte de votre expérience, de votre aisance dans l'eau, des conditions et de vos envies. Le meilleur plan surf reste flexible.",
+        },
+      ],
     },
     {
       id: "tamraght",
@@ -136,18 +137,18 @@ function buildFaqSections({
         {
           question: "Pourquoi séjourner à Tamraght?",
           answer:
-            "Tamraght est proche des spots connus, plus calme que les grandes zones touristiques et garde une texture quotidienne qui rend un séjour surf au Maroc chaleureux et ancré."
+            "Tamraght est proche des spots connus, plus calme que les grandes zones touristiques et garde une texture quotidienne qui rend un séjour surf au Maroc chaleureux et ancré.",
         },
         {
           question: "Est-il facile de se déplacer?",
           answer:
-            "La plupart des voyageurs bougent entre la maison, les cafés, la plage et les points de rendez-vous surf avec les conseils locaux. Pour les trajets plus longs, demandez à l'équipe."
+            "La plupart des voyageurs bougent entre la maison, les cafés, la plage et les points de rendez-vous surf avec les conseils locaux. Pour les trajets plus longs, demandez à l'équipe.",
         },
         {
           question: "Où se trouve exactement Tifawave?",
-          answer: `${businessName} est basé à Tamraght, Maroc. Les détails exacts d'arrivée sont partagés après réservation.`
-        }
-      ]
+          answer: `${businessName} est basé à Tamraght, Maroc. Les détails exacts d'arrivée sont partagés après réservation.`,
+        },
+      ],
     },
     {
       id: "transfert-aeroport",
@@ -157,14 +158,14 @@ function buildFaqSections({
         {
           question: "Tifawave peut-il organiser un transfert aéroport?",
           answer:
-            "L'équipe peut aider avec les conseils ou l'organisation selon votre aéroport, horaire et réservation. Partagez vos informations de vol dès que possible."
+            "L'équipe peut aider avec les conseils ou l'organisation selon votre aéroport, horaire et réservation. Partagez vos informations de vol dès que possible.",
         },
         {
           question: "Quel aéroport choisir?",
           answer:
-            "Agadir est généralement le plus simple pour Tamraght. Marrakech fonctionne aussi pour les longs voyages, mais le transfert est plus long et se prépare à l'avance."
-        }
-      ]
+            "Agadir est généralement le plus simple pour Tamraght. Marrakech fonctionne aussi pour les longs voyages, mais le transfert est plus long et se prépare à l'avance.",
+        },
+      ],
     },
     {
       id: "repas",
@@ -174,19 +175,19 @@ function buildFaqSections({
         {
           question: "Le petit-déjeuner est-il inclus?",
           answer:
-            "Les détails peuvent varier selon la chambre ou le séjour. Vérifiez la page concernée et votre confirmation. Si c'est important pour vous, demandez avant de réserver."
+            "Les détails peuvent varier selon la chambre ou le séjour. Vérifiez la page concernée et votre confirmation. Si c'est important pour vous, demandez avant de réserver.",
         },
         {
           question: "Y a-t-il des endroits où manger à proximité?",
           answer:
-            "Oui. Tamraght et les alentours ont des cafés simples, de la cuisine locale et des options détendues pour le dîner. L'équipe peut vous orienter selon votre journée."
+            "Oui. Tamraght et les alentours ont des cafés simples, de la cuisine locale et des options détendues pour le dîner. L'équipe peut vous orienter selon votre journée.",
         },
         {
           question: "Les besoins alimentaires peuvent-ils être pris en compte?",
           answer:
-            "Souvent oui, mais le mieux est de les mentionner avant l'arrivée pour savoir ce qui est réaliste selon votre séjour et les options locales."
-        }
-      ]
+            "Souvent oui, mais le mieux est de les mentionner avant l'arrivée pour savoir ce qui est réaliste selon votre séjour et les options locales.",
+        },
+      ],
     },
     {
       id: "annulations",
@@ -196,14 +197,14 @@ function buildFaqSections({
         {
           question: "Quelle est la politique d'annulation?",
           answer:
-            "Les conditions dépendent du timing, du séjour et des informations écrites au moment de la confirmation. Demandez avant de confirmer si vous avez besoin de flexibilité."
+            "Les conditions dépendent du timing, du séjour et des informations écrites au moment de la confirmation. Demandez avant de confirmer si vous avez besoin de flexibilité.",
         },
         {
           question: "Puis-je changer de dates après réservation?",
           answer:
-            "Les changements dépendent des disponibilités et de la proximité de l'arrivée. Contactez l'équipe dès que possible pour vérifier les options."
-        }
-      ]
+            "Les changements dépendent des disponibilités et de la proximité de l'arrivée. Contactez l'équipe dès que possible pour vérifier les options.",
+        },
+      ],
     },
     {
       id: "wifi-travail",
@@ -213,14 +214,14 @@ function buildFaqSections({
         {
           question: "Puis-je travailler à distance depuis Tifawave?",
           answer:
-            "Oui. Tifawave est pensé pour les voyageurs qui doivent parfois travailler autour des sessions, avec des espaces pratiques et un rythme de maison calme."
+            "Oui. Tifawave est pensé pour les voyageurs qui doivent parfois travailler autour des sessions, avec des espaces pratiques et un rythme de maison calme.",
         },
         {
           question: "Le Wi-Fi est-il fiable?",
           answer:
-            "Le Wi-Fi rapide fait partie de l'expérience, mais la connectivité au Maroc peut varier. Pour les appels critiques, prévoyez une option data de secours."
-        }
-      ]
+            "Le Wi-Fi rapide fait partie de l'expérience, mais la connectivité au Maroc peut varier. Pour les appels critiques, prévoyez une option data de secours.",
+        },
+      ],
     },
     {
       id: "bagages",
@@ -230,20 +231,20 @@ function buildFaqSections({
         {
           question: "Que dois-je mettre dans ma valise?",
           answer:
-            "Maillot, crème solaire, chapeau, couches pour les soirées fraîches, sandales, gourde, matériel de travail si besoin et médicaments personnels."
+            "Maillot, crème solaire, chapeau, couches pour les soirées fraîches, sandales, gourde, matériel de travail si besoin et médicaments personnels.",
         },
         {
           question: "Dois-je apporter mon propre matériel de surf?",
           answer:
-            "Pas toujours. Les inclusions et l'accès au matériel varient selon les séjours, donc vérifiez les détails ou demandez avant de voyager avec planche ou combinaison."
+            "Pas toujours. Les inclusions et l'accès au matériel varient selon les séjours, donc vérifiez les détails ou demandez avant de voyager avec planche ou combinaison.",
         },
         {
           question: "Faut-il apporter du cash?",
           answer:
-            "Un peu de dirhams marocains est utile pour taxis locaux, snacks, pourboires et petits endroits qui n'acceptent pas toujours les cartes."
-        }
-      ]
-    }
+            "Un peu de dirhams marocains est utile pour taxis locaux, snacks, pourboires et petits endroits qui n'acceptent pas toujours les cartes.",
+        },
+      ],
+    },
   ];
 }
 
@@ -255,7 +256,7 @@ export default async function FrenchFaqPage() {
     businessName: settings.businessName,
     contactEmail: settings.contactEmail,
     hasWhatsapp,
-    whatsappHref
+    whatsappHref,
   });
 
   return (
@@ -266,9 +267,8 @@ export default async function FrenchFaqPage() {
             <p className="eyebrow">FAQ</p>
             <h1 id="faq-title">Des réponses pratiques avant de réserver.</h1>
             <p>
-              Acomptes, chambres, niveaux de surf, transferts, petit-déjeuner,
-              Wi-Fi et les détails qui rendent le voyage plus simple avant
-              l'arrivée.
+              Chambres, niveaux de surf, transferts, petit-déjeuner, Wi-Fi et
+              les détails qui rendent le voyage plus simple avant l'arrivée.
             </p>
           </div>
 
@@ -277,15 +277,14 @@ export default async function FrenchFaqPage() {
             <h2>Demandez avant de vous engager.</h2>
             <p>
               Si votre question concerne les dates, les vols, le niveau surf ou
-              le choix de chambre, contactez Tifawave avant d'envoyer la demande.
+              le choix de chambre, contactez Tifawave avant d'envoyer la
+              demande.
             </p>
             <div>
               <a href={`mailto:${settings.contactEmail}`}>
                 {settings.contactEmail}
               </a>
-              {hasWhatsapp ? (
-                <a href={whatsappHref}>WhatsApp</a>
-              ) : null}
+              {hasWhatsapp ? <a href={whatsappHref}>WhatsApp</a> : null}
             </div>
           </aside>
         </Container>
@@ -337,7 +336,8 @@ export default async function FrenchFaqPage() {
           <div>
             <p className="eyebrow">Prêt à vérifier les dates?</p>
             <h2 id="faq-cta-title">
-              Commencez par les disponibilités, puis posez les questions précises.
+              Commencez par les disponibilités, puis posez les questions
+              précises.
             </h2>
             <p>
               Le parcours de réservation bloque temporairement les dates, pour

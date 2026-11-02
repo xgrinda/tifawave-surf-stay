@@ -1,208 +1,174 @@
 # Tifawave Surf Stay
 
-Next.js App Router foundation for the Tifawave public site, direct booking flow, Supabase-backed availability, booking holds, pending bookings, email notifications, and a small protected admin area.
+Existing Next.js / Supabase / Vercel website. Development branch: `dev/hostel-admin`.
 
-## Local Checks
+The current milestone implements a manual reservation system. There are no online
+payments. Public requests always start pending; only an active Owner account
+with MFA may confirm or decline, after recording manual Booking.com/Airbnb checks
+and allocating sufficient physical inventory.
 
-Run these before deploying:
+## Development safety
 
-```bash
-npm run lint
-npm run typecheck
-npm run build
+Use a separate Supabase staging project and Storage bucket. Never copy production
+guest records or privileged credentials into a Preview. Configuration is listed
+in `.env.example`; keep actual values in an ignored `.env.local`.
+
+- Preview requires `TIFAWAVE_ENV=staging`, a verified staging project reference,
+  and an explicit, different production project reference.
+- Local operations may use `TIFAWAVE_ENV=development` and
+  `TIFAWAVE_STAGING_PROJECT_REF=local` only with a loopback Supabase URL.
+- Operational clients refuse unknown targets, the known production project in
+  non-production, and mismatched Preview configuration.
+- Every non-production email recipient must be in `STAGING_EMAIL_ALLOWLIST`.
+  Recipients are never silently rewritten. Use controlled test inboxes.
+- No production deployment, production branch push, production migration, domain,
+  or environment-variable change is authorized by routine development approval.
+
+## Run
+
+```sh
+rtk npm ci
+rtk npm run dev
+rtk npm run lint
+rtk npm run typecheck
+rtk npm test
+rtk npm run build
 ```
 
-## Media & Content Checklist
+The application builds without live credentials. An unconfigured admin shows a
+setup state and refuses operations; it is not a working reservation Preview.
 
-Use `docs/media-content-quality-checklist.md` before publishing room or gallery
-images. It covers recommended image sizes, direct URL requirements, alt text,
-caption quality, and fallback expectations for empty media states.
+## Database setup and preservation
 
-Admin image uploads use the public Supabase Storage bucket `tifawave-media`.
-Manual image URLs are still supported. Upload validation currently allows JPG,
-PNG, WebP, and AVIF images up to 5 MB.
+Review and apply migrations in filename order **to staging only**. The original
+historical migrations remain intact. New migrations:
 
-## Deployment: Vercel
+1. `202611020001_add_declined_status.sql` — adds an enum value.
+2. `202611020002_manual_operations_schema.sql` — staff/RLS, 9 physical rooms,
+   12 bookable units, capacity 23, allocation ledger, notifications, outbox,
+   immutable operational history, and database approval/allocation guards.
+3. `202611020003_manual_reservation_commands.sql` — narrow intake, decision,
+   change/reassignment, reconciliation, maintenance, email and calendar RPCs.
 
-Recommended deployment target: Vercel with the existing Next.js project settings.
+Existing booking IDs, guest records, statuses, payment-history columns, and
+historical SQL are preserved. No historical reservation is assigned a physical
+room automatically. The owner must reconcile confirmed legacy stays and blocks
+before overlapping new reservations can be approved. Reconciliation copies a
+legacy room-category reference to `preferred_listing_id`, then uses the new
+unit allocations; the original association and decision history remain recorded.
 
-1. Push the repository to GitHub.
-2. Import the repository in Vercel.
-3. Keep the default Next.js build command:
+The older room/package seed migrations contain historical starter content.
+Do not reapply those seeds to correct production inventory. For a fresh staging
+project, review/remove historical starter catalogue content **in staging only**
+and import only owner-approved non-PII public content/media before review.
+Never present starter rates/packages as approved business offers.
 
-```bash
-npm run build
-```
+Before production, compare the actual live schema/migration history with these
+files, verify backups and mappings, test the upgrade and rollback, and obtain
+explicit release approval. The application is not ready for an unreviewed
+production database cutover.
 
-4. Add the production environment variables listed below in Vercel Project Settings.
-5. Apply the Supabase migrations before testing booking routes in production.
-6. Redeploy after environment variables are saved.
+## Staff accounts
 
-Vercel environments should use separate values for Production and Preview where possible, especially for Supabase and Resend.
+Use Supabase Auth to provision individual staff accounts through the controlled
+staging account setup. No shared password, public staff registration, automatic
+first-user administrator, or hard-coded Owner account is included.
 
-## Required Environment Variables
+After verifying the intended Auth user's UUID, a trusted project administrator
+adds that identity to `public.staff_members`, with a real display name and one
+of: `owner`, `reception`, `housekeeping`, `content_editor`.
 
-Add these in Vercel and keep local values in `.env.local`.
+The Owner signs in at `/admin/login`, enrolls an authenticator at `/admin/mfa`,
+and verifies a code. Owner authority is enforced with `aal2` in database
+policies/functions, not only through UI controls. Disabled staff lose access on
+their next protected operation. Keep Auth recovery and MFA-recovery procedures
+in the trusted Supabase administration process until staff/security settings are
+completed in later milestones.
 
-```bash
-NEXT_PUBLIC_SITE_URL=
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-RESEND_API_KEY=
-BOOKING_EMAIL_FROM=
-BOOKING_NOTIFICATION_EMAIL=
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
-STRIPE_DEPOSIT_AMOUNT_CENTS=
-STRIPE_DEPOSIT_CURRENCY=
-ADMIN_PASSWORD=
-ADMIN_SESSION_SECRET=
-```
+Reception can prepare manual requests and pending contact details, view
+reservations/blocks/alerts, and add internal notes. It cannot confirm/decline,
+change a confirmed reservation, edit staff permissions, or reset email failures.
+Housekeeping's operational UI arrives in Milestone C; its account has no guest
+contact access. Content editors can manage the existing room/package/gallery
+content tools; settings and official review sync remain Owner-only.
 
-Notes:
-- `NEXT_PUBLIC_SITE_URL` should be the canonical production URL, for example `https://tifawave.com`.
-- `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are used by browser-safe room loading.
-- `SUPABASE_SERVICE_ROLE_KEY` is server-only. Never expose it in client components or public logs.
-- `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` are server-only. Never expose them in client components.
-- `STRIPE_DEPOSIT_AMOUNT_CENTS` is the fixed deposit amount, not the full booking amount.
-- `STRIPE_DEPOSIT_CURRENCY` should be lowercase, for example `usd`.
-- `ADMIN_SESSION_SECRET` should be a long random string.
-- `ADMIN_PASSWORD` is temporary password auth for the current protected admin area.
+## Inventory and requests
 
-## Supabase Migrations
+Four doubles, two twins, one triple, one indivisible family suite, and one
+four-bed dormitory: 9 physical rooms; 8 private-room units + 4 individual dorm
+beds; maximum capacity 23.
 
-Recommended method: use Supabase CLI so migrations are applied in the same order as the repository.
+Guest preferences are separate from allocations. Pending requests do not reserve
+units indefinitely. All confirmed stays and maintenance blocks use the same
+unit-level date-range exclusion constraint. Dates use arrival-inclusive,
+departure-exclusive ranges; same-day turnover is allowed. Commands lock/version
+records and roll back failed changes entirely.
 
-```bash
-supabase login
-supabase link --project-ref YOUR_PROJECT_REF
-supabase db push
-```
+Public intake: `POST /api/booking`. Request validation, HMAC IP rate limits,
+idempotent submission, same-origin checks, and bounded JSON protect the server.
+Manual OTA/direct/walk-in entries remain pending until Owner finalization. Missing
+manual-entry contacts are not fabricated; a missing guest email is clearly shown
+and requires communication through the original channel.
 
-Migration order:
+## Email
 
-```text
-supabase/migrations/202605210001_initial_booking_schema.sql
-supabase/migrations/202605210002_add_booking_overlap_constraints.sql
-supabase/migrations/202605210003_enable_rls_policies.sql
-supabase/migrations/202605210004_seed_initial_rooms.sql
-supabase/migrations/202605220001_add_stripe_deposit_fields.sql
-supabase/migrations/202605220002_add_ical_sync_foundation.sql
-supabase/migrations/202605220003_add_website_settings.sql
-supabase/migrations/202605220004_add_surf_packages.sql
-supabase/migrations/202605220005_add_room_images.sql
-supabase/migrations/202605220006_add_gallery_images.sql
-supabase/migrations/202605230001_add_media_storage_bucket.sql
-```
+Pending website requests queue guest receipts and an internal alert. Manual OTA
+entry does not send a confusing new-request receipt to an already-booked guest.
+Owner decisions queue confirmation/decline/change/cancellation messages in the
+recorded English/French language when a real email exists.
 
-SQL editor alternative:
-1. Open the Supabase SQL editor.
-2. Run each migration file above manually in exact order.
-3. Do not skip the RLS migration.
-4. Confirm the room seed runs after the `rooms` table and `base_price_cents` column exist.
-5. Confirm the `tifawave-media` Storage bucket exists and is public for image rendering.
+Jobs are committed with the decision, claimed with exclusive leases, and sent
+after the HTTP response using Next.js `after`. Failures stay visible with
+backoff and a five-attempt limit. Owner-authorized retries can reset failed jobs
+without resending jobs already marked sent. Provider idempotency keys reduce
+duplicates; “sent” means provider acceptance, not verified inbox delivery.
 
-Verify rooms were seeded:
+Configure an authenticated POST scheduler for `/api/internal/email` with
+`Authorization: Bearer <NOTIFICATION_WORKER_SECRET>` to process due retries
+without staff intervention. GET performs no mutation. Until that scheduler is
+configured, immediate attempts and the Owner's retry control work, but unattended
+retry scheduling is not complete. Resend domain/sender and actual delivery must
+be verified in staging before a milestone is declared complete.
 
-```sql
-select id, slug, name, max_guests, base_price_cents, is_active
-from public.rooms
-order by name;
-```
+## Calendar compatibility
 
-Get one room UUID for API testing:
+The legacy category-level hold/availability endpoints and public calendar
+endpoint return 410. They are not silently pointed at a different inventory
+model. Legacy hold/calendar records and the import foundation are retained.
 
-```sql
-select id
-from public.rooms
-where is_active = true
-order by name
-limit 1;
-```
+Optional scoped exports use `/api/ical/units/[unitId]?token=…`, generated in the
+Owner's inventory-block screen when `ICAL_EXPORT_SECRET` is configured.
+Exports contain only confirmed allocations/blocks, with opaque event identifiers,
+and fail closed while upcoming legacy inventory is unreconciled. Rotating the
+secret revokes all unit feed URLs. No endpoint auto-confirms or pushes OTA data.
 
-Manual API checks after deploy or local startup:
+**Before production:** identify existing Booking.com/Airbnb calendar consumers,
+map actual rooms/beds, and approve/update their private feed URLs. Do not deploy
+the compatibility change without that review. Never connect staging feeds to
+real OTA inventory.
 
-```bash
-AVAILABILITY_API_BASE_URL=https://YOUR_DOMAIN \
-AVAILABILITY_TEST_ROOM_ID=ROOM_UUID \
-AVAILABILITY_TEST_CHECK_IN=2026-06-01 \
-AVAILABILITY_TEST_CHECK_OUT=2026-06-05 \
-npm run check:availability-api
+## Tests
 
-BOOKING_API_BASE_URL=https://YOUR_DOMAIN \
-BOOKING_HOLD_TEST_ROOM_ID=ROOM_UUID \
-BOOKING_HOLD_TEST_CHECK_IN=2026-06-08 \
-BOOKING_HOLD_TEST_CHECK_OUT=2026-06-12 \
-npm run check:booking-hold-api
-```
+`npm test` covers target isolation, recipient restrictions, origin protection,
+payload limits, date/capacity validation, timezone boundaries, and escaped email
+content. `npm run test:db` applies fresh and upgrade migrations to disposable
+local PostgreSQL databases, preserving a historical fixture, then exercises real
+database privileges, MFA/Owner checks, races, capacity, maintenance, rollback,
+legacy mapping, history, and delivery leases.
 
-## Resend Setup
+The database test bootstrap emulates Supabase Auth claims/roles and Storage
+schema. It does **not** replace an actual Supabase Auth/session/MFA integration
+test. Test fixtures are isolated and databases are dropped after the run.
 
-1. Create a Resend API key and save it as `RESEND_API_KEY`.
-2. Verify the sending domain in Resend before production sending.
-3. Set `BOOKING_EMAIL_FROM` to a sender on that verified domain, for example `Tifawave <bookings@yourdomain.com>`.
-4. Set `BOOKING_NOTIFICATION_EMAIL` to the internal inbox that should receive pending booking notifications.
+Start a dedicated disposable local PostgreSQL cluster and set
+`TIFAWAVE_TEST_POSTGRES_URL` to its loopback URL, or use the default local port
+55439 and your local database username. The script refuses remote PostgreSQL.
+Do not point it at a production tunnel.
 
-Current email behavior:
-- A pending booking attempts to send one internal notification email.
-- A pending booking attempts to send one guest confirmation email.
-- Email failures are logged server-side and do not roll back booking creation.
+`npm run test:http` targets only a loopback application with database operations
+unconfigured. It refuses its mutation test if the setup-disabled state is absent.
+Start the production build locally on port 3217 without Supabase credentials.
+It verifies removed payment routes, legacy URL behavior, unauthenticated access,
+origin checks, private endpoints, and security headers without booking writes.
 
-## Stripe Deposit Setup
-
-1. Create a Stripe secret key and save it as `STRIPE_SECRET_KEY`.
-2. Create a webhook endpoint in Stripe that points to:
-
-```text
-https://YOUR_DOMAIN/api/stripe/webhook
-```
-
-3. Save the webhook signing secret as `STRIPE_WEBHOOK_SECRET`.
-4. Set `STRIPE_DEPOSIT_AMOUNT_CENTS` to the fixed deposit amount.
-5. Set `STRIPE_DEPOSIT_CURRENCY` to the lowercase Stripe currency code.
-
-Current payment behavior:
-- Checkout collects a deposit only, not the full booking amount.
-- Checkout starts only after a pending booking exists.
-- A verified successful Stripe webhook updates the booking to `confirmed` and marks the deposit as `paid`.
-- Failed or expired payment events keep the booking pending and mark the payment attempt as `failed`.
-
-## Admin Login Notes
-
-Admin pages are protected by the temporary password flow:
-
-```text
-/admin/login
-/admin/bookings
-/admin/blocked-dates
-```
-
-Set `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` before deploying. Rotate both if either value has been shared. The current auth is intentionally lightweight and should be replaced before adding broader CMS-style admin features or multiple staff accounts.
-
-## Production Safety Checklist
-
-Before launch:
-
-- Confirm all Vercel production environment variables are set.
-- Confirm Supabase migrations have been applied in order.
-- Confirm RLS is enabled and public reads are limited to active rooms.
-- Confirm `SUPABASE_SERVICE_ROLE_KEY` is only available server-side.
-- Confirm Resend sender domain is verified.
-- Confirm Stripe webhook signing is configured for `/api/stripe/webhook`.
-- Confirm Stripe test mode checkout succeeds before switching to live keys.
-- Confirm admin password and session secret are strong production-only values.
-- Confirm `/admin/*` and `/api/*` are excluded from `robots.txt`.
-- Run `npm run lint`, `npm run typecheck`, and `npm run build`.
-- Run the availability and hold manual check scripts against production.
-- Create a real test pending booking and verify both internal and guest emails.
-
-Official references:
-- [Vercel environment variables](https://vercel.com/docs/environment-variables)
-- [Supabase CLI migrations](https://supabase.com/docs/guides/local-development/overview)
-- [Resend domain verification](https://resend.com/docs/dashboard/domains/introduction)
-- [Stripe Checkout Sessions](https://docs.stripe.com/api/checkout/sessions/create)
-- [Stripe webhook signatures](https://docs.stripe.com/webhooks/signature?lang=node&locale=en-GB)
-# tifawave-surf-stay
-# tifawave-surf-stay
-# tifawave-surf-stay
+See `docs/production-qa-checklist.md` for the remaining staging/release gates.

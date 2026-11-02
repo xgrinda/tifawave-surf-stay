@@ -11,7 +11,7 @@ function redirectWithMessage(params: Record<string, string>): never {
 }
 
 export async function syncGoogleReviewsAction() {
-  await requireAdmin();
+  await requireAdmin("owner");
 
   const result = await syncGoogleBusinessProfileReviews();
 
@@ -22,12 +22,12 @@ export async function syncGoogleReviewsAction() {
 
   if (!result.ok) {
     redirectWithMessage({
-      error: result.message
+      error: result.message,
     });
   }
 
   redirectWithMessage({
     skipped: String(result.skipped),
-    synced: String(result.synced)
+    synced: String(result.synced),
   });
 }

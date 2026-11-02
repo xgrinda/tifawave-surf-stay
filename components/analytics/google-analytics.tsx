@@ -19,14 +19,13 @@ export function GoogleAnalytics({ measurementId }: GoogleAnalyticsProps) {
       return;
     }
 
-    const queryString = window.location.search.replace(/^\?/, "");
-    const pagePath = queryString ? `${pathname}?${queryString}` : pathname;
+    const pagePath = pathname;
 
     window.gtag("config", measurementId, {
       allow_ad_personalization_signals: false,
       allow_google_signals: false,
       anonymize_ip: true,
-      page_path: pagePath
+      page_path: pagePath,
     });
   }, [measurementId, pathname]);
 
@@ -50,7 +49,8 @@ export function GoogleAnalytics({ measurementId }: GoogleAnalyticsProps) {
 
       const url = new URL(link.href);
 
-      const isBookingPath = url.pathname === "/book" || url.pathname === "/fr/book";
+      const isBookingPath =
+        url.pathname === "/book" || url.pathname === "/fr/book";
 
       if (url.origin !== window.location.origin || !isBookingPath) {
         return;
@@ -59,7 +59,7 @@ export function GoogleAnalytics({ measurementId }: GoogleAnalyticsProps) {
       trackBookingCtaClick({
         linkText: link.textContent?.trim().replace(/\s+/g, " ").slice(0, 80),
         linkUrl: url.pathname,
-        sourcePath: window.location.pathname
+        sourcePath: window.location.pathname,
       });
     }
 

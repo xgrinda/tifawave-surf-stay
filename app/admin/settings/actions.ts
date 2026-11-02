@@ -15,7 +15,7 @@ function stringField(formData: FormData, key: string): string {
 }
 
 export async function updateSettingsAction(formData: FormData) {
-  await requireAdmin();
+  await requireAdmin("owner");
 
   const result = await updateWebsiteSettings({
     address: stringField(formData, "address"),
@@ -29,17 +29,13 @@ export async function updateSettingsAction(formData: FormData) {
     googleMapsUrl: stringField(formData, "googleMapsUrl"),
     googleReviewsProfileUrl: stringField(formData, "googleReviewsProfileUrl"),
     instagramUrl: stringField(formData, "instagramUrl"),
-    stripeDepositAmountDisplay: stringField(
-      formData,
-      "stripeDepositAmountDisplay"
-    ),
     supportPhone: stringField(formData, "supportPhone"),
-    whatsappNumber: stringField(formData, "whatsappNumber")
+    whatsappNumber: stringField(formData, "whatsappNumber"),
   });
 
   if (!result.ok) {
     redirectWithMessage({
-      error: result.message
+      error: result.message,
     });
   }
 
@@ -52,6 +48,6 @@ export async function updateSettingsAction(formData: FormData) {
   revalidatePath("/fr/faq");
   revalidatePath("/admin/settings");
   redirectWithMessage({
-    saved: "1"
+    saved: "1",
   });
 }

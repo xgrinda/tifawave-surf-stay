@@ -5,7 +5,7 @@ type BookingStatus = Database["public"]["Enums"]["booking_status"];
 
 const INVENTORY_BLOCKING_BOOKING_STATUSES: BookingStatus[] = [
   "pending",
-  "confirmed"
+  "confirmed",
 ];
 const AVAILABILITY_CHECK_FAILED_MESSAGE =
   "We could not check those dates right now. Please try again, or message Tifawave and we will help.";
@@ -38,12 +38,15 @@ function isIsoDate(value: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
 
-function validateDateRange(checkIn: string, checkOut: string): AvailabilityResult | null {
+function validateDateRange(
+  checkIn: string,
+  checkOut: string,
+): AvailabilityResult | null {
   if (!isIsoDate(checkIn) || !isIsoDate(checkOut)) {
     return {
       available: false,
       reason: "invalid_dates",
-      message: "Dates must use YYYY-MM-DD format."
+      message: "Dates must use YYYY-MM-DD format.",
     };
   }
 
@@ -51,7 +54,7 @@ function validateDateRange(checkIn: string, checkOut: string): AvailabilityResul
     return {
       available: false,
       reason: "invalid_dates",
-      message: "Check-out must be after check-in."
+      message: "Check-out must be after check-in.",
     };
   }
 
@@ -61,7 +64,7 @@ function validateDateRange(checkIn: string, checkOut: string): AvailabilityResul
 export async function isRangeAvailable({
   roomId,
   checkIn,
-  checkOut
+  checkOut,
 }: AvailabilityInput): Promise<AvailabilityResult> {
   const invalidRange = validateDateRange(checkIn, checkOut);
 
@@ -85,7 +88,7 @@ export async function isRangeAvailable({
     return {
       available: false,
       reason: "database_error",
-      message: AVAILABILITY_CHECK_FAILED_MESSAGE
+      message: AVAILABILITY_CHECK_FAILED_MESSAGE,
     };
   }
 
@@ -94,7 +97,7 @@ export async function isRangeAvailable({
       available: false,
       reason: "active_booking",
       message:
-        "Those dates are already reserved. Please try another window or message Tifawave for help."
+        "Those dates are already reserved. Please try another window or message Tifawave for help.",
     };
   }
 
@@ -110,7 +113,7 @@ export async function isRangeAvailable({
     return {
       available: false,
       reason: "database_error",
-      message: AVAILABILITY_CHECK_FAILED_MESSAGE
+      message: AVAILABILITY_CHECK_FAILED_MESSAGE,
     };
   }
 
@@ -119,25 +122,7 @@ export async function isRangeAvailable({
       available: false,
       reason: "blocked_dates",
       message:
-        "Those dates are not open for online booking right now. Please try another window."
-    };
-  }
-
-  const expiredHolds = await supabase
-    .from("booking_holds")
-    .update({
-      released_at: now,
-      updated_at: now
-    })
-    .eq("room_id", roomId)
-    .is("released_at", null)
-    .lte("expires_at", now);
-
-  if (expiredHolds.error) {
-    return {
-      available: false,
-      reason: "database_error",
-      message: AVAILABILITY_CHECK_FAILED_MESSAGE
+        "Those dates are not open for online booking right now. Please try another window.",
     };
   }
 
@@ -157,7 +142,7 @@ export async function isRangeAvailable({
     return {
       available: false,
       reason: "database_error",
-      message: AVAILABILITY_CHECK_FAILED_MESSAGE
+      message: AVAILABILITY_CHECK_FAILED_MESSAGE,
     };
   }
 
@@ -166,12 +151,12 @@ export async function isRangeAvailable({
       available: false,
       reason: "active_hold",
       message:
-        "Someone is already holding those dates. Please try another window or check back shortly."
+        "Someone is already holding those dates. Please try another window or check back shortly.",
     };
   }
 
   return {
     available: true,
-    reason: null
+    reason: null,
   };
 }

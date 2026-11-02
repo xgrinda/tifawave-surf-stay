@@ -1,3 +1,4 @@
+import { requireStaff } from "@/lib/admin/auth";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { logoutAdminAction } from "../login/actions";
@@ -30,60 +31,69 @@ const adminNavItems: Array<{
     description: "Daily overview",
     href: "/admin",
     key: "dashboard",
-    label: "Dashboard"
+    label: "Dashboard",
   },
   {
     description: "Requests and stays",
     href: "/admin/bookings",
     key: "bookings",
-    label: "Bookings"
+    label: "Bookings",
   },
   {
     description: "Inventory and photos",
     href: "/admin/rooms",
     key: "rooms",
-    label: "Rooms"
+    label: "Rooms",
   },
   {
     description: "Surf offers",
     href: "/admin/packages",
     key: "packages",
-    label: "Packages"
+    label: "Packages",
   },
   {
     description: "Google sync",
     href: "/admin/reviews",
     key: "reviews",
-    label: "Reviews"
+    label: "Reviews",
   },
   {
     description: "Public image library",
     href: "/admin/gallery",
     key: "gallery",
-    label: "Gallery"
+    label: "Gallery",
   },
   {
-    description: "Closures and iCal",
+    description: "Rooms, beds and closures",
     href: "/admin/blocked-dates",
     key: "blocked-dates",
-    label: "Blocked dates"
+    label: "Blocked dates",
   },
   {
     description: "Contact and copy",
     href: "/admin/settings",
     key: "settings",
-    label: "Settings"
-  }
+    label: "Settings",
+  },
 ];
 
-export function AdminShell({
+export async function AdminShell({
   active,
   children,
   className,
   description,
-  title
+  title,
 }: AdminShellProps) {
   const pageTitleId = "admin-page-title";
+  const staff = await requireStaff();
+  const permittedNav = adminNavItems.filter(
+    (item) =>
+      staff.role === "owner" ||
+      (staff.role === "reception" &&
+        ["dashboard", "bookings", "blocked-dates"].includes(item.key)) ||
+      (staff.role === "content_editor" &&
+        ["rooms", "packages", "gallery"].includes(item.key)),
+  );
 
   return (
     <main className={`admin-page${className ? ` ${className}` : ""}`}>
@@ -98,7 +108,7 @@ export function AdminShell({
           </Link>
 
           <nav className="admin-sidebar-nav">
-            {adminNavItems.map((item) => (
+            {permittedNav.map((item) => (
               <Link
                 aria-current={item.key === active ? "page" : undefined}
                 className="admin-sidebar-link"
@@ -134,8 +144,12 @@ export function AdminShell({
               <p>{description}</p>
             </div>
             <div className="admin-topbar-status" aria-label="Workspace status">
-              <span>Protected workspace</span>
-              <strong>Manual confirmation mode</strong>
+              <span>
+                {staff.display_name} · {staff.role.replaceAll("_", " ")}
+              </span>
+              <strong>
+                Owner approval · {process.env.TIFAWAVE_ENV || "not configured"}
+              </strong>
             </div>
           </header>
 

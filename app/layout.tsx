@@ -7,7 +7,12 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { getAnalyticsEnv } from "@/lib/env";
 import { getLocaleFromPathname } from "@/lib/i18n";
 import { getWebsiteSettings, getWhatsappHref } from "@/lib/settings";
-import { getSiteUrl, SITE_DESCRIPTION, SITE_NAME, SITE_OG_IMAGE } from "@/lib/site";
+import {
+  getSiteUrl,
+  SITE_DESCRIPTION,
+  SITE_NAME,
+  SITE_OG_IMAGE,
+} from "@/lib/site";
 import { fraunces, inter } from "./fonts";
 import "./globals.css";
 
@@ -24,47 +29,52 @@ export const metadata: Metadata = {
         alt: "Surfer walking toward Atlantic waves near Tamraght",
         height: 630,
         url: SITE_OG_IMAGE,
-        width: 1200
-      }
+        width: 1200,
+      },
     ],
     locale: "en_US",
     siteName: SITE_NAME,
     type: "website",
-    url: getSiteUrl()
+    url: getSiteUrl(),
   },
   robots: {
     index: true,
-    follow: true
+    follow: true,
   },
   twitter: {
     card: "summary_large_image",
     title: SITE_NAME,
     description: SITE_DESCRIPTION,
-    images: [SITE_OG_IMAGE]
-  }
+    images: [SITE_OG_IMAGE],
+  },
 };
 
 export default async function RootLayout({
-  children
+  children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   const [settings, requestHeaders] = await Promise.all([
     getWebsiteSettings(),
-    headers()
+    headers(),
   ]);
   const { gaMeasurementId } = getAnalyticsEnv();
   const whatsappHref = getWhatsappHref(settings);
   const locale = getLocaleFromPathname(requestHeaders.get("x-pathname"));
 
+  const isAdmin =
+    requestHeaders.get("x-pathname")?.startsWith("/admin") ?? false;
+
   return (
     <html lang={locale}>
       <body className={`${inter.variable} ${fraunces.variable}`}>
-        <GoogleAnalytics measurementId={gaMeasurementId} />
-        <SiteHeader />
+        {!isAdmin && <GoogleAnalytics measurementId={gaMeasurementId} />}
+        {!isAdmin && <SiteHeader />}
         {children}
-        <SiteFooter settings={settings} whatsappHref={whatsappHref} />
-        <MobileBookingBar whatsappHref={whatsappHref} />
+        {!isAdmin && (
+          <SiteFooter settings={settings} whatsappHref={whatsappHref} />
+        )}
+        {!isAdmin && <MobileBookingBar whatsappHref={whatsappHref} />}
       </body>
     </html>
   );

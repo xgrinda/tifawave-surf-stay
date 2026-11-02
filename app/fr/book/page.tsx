@@ -1,114 +1,22 @@
 import type { Metadata } from "next";
 import {
-  BookingAvailabilityForm,
-  BookingPaymentReturnPanel,
-  type BookingContactSettings,
-  type BookingInitialParams,
-  type BookingPaymentReturn
-} from "@/components/booking/booking-availability-form";
-import { Container } from "@/components/primitives/container";
-import { getBookingFlowEnv } from "@/lib/env";
-import { getWebsiteSettings, getWhatsappHref } from "@/lib/settings";
+  RequestPage,
+  type RequestParams,
+} from "@/components/booking/request-page";
 import { getSiteUrl } from "@/lib/site";
-
 export const metadata: Metadata = {
-  title: "Réserver | Tifawave Surf Stay",
+  title: "Demande de réservation | Tifawave Surf Stay",
   description:
-    "Vérifiez les disponibilités des chambres Tifawave et posez une option temporaire en réservation directe.",
+    "Demandez une chambre, un lit en dortoir, un séjour surf ou un séjour en groupe. Approbation du propriétaire obligatoire.",
   alternates: {
-    canonical: `${getSiteUrl()}/fr/book`,
-    languages: {
-      en: `${getSiteUrl()}/book`,
-      fr: `${getSiteUrl()}/fr/book`
-    }
-  }
+    canonical: getSiteUrl() + "/fr/book",
+    languages: { en: getSiteUrl() + "/book", fr: getSiteUrl() + "/fr/book" },
+  },
 };
-
-type FrenchBookPageProps = {
-  searchParams?: Promise<{
-    bookingId?: string;
-    checkIn?: string;
-    checkOut?: string;
-    guests?: string;
-    packageId?: string;
-    payment?: string;
-    roomId?: string;
-  }>;
-};
-
-function getPaymentReturn({
-  bookingId,
-  payment
+export default async function Book({
+  searchParams,
 }: {
-  bookingId?: string;
-  payment?: string;
-}): BookingPaymentReturn | null {
-  if (payment === "success" && bookingId) {
-    return {
-      status: "success",
-      bookingId
-    };
-  }
-
-  if (payment === "cancelled") {
-    return {
-      status: "cancelled",
-      bookingId
-    };
-  }
-
-  return null;
-}
-
-function getBookingContactSettings(): Promise<BookingContactSettings> {
-  const { depositsEnabled } = getBookingFlowEnv();
-
-  return getWebsiteSettings().then((settings) => ({
-    businessName: settings.businessName,
-    bookingNoticeText: settings.bookingNoticeText,
-    contactEmail: settings.contactEmail,
-    depositsEnabled,
-    stripeDepositAmountDisplay: settings.stripeDepositAmountDisplay,
-    supportPhone: settings.supportPhone,
-    whatsappHref: getWhatsappHref(settings)
-  }));
-}
-
-export default async function FrenchBookPage({ searchParams }: FrenchBookPageProps) {
-  const [params, settings] = await Promise.all([
-    searchParams,
-    getBookingContactSettings()
-  ]);
-  const paymentReturn = getPaymentReturn({
-    bookingId: params?.bookingId,
-    payment: params?.payment
-  });
-  const visiblePaymentReturn = settings.depositsEnabled ? paymentReturn : null;
-  const initialParams: BookingInitialParams = {
-    checkIn: params?.checkIn,
-    checkOut: params?.checkOut,
-    guests: params?.guests,
-    packageId: params?.packageId,
-    roomId: params?.roomId
-  };
-
-  return (
-    <main className="booking-page">
-      <Container>
-        {visiblePaymentReturn ? (
-          <BookingPaymentReturnPanel
-            locale="fr"
-            paymentReturn={visiblePaymentReturn}
-            settings={settings}
-          />
-        ) : (
-          <BookingAvailabilityForm
-            initialParams={initialParams}
-            locale="fr"
-            settings={settings}
-          />
-        )}
-      </Container>
-    </main>
-  );
+  searchParams: Promise<RequestParams>;
+}) {
+  return <RequestPage locale="fr" params={await searchParams} />;
 }

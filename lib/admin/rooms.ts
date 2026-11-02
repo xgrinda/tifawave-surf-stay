@@ -1,5 +1,8 @@
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { normalizeFocalPosition, type FocalPosition } from "@/lib/image-position";
+import { createSupabaseStaffClient } from "@/lib/supabase/staff";
+import {
+  normalizeFocalPosition,
+  type FocalPosition,
+} from "@/lib/image-position";
 
 type AdminRoomResult =
   | {
@@ -58,7 +61,9 @@ function normalizeRequiredText(value: string): string {
   return value.trim().replace(/\s+/g, " ");
 }
 
-function normalizeOptionalText(value: string | null | undefined): string | null {
+function normalizeOptionalText(
+  value: string | null | undefined,
+): string | null {
   const normalized = value?.trim().replace(/\s+/g, " ");
   return normalized ? normalized : null;
 }
@@ -102,7 +107,7 @@ function normalizeRoomInput(input: UpsertAdminRoomInput) {
   const maxGuests = parsePositiveInteger(input.maxGuests, "Capacity");
   const basePriceCents = parseNonNegativeInteger(
     input.basePriceCents,
-    "Base price cents"
+    "Base price cents",
   );
 
   if (name.length < 2 || name.length > 120) {
@@ -122,7 +127,7 @@ function normalizeRoomInput(input: UpsertAdminRoomInput) {
     description,
     maxGuests,
     name,
-    slug
+    slug,
   };
 }
 
@@ -162,7 +167,7 @@ function normalizeRoomImageInput(input: UpsertAdminRoomImageInput) {
     imageUrl,
     isPrimary: input.isPrimary,
     roomId,
-    sortOrder
+    sortOrder,
   };
 }
 
@@ -173,7 +178,7 @@ function roomPayload(input: ReturnType<typeof normalizeRoomInput>) {
     max_guests: input.maxGuests,
     name: input.name,
     slug: input.slug,
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
   };
 }
 
@@ -183,7 +188,7 @@ function roomImagePayload(input: ReturnType<typeof normalizeRoomImageInput>) {
     focal_position: input.focalPosition,
     image_url: input.imageUrl,
     sort_order: input.sortOrder,
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
   };
 }
 
@@ -196,10 +201,12 @@ function publicErrorMessage(error: unknown): string {
 }
 
 export async function getAdminRooms(): Promise<AdminRoom[]> {
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createSupabaseStaffClient();
   const { data: rooms, error } = await supabase
     .from("rooms")
-    .select("id, slug, name, description, max_guests, base_price_cents, is_active, updated_at")
+    .select(
+      "id, slug, name, description, max_guests, base_price_cents, is_active, updated_at",
+    )
     .order("is_active", { ascending: false })
     .order("name", { ascending: true });
 
@@ -214,7 +221,7 @@ export async function getAdminRooms(): Promise<AdminRoom[]> {
     const { data: images, error: imagesError } = await supabase
       .from("room_images")
       .select(
-        "id, room_id, image_url, alt_text, focal_position, sort_order, is_primary, updated_at"
+        "id, room_id, image_url, alt_text, focal_position, sort_order, is_primary, updated_at",
       )
       .in("room_id", roomIds)
       .order("is_primary", { ascending: false })
@@ -235,7 +242,7 @@ export async function getAdminRooms(): Promise<AdminRoom[]> {
         focalPosition: normalizeFocalPosition(image.focal_position),
         sortOrder: image.sort_order,
         isPrimary: image.is_primary,
-        updatedAt: image.updated_at
+        updatedAt: image.updated_at,
       });
       imagesByRoomId.set(image.room_id, roomImages);
     }
@@ -250,12 +257,12 @@ export async function getAdminRooms(): Promise<AdminRoom[]> {
     basePriceCents: room.base_price_cents,
     isActive: room.is_active,
     updatedAt: room.updated_at,
-    images: imagesByRoomId.get(room.id) ?? []
+    images: imagesByRoomId.get(room.id) ?? [],
   }));
 }
 
 export async function createAdminRoom(
-  input: UpsertAdminRoomInput
+  input: UpsertAdminRoomInput,
 ): Promise<AdminRoomResult> {
   let normalized: ReturnType<typeof normalizeRoomInput>;
 
@@ -264,35 +271,35 @@ export async function createAdminRoom(
   } catch (error) {
     return {
       ok: false,
-      message: publicErrorMessage(error)
+      message: publicErrorMessage(error),
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createSupabaseStaffClient();
   const { error } = await supabase.from("rooms").insert({
     ...roomPayload(normalized),
-    is_active: true
+    is_active: true,
   });
 
   if (error) {
     return {
       ok: false,
-      message: error.message
+      message: error.message,
     };
   }
 
   return {
-    ok: true
+    ok: true,
   };
 }
 
 export async function updateAdminRoom(
-  input: UpsertAdminRoomInput
+  input: UpsertAdminRoomInput,
 ): Promise<AdminRoomResult> {
   if (!input.id) {
     return {
       ok: false,
-      message: "roomId is required."
+      message: "roomId is required.",
     };
   }
 
@@ -303,11 +310,11 @@ export async function updateAdminRoom(
   } catch (error) {
     return {
       ok: false,
-      message: publicErrorMessage(error)
+      message: publicErrorMessage(error),
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createSupabaseStaffClient();
   const { error } = await supabase
     .from("rooms")
     .update(roomPayload(normalized))
@@ -316,51 +323,51 @@ export async function updateAdminRoom(
   if (error) {
     return {
       ok: false,
-      message: error.message
+      message: error.message,
     };
   }
 
   return {
-    ok: true
+    ok: true,
   };
 }
 
 export async function setAdminRoomActive(
   roomId: string,
-  isActive: boolean
+  isActive: boolean,
 ): Promise<AdminRoomResult> {
   const id = roomId.trim();
 
   if (!id) {
     return {
       ok: false,
-      message: "roomId is required."
+      message: "roomId is required.",
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createSupabaseStaffClient();
   const { error } = await supabase
     .from("rooms")
     .update({
       is_active: isActive,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     })
     .eq("id", id);
 
   if (error) {
     return {
       ok: false,
-      message: error.message
+      message: error.message,
     };
   }
 
   return {
-    ok: true
+    ok: true,
   };
 }
 
 export async function createAdminRoomImage(
-  input: UpsertAdminRoomImageInput
+  input: UpsertAdminRoomImageInput,
 ): Promise<AdminRoomResult> {
   let normalized: ReturnType<typeof normalizeRoomImageInput>;
 
@@ -369,17 +376,17 @@ export async function createAdminRoomImage(
   } catch (error) {
     return {
       ok: false,
-      message: publicErrorMessage(error)
+      message: publicErrorMessage(error),
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createSupabaseStaffClient();
   const { data, error } = await supabase
     .from("room_images")
     .insert({
       ...roomImagePayload(normalized),
       is_primary: false,
-      room_id: normalized.roomId
+      room_id: normalized.roomId,
     })
     .select("id")
     .single();
@@ -387,7 +394,7 @@ export async function createAdminRoomImage(
   if (error) {
     return {
       ok: false,
-      message: error.message
+      message: error.message,
     };
   }
 
@@ -396,17 +403,17 @@ export async function createAdminRoomImage(
   }
 
   return {
-    ok: true
+    ok: true,
   };
 }
 
 export async function updateAdminRoomImage(
-  input: UpsertAdminRoomImageInput
+  input: UpsertAdminRoomImageInput,
 ): Promise<AdminRoomResult> {
   if (!input.id) {
     return {
       ok: false,
-      message: "imageId is required."
+      message: "imageId is required.",
     };
   }
 
@@ -417,16 +424,16 @@ export async function updateAdminRoomImage(
   } catch (error) {
     return {
       ok: false,
-      message: publicErrorMessage(error)
+      message: publicErrorMessage(error),
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createSupabaseStaffClient();
   const { error } = await supabase
     .from("room_images")
     .update({
       ...roomImagePayload(normalized),
-      is_primary: false
+      is_primary: false,
     })
     .eq("id", input.id)
     .eq("room_id", normalized.roomId);
@@ -434,7 +441,7 @@ export async function updateAdminRoomImage(
   if (error) {
     return {
       ok: false,
-      message: error.message
+      message: error.message,
     };
   }
 
@@ -443,23 +450,23 @@ export async function updateAdminRoomImage(
   }
 
   return {
-    ok: true
+    ok: true,
   };
 }
 
 export async function setAdminRoomImagePrimary(
-  imageId: string
+  imageId: string,
 ): Promise<AdminRoomResult> {
   const id = imageId.trim();
 
   if (!id) {
     return {
       ok: false,
-      message: "imageId is required."
+      message: "imageId is required.",
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createSupabaseStaffClient();
   const { data: image, error: imageError } = await supabase
     .from("room_images")
     .select("room_id")
@@ -469,7 +476,7 @@ export async function setAdminRoomImagePrimary(
   if (imageError) {
     return {
       ok: false,
-      message: imageError.message
+      message: imageError.message,
     };
   }
 
@@ -478,14 +485,14 @@ export async function setAdminRoomImagePrimary(
     .from("room_images")
     .update({
       is_primary: false,
-      updated_at: now
+      updated_at: now,
     })
     .eq("room_id", image.room_id);
 
   if (clearError) {
     return {
       ok: false,
-      message: clearError.message
+      message: clearError.message,
     };
   }
 
@@ -493,45 +500,45 @@ export async function setAdminRoomImagePrimary(
     .from("room_images")
     .update({
       is_primary: true,
-      updated_at: now
+      updated_at: now,
     })
     .eq("id", id);
 
   if (setError) {
     return {
       ok: false,
-      message: setError.message
+      message: setError.message,
     };
   }
 
   return {
-    ok: true
+    ok: true,
   };
 }
 
 export async function removeAdminRoomImage(
-  imageId: string
+  imageId: string,
 ): Promise<AdminRoomResult> {
   const id = imageId.trim();
 
   if (!id) {
     return {
       ok: false,
-      message: "imageId is required."
+      message: "imageId is required.",
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createSupabaseStaffClient();
   const { error } = await supabase.from("room_images").delete().eq("id", id);
 
   if (error) {
     return {
       ok: false,
-      message: error.message
+      message: error.message,
     };
   }
 
   return {
-    ok: true
+    ok: true,
   };
 }

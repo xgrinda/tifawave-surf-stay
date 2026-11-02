@@ -1,355 +1,142 @@
-import type { Metadata } from "next";
+import { RefreshRequests } from "../_components/refresh-requests";
+import Link from "next/link";
 import { requireAdmin } from "@/lib/admin/auth";
-import {
-  getAdminBookings,
-  type AdminBooking,
-  type AdminBookingFilter
-} from "@/lib/admin/bookings";
+import { getAdminBookings, bookingStatuses } from "@/lib/admin/bookings";
 import { AdminShell } from "../_components/admin-shell";
-import { updateBookingStatusAction } from "./actions";
-
 export const dynamic = "force-dynamic";
-
-export const metadata: Metadata = {
-  title: "Pending Bookings | Tifawave Admin",
-  description: "Protected Tifawave pending booking dashboard."
-};
-
-const bookingFilters: Array<{
-  label: string;
-  value: AdminBookingFilter;
-}> = [
-  { label: "Pending", value: "pending" },
-  { label: "Confirmed", value: "confirmed" },
-  { label: "Cancelled", value: "cancelled" },
-  { label: "All", value: "all" }
-];
-
-type AdminBookingsPageProps = {
-  searchParams?: Promise<{
+export default async function Bookings({
+  searchParams,
+}: {
+  searchParams: Promise<{
     status?: string;
+    q?: string;
+    source?: string;
+    page?: string;
+    sort?: string;
   }>;
-};
-
-function parseBookingFilter(value: string | undefined): AdminBookingFilter {
-  return bookingFilters.some((filter) => filter.value === value)
-    ? (value as AdminBookingFilter)
-    : "pending";
-}
-
-function filterHref(filter: AdminBookingFilter): string {
-  return filter === "pending"
-    ? "/admin/bookings"
-    : `/admin/bookings?status=${filter}`;
-}
-
-function filterTitle(filter: AdminBookingFilter): string {
-  return filter === "all"
-    ? "All bookings"
-    : `${filter.charAt(0).toUpperCase()}${filter.slice(1)} bookings`;
-}
-
-function formatDate(value: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeZone: "UTC"
-  }).format(new Date(`${value}T00:00:00Z`));
-}
-
-function formatDateTime(value: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short"
-  }).format(new Date(value));
-}
-
-function bookingTypeLabel(type: string): string {
-  if (type === "surf_package") {
-    return "Surf package";
-  }
-
-  if (type === "group_request") {
-    return "Group request";
-  }
-
-  return "Stay only";
-}
-
-function formatPreference(value: string | null): string | null {
-  if (!value) {
-    return null;
-  }
-
-  return value
-    .replaceAll("_", " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
-function booleanLabel(value: boolean): string {
-  return value ? "Yes" : "No";
-}
-
-function whatsappHref(phone: string | null): string | null {
-  const digits = phone?.replace(/\D/g, "") ?? "";
-  return digits.length >= 6 ? `https://wa.me/${digits}` : null;
-}
-
-function BookingDetails({ booking }: { booking: AdminBooking }) {
-  return (
-    <details className="admin-booking-row-details">
-      <summary>View details</summary>
-      <div className="admin-booking-details-panel">
-        <dl className="admin-booking-details">
-          <div>
-            <dt>Booking ID</dt>
-            <dd>{booking.id}</dd>
-          </div>
-          <div>
-            <dt>Type</dt>
-            <dd>{bookingTypeLabel(booking.bookingType)}</dd>
-          </div>
-          {booking.guestPhone ? (
-            <div>
-              <dt>Phone / WhatsApp</dt>
-              <dd>{booking.guestPhone}</dd>
-            </div>
-          ) : null}
-          {booking.groupSize ? (
-            <div>
-              <dt>Group size</dt>
-              <dd>{booking.groupSize}</dd>
-            </div>
-          ) : null}
-          {booking.roomPreference ? (
-            <div>
-              <dt>Room preference</dt>
-              <dd>{formatPreference(booking.roomPreference)}</dd>
-            </div>
-          ) : null}
-          {booking.surfLevel ? (
-            <div>
-              <dt>Surf level</dt>
-              <dd>{formatPreference(booking.surfLevel)}</dd>
-            </div>
-          ) : null}
-          {booking.retreatName ? (
-            <div>
-              <dt>Retreat</dt>
-              <dd>{booking.retreatName}</dd>
-            </div>
-          ) : null}
-          {booking.bookingType === "surf_package" ? (
-            <>
-              <div>
-                <dt>Transfer</dt>
-                <dd>{booleanLabel(booking.airportTransfer)}</dd>
-              </div>
-              <div>
-                <dt>Board</dt>
-                <dd>{booleanLabel(booking.boardRental)}</dd>
-              </div>
-              <div>
-                <dt>Wetsuit</dt>
-                <dd>{booleanLabel(booking.wetsuitRental)}</dd>
-              </div>
-              <div>
-                <dt>Coworking</dt>
-                <dd>{booleanLabel(booking.coworkingInterest)}</dd>
-              </div>
-            </>
-          ) : null}
-          {booking.bookingType === "group_request" ? (
-            <>
-              <div>
-                <dt>Meals</dt>
-                <dd>{booleanLabel(booking.mealsNeeded)}</dd>
-              </div>
-              <div>
-                <dt>Transfer</dt>
-                <dd>{booleanLabel(booking.airportTransfer)}</dd>
-              </div>
-              <div>
-                <dt>Private coaching</dt>
-                <dd>{booleanLabel(booking.privateCoaching)}</dd>
-              </div>
-              <div>
-                <dt>Yoga</dt>
-                <dd>{booleanLabel(booking.yogaInterest)}</dd>
-              </div>
-              <div>
-                <dt>Coworking</dt>
-                <dd>{booleanLabel(booking.coworkingInterest)}</dd>
-              </div>
-            </>
-          ) : null}
-          {booking.notes ? (
-            <div className="admin-booking-note">
-              <dt>Notes</dt>
-              <dd>{booking.notes}</dd>
-            </div>
-          ) : null}
-        </dl>
-      </div>
-    </details>
-  );
-}
-
-export default async function AdminBookingsPage({
-  searchParams
-}: AdminBookingsPageProps) {
-  await requireAdmin();
+}) {
+  await requireAdmin("reservations");
   const params = await searchParams;
-  const activeFilter = parseBookingFilter(params?.status);
-  const bookings = await getAdminBookings(activeFilter);
-
+  const { bookings, count, page } = await getAdminBookings(params);
+  const pageLink = (p: number) =>
+    "/admin/bookings?" +
+    new URLSearchParams({ ...params, page: String(p) }).toString();
   return (
     <AdminShell
       active="bookings"
-      className="admin-bookings-page"
-      description="Review pending booking requests and update their status."
-      title={filterTitle(activeFilter)}
+      title="Reservations"
+      description="Requests stay pending until the Owner verifies availability and allocates rooms or beds."
     >
-        <nav className="admin-booking-tabs" aria-label="Booking status filters">
-          {bookingFilters.map((filter) => (
-            <a
-              aria-current={filter.value === activeFilter ? "page" : undefined}
-              href={filterHref(filter.value)}
-              key={filter.value}
-            >
-              {filter.label}
-            </a>
-          ))}
-        </nav>
-
-        <div className="admin-bookings-table-wrap">
-          {bookings.length > 0 ? (
-            <table className="admin-bookings-table">
-              <thead>
-                <tr>
-                  <th scope="col">Type</th>
-                  <th scope="col">Guest</th>
-                  <th scope="col">Contact</th>
-                  <th scope="col">Stay</th>
-                  <th scope="col">Dates</th>
-                  <th scope="col">Status</th>
-                  <th scope="col">Created</th>
-                  <th scope="col">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {bookings.map((booking) => {
-                  const quickWhatsappHref = whatsappHref(booking.guestPhone);
-                  const stayLabel =
-                    booking.packageName ??
-                    (booking.bookingType === "group_request"
-                      ? "Custom proposal"
-                      : "Stay only");
-
-                  return (
-                    <tr key={booking.id}>
-                      <td data-label="Type">
-                        <span className="admin-booking-type-pill">
-                          {bookingTypeLabel(booking.bookingType)}
-                        </span>
-                      </td>
-                      <td data-label="Guest">
-                        <strong className="admin-booking-guest">
-                          {booking.guestName}
-                        </strong>
-                        {booking.groupSize ? (
-                          <span className="admin-booking-subtext">
-                            {booking.groupSize} guests
-                          </span>
-                        ) : null}
-                      </td>
-                      <td data-label="Contact">
-                        <div className="admin-booking-contact">
-                          <a href={`mailto:${booking.guestEmail}`}>
-                            {booking.guestEmail}
-                          </a>
-                          {quickWhatsappHref ? (
-                            <a
-                              className="admin-whatsapp-link"
-                              href={quickWhatsappHref}
-                              rel="noreferrer"
-                              target="_blank"
-                            >
-                              WhatsApp
-                            </a>
-                          ) : null}
-                        </div>
-                      </td>
-                      <td data-label="Stay">
-                        <div className="admin-booking-stay-cell">
-                          <strong>{booking.roomName}</strong>
-                          <span>{stayLabel}</span>
-                        </div>
-                      </td>
-                      <td data-label="Dates">
-                        <span className="admin-booking-date-range">
-                          {formatDate(booking.checkIn)} to{" "}
-                          {formatDate(booking.checkOut)}
-                        </span>
-                      </td>
-                      <td data-label="Status">
-                        <span className="admin-status-pill">
-                          {booking.status}
-                        </span>
-                      </td>
-                      <td data-label="Created">{formatDateTime(booking.createdAt)}</td>
-                      <td data-label="Actions">
-                        <div className="admin-booking-actions-cell">
-                          <form
-                            className="admin-status-actions"
-                            action={updateBookingStatusAction}
-                          >
-                            <input
-                              name="bookingId"
-                              type="hidden"
-                              value={booking.id}
-                            />
-                            <button
-                              className="admin-status-button"
-                              disabled={booking.status === "pending"}
-                              name="status"
-                              type="submit"
-                              value="pending"
-                            >
-                              Pending
-                            </button>
-                            <button
-                              className="admin-status-button"
-                              name="status"
-                              type="submit"
-                              value="confirmed"
-                            >
-                              Confirm
-                            </button>
-                            <button
-                              className="admin-status-button admin-status-danger"
-                              name="status"
-                              type="submit"
-                              value="cancelled"
-                            >
-                              Cancel
-                            </button>
-                          </form>
-                          <BookingDetails booking={booking} />
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          ) : (
-            <div className="admin-empty-state">
-              <p className="eyebrow">All clear</p>
-              <h2>No {activeFilter === "all" ? "" : activeFilter} bookings.</h2>
-              <p>Bookings matching this filter will appear here.</p>
-            </div>
-          )}
-        </div>
+      <RefreshRequests />
+      <div className="ops-toolbar">
+        <Link href="/admin/bookings/new" className="btn btn-primary">
+          Add OTA / manual request
+        </Link>
+        <span>{count} records</span>
+      </div>
+      <form className="ops-filters" method="get">
+        <label>
+          Search
+          <input
+            name="q"
+            defaultValue={params.q}
+            maxLength={100}
+            placeholder="Guest, email, reference"
+          />
+        </label>
+        <label>
+          Status
+          <select name="status" defaultValue={params.status || ""}>
+            <option value="">All statuses</option>
+            {bookingStatuses.map((s) => (
+              <option key={s}>{s}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Source
+          <select name="source" defaultValue={params.source || ""}>
+            <option value="">All sources</option>
+            {[
+              "website",
+              "booking_com",
+              "airbnb",
+              "direct",
+              "walk_in",
+              "legacy",
+            ].map((s) => (
+              <option key={s} value={s}>
+                {s.replaceAll("_", " ")}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Sort
+          <select name="sort" defaultValue={params.sort || "created_at"}>
+            <option value="created_at">Newest request</option>
+            <option value="check_in">Arrival</option>
+            <option value="guest_name">Guest name</option>
+          </select>
+        </label>
+        <button className="btn btn-secondary">Apply</button>
+      </form>
+      <div className="admin-bookings-table-wrap">
+        <table className="admin-bookings-table">
+          <thead>
+            <tr>
+              <th>Guest / reference</th>
+              <th>Dates</th>
+              <th>Guests</th>
+              <th>Source</th>
+              <th>Status</th>
+              <th>Request</th>
+            </tr>
+          </thead>
+          <tbody>
+            {bookings.map((b) => (
+              <tr key={b.id}>
+                <td>
+                  <Link href={"/admin/bookings/" + b.id}>
+                    {b.guest_name || "Guest"}
+                  </Link>
+                  <br />
+                  <small>{b.reference || b.id}</small>
+                </td>
+                <td>
+                  {b.check_in} → {b.check_out}
+                </td>
+                <td>{b.guests}</td>
+                <td>{b.booking_source.replaceAll("_", " ")}</td>
+                <td>
+                  <span className={"ops-status ops-status-" + b.status}>
+                    {b.status}
+                  </span>
+                </td>
+                <td>{b.booking_type.replaceAll("_", " ")}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {!bookings.length && (
+          <div className="admin-empty-state">
+            <h2>No matching reservations</h2>
+            <p>
+              Adjust the filters or add a genuine request. No demonstration
+              records are created.
+            </p>
+          </div>
+        )}
+      </div>
+      <nav className="ops-toolbar" aria-label="Reservation pages">
+        {page > 1 ? (
+          <Link href={pageLink(page - 1)}>← Previous</Link>
+        ) : (
+          <span />
+        )}
+        <span>Page {page} · 25 per page</span>
+        {page * 25 < count && <Link href={pageLink(page + 1)}>Next →</Link>}
+      </nav>
     </AdminShell>
   );
 }

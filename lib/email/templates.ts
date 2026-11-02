@@ -1,22 +1,90 @@
-export type PendingBookingEmailDetails = {
-  bookingId: string;
-  status: string;
-  roomName: string;
-  checkIn: string;
-  checkOut: string;
-  guestName: string;
-  guestEmail: string;
-  guestPhone: string;
-  message: string | null;
-};
+import { z } from "zod";
 
-export type EmailTemplate = {
-  subject: string;
-  html: string;
-  text: string;
-};
-
-function escapeHtml(value: string): string {
+export type EmailTemplate = { subject: string; html: string; text: string };
+export const emailSnapshotSchema = z.object({
+  name: z
+    .string()
+    .nullable()
+    .transform((v) => v || "Guest"),
+  email: z
+    .union([z.string().email(), z.literal("")])
+    .nullable()
+    .transform((v) => v || ""),
+  phone: z.string().nullable(),
+  checkIn: z.string(),
+  checkOut: z.string(),
+  guests: z.number(),
+  locale: z.enum(["en", "fr"]),
+  reference: z.string(),
+  preference: z.string().nullable(),
+  notes: z.string().nullable(),
+  bookingType: z.string(),
+  package: z.string().nullable(),
+  units: z.array(z.string()),
+});
+export type EmailSnapshot = z.infer<typeof emailSnapshotSchema>;
+type Event =
+  | "received"
+  | "owner_alert"
+  | "confirmed"
+  | "declined"
+  | "cancelled"
+  | "changed";
+const copy = {
+  en: {
+    received: [
+      "Your Tifawave request is pending",
+      "We received your request. The owner will check availability and contact you. Your reservation is not confirmed.",
+    ],
+    owner_alert: [
+      "New Tifawave booking request",
+      "Review the pending request, check Booking.com and Airbnb manually, and allocate available rooms or dorm beds before deciding.",
+    ],
+    confirmed: [
+      "Your Tifawave reservation is confirmed",
+      "The owner has reviewed availability and confirmed your stay.",
+    ],
+    declined: [
+      "An update on your Tifawave request",
+      "The owner has reviewed your request and cannot confirm this stay. Please contact Tifawave to discuss alternatives.",
+    ],
+    cancelled: [
+      "Your Tifawave reservation is cancelled",
+      "The owner has cancelled this reservation. Contact Tifawave if you need assistance.",
+    ],
+    changed: [
+      "Your Tifawave reservation has changed",
+      "The owner has approved the updated dates and allocations below.",
+    ],
+  },
+  fr: {
+    received: [
+      "Votre demande Tifawave est en attente",
+      "Nous avons reçu votre demande. Le propriétaire vérifiera les disponibilités et vous contactera. Votre réservation n’est pas confirmée.",
+    ],
+    owner_alert: [
+      "Nouvelle demande Tifawave",
+      "Vérifiez Booking.com et Airbnb manuellement et attribuez les chambres ou lits disponibles avant de prendre une décision.",
+    ],
+    confirmed: [
+      "Votre réservation Tifawave est confirmée",
+      "Le propriétaire a vérifié les disponibilités et confirmé votre séjour.",
+    ],
+    declined: [
+      "Une réponse à votre demande Tifawave",
+      "Après vérification, le propriétaire ne peut pas confirmer ce séjour. Contactez Tifawave pour envisager une autre option.",
+    ],
+    cancelled: [
+      "Votre réservation Tifawave est annulée",
+      "Le propriétaire a annulé cette réservation. Contactez Tifawave si vous avez besoin d’aide.",
+    ],
+    changed: [
+      "Votre réservation Tifawave a été modifiée",
+      "Le propriétaire a approuvé les nouvelles dates et attributions ci-dessous.",
+    ],
+  },
+} as const;
+function escape(value: string) {
   return value
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
@@ -24,113 +92,56 @@ function escapeHtml(value: string): string {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
 }
-
-function formatDate(value: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeZone: "UTC"
-  }).format(new Date(`${value}T00:00:00Z`));
-}
-
-function bookingRows(details: PendingBookingEmailDetails): string {
+export function reservationEmail(
+  event: Event,
+  data: EmailSnapshot,
+): EmailTemplate {
+  const [subject, intro] = copy[data.locale][event];
+  const fr = data.locale === "fr";
   const rows = [
-    ["Booking ID", details.bookingId],
-    ["Status", details.status],
-    ["Room", details.roomName],
-    ["Dates", `${formatDate(details.checkIn)} to ${formatDate(details.checkOut)}`],
-    ["Guest", details.guestName],
-    ["Email", details.guestEmail],
-    ["Phone / WhatsApp", details.guestPhone]
+    [fr ? "Référence" : "Reference", data.reference],
+    [fr ? "Voyageur" : "Guest", data.name],
+    [fr ? "Arrivée" : "Arrival", data.checkIn],
+    [fr ? "Départ" : "Departure", data.checkOut],
+    [fr ? "Voyageurs" : "Guests", String(data.guests)],
+    ...(data.package
+      ? [[fr ? "Séjour surf" : "Surf package", data.package]]
+      : []),
+    ...(data.units.length
+      ? [[fr ? "Attribution" : "Allocation", data.units.join(", ")]]
+      : []),
   ];
-
-  if (details.message) {
-    rows.push(["Message", details.message]);
+  if (event === "owner_alert") {
+    rows.push(["Email", data.email], ["Phone / WhatsApp", data.phone || "—"]);
+    if (data.preference) rows.push(["Preference", data.preference]);
+    if (data.notes) rows.push(["Guest message", data.notes]);
   }
-
-  return rows
-    .map(
-      ([label, value]) => `
-        <tr>
-          <th align="left" style="padding:8px 14px 8px 0;color:#6b7b82;font-size:13px;font-weight:700;">${escapeHtml(label)}</th>
-          <td style="padding:8px 0;color:#0b1f2a;font-size:14px;">${escapeHtml(value)}</td>
-        </tr>`
-    )
-    .join("");
-}
-
-function bookingText(details: PendingBookingEmailDetails): string {
-  const lines = [
-    `Booking ID: ${details.bookingId}`,
-    `Status: ${details.status}`,
-    `Room: ${details.roomName}`,
-    `Dates: ${formatDate(details.checkIn)} to ${formatDate(details.checkOut)}`,
-    `Guest: ${details.guestName}`,
-    `Email: ${details.guestEmail}`,
-    `Phone / WhatsApp: ${details.guestPhone}`
-  ];
-
-  if (details.message) {
-    lines.push(`Message: ${details.message}`);
-  }
-
-  return lines.join("\n");
-}
-
-function wrapEmail(title: string, intro: string, details: PendingBookingEmailDetails): string {
-  return `
-    <div style="margin:0;background:#f6f1e7;padding:28px;font-family:Inter,Arial,sans-serif;color:#0b1f2a;">
-      <div style="max-width:640px;margin:0 auto;border-radius:18px;background:#fbf8f2;padding:28px;border:1px solid #e3dbcc;">
-        <p style="margin:0 0 10px;color:#2e8b8b;font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;">Tifawave Surf Stay</p>
-        <h1 style="margin:0 0 14px;font-family:Georgia,serif;font-size:32px;font-weight:400;line-height:1.12;color:#0b1f2a;">${escapeHtml(title)}</h1>
-        <p style="margin:0 0 20px;color:#6b7b82;font-size:15px;line-height:1.6;">${escapeHtml(intro)}</p>
-        <table role="presentation" cellspacing="0" cellpadding="0" style="width:100%;border-top:1px solid #e3dbcc;border-bottom:1px solid #e3dbcc;padding:10px 0;">
-          <tbody>${bookingRows(details)}</tbody>
-        </table>
-        <p style="margin:20px 0 0;color:#6b7b82;font-size:13px;line-height:1.5;">This booking is pending confirmation. No payment has been collected.</p>
-      </div>
-    </div>`;
-}
-
-export function pendingBookingInternalEmail(
-  details: PendingBookingEmailDetails
-): EmailTemplate {
+  const text = [
+    intro,
+    "",
+    ...rows.map(([k, v]) => k + ": " + v),
+    "",
+    "Tifawave Surf Stay · hello@tifawave.com",
+  ].join("\n");
   return {
-    subject: `New pending booking: ${details.roomName}`,
-    html: wrapEmail(
-      "New pending booking request",
-      "A guest created a pending booking request through the Tifawave booking flow.",
-      details
-    ),
-    text: [
-      "New pending booking request",
-      "",
-      "A guest created a pending booking request through the Tifawave booking flow.",
-      "",
-      bookingText(details),
-      "",
-      "This booking is pending confirmation. No payment has been collected."
-    ].join("\n")
-  };
-}
-
-export function pendingBookingGuestEmail(
-  details: PendingBookingEmailDetails
-): EmailTemplate {
-  return {
-    subject: "Tifawave booking request received",
-    html: wrapEmail(
-      "Your request is pending",
-      "Thanks for reaching out to Tifawave. We received your booking request and will confirm availability before anything is final.",
-      details
-    ),
-    text: [
-      "Your Tifawave booking request is pending",
-      "",
-      "Thanks for reaching out to Tifawave. We received your booking request and will confirm availability before anything is final.",
-      "",
-      bookingText(details),
-      "",
-      "This booking is pending confirmation. No payment has been collected."
-    ].join("\n")
+    subject,
+    text,
+    html:
+      '<div style="font-family:Arial,sans-serif;max-width:640px;margin:auto;color:#18333e;padding:24px"><p>Tifawave Surf Stay</p><h1 style="font-size:24px">' +
+      escape(subject) +
+      "</h1><p>" +
+      escape(intro) +
+      "</p><table>" +
+      rows
+        .map(
+          ([k, v]) =>
+            '<tr><th align="left" style="padding:8px 16px 8px 0">' +
+            escape(k) +
+            "</th><td>" +
+            escape(v) +
+            "</td></tr>",
+        )
+        .join("") +
+      "</table><p>hello@tifawave.com</p></div>",
   };
 }

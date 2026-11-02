@@ -1,6 +1,6 @@
 import { getGoogleBusinessProfileEnv } from "@/lib/env";
 import { getWebsiteSettings } from "@/lib/settings";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createSupabaseStaffClient } from "@/lib/supabase/staff";
 import type { Row } from "@/lib/supabase/types";
 
 type AdminReviewRow = Pick<
@@ -49,16 +49,16 @@ function rowToAdminReview(review: AdminReviewRow): AdminReview {
     reviewText: review.review_text,
     source: review.source,
     sourceUrl: review.source_url,
-    updatedAt: review.updated_at
+    updatedAt: review.updated_at,
   };
 }
 
 export async function getAdminReviews(limit = 50): Promise<AdminReview[]> {
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createSupabaseStaffClient();
   const { data, error } = await supabase
     .from("reviews")
     .select(
-      "id, source, external_review_id, reviewer_name, rating, review_text, review_date, source_url, active, updated_at"
+      "id, source, external_review_id, reviewer_name, rating, review_text, review_date, source_url, active, updated_at",
     )
     .order("review_date", { ascending: false })
     .limit(limit);
@@ -73,7 +73,7 @@ export async function getAdminReviews(limit = 50): Promise<AdminReview[]> {
 export async function getGoogleReviewsReadiness(): Promise<GoogleReviewsReadiness> {
   const [settings, env] = await Promise.all([
     getWebsiteSettings(),
-    Promise.resolve(getGoogleBusinessProfileEnv())
+    Promise.resolve(getGoogleBusinessProfileEnv()),
   ]);
   const accountConfigured = Boolean(settings.googleBusinessAccountId);
   const locationConfigured = Boolean(settings.googleBusinessLocationId);
@@ -84,6 +84,6 @@ export async function getGoogleReviewsReadiness(): Promise<GoogleReviewsReadines
     envConfigured: env.configured,
     locationConfigured,
     profileUrlConfigured,
-    ready: accountConfigured && locationConfigured && env.configured
+    ready: accountConfigured && locationConfigured && env.configured,
   };
 }

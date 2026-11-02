@@ -1,87 +1,57 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
-import { cookies } from "next/headers";
+import "server-only";
+import { cache } from "react";
 import { redirect } from "next/navigation";
-import { getAdminAuthEnv } from "@/lib/env";
+import { createSupabaseStaffClient } from "@/lib/supabase/staff";
+import type { StaffRole } from "@/types/operations";
 
-const ADMIN_SESSION_COOKIE = "tifawave_admin_session";
-const ADMIN_SESSION_MAX_AGE_SECONDS = 60 * 60 * 12;
-
-function signSession(issuedAt: string, secret: string): string {
-  return createHmac("sha256", secret).update(issuedAt).digest("base64url");
-}
-
-function safeEqual(left: string, right: string): boolean {
-  const leftBuffer = Buffer.from(left);
-  const rightBuffer = Buffer.from(right);
-
-  if (leftBuffer.length !== rightBuffer.length) {
-    return false;
-  }
-
-  return timingSafeEqual(leftBuffer, rightBuffer);
-}
-
-function createSessionValue(secret: string): string {
-  const issuedAt = Date.now().toString();
-  return `${issuedAt}.${signSession(issuedAt, secret)}`;
-}
-
-function isSessionValid(value: string | undefined, secret: string): boolean {
-  if (!value) {
-    return false;
-  }
-
-  const [issuedAt, signature] = value.split(".");
-  const issuedAtNumber = Number(issuedAt);
-
-  if (!issuedAt || !signature || !Number.isFinite(issuedAtNumber)) {
-    return false;
-  }
-
-  const ageSeconds = (Date.now() - issuedAtNumber) / 1000;
-
-  if (ageSeconds < 0 || ageSeconds > ADMIN_SESSION_MAX_AGE_SECONDS) {
-    return false;
-  }
-
-  return safeEqual(signature, signSession(issuedAt, secret));
-}
-
-export async function isAdminAuthenticated(): Promise<boolean> {
-  const { adminSessionSecret } = getAdminAuthEnv();
-  const cookieStore = await cookies();
-  return isSessionValid(
-    cookieStore.get(ADMIN_SESSION_COOKIE)?.value,
-    adminSessionSecret
+export type Permission = "owner" | "reservations" | "content";
+export function hasPermission(
+  role: StaffRole,
+  permission: Permission,
+): boolean {
+  return (
+    role === "owner" ||
+    (permission === "reservations" && role === "reception") ||
+    (permission === "content" && role === "content_editor")
   );
 }
 
-export async function requireAdmin(): Promise<void> {
-  if (!(await isAdminAuthenticated())) {
-    redirect("/admin/login");
+export const currentStaff = cache(async () => {
+  try {
+    const client = await createSupabaseStaffClient();
+    const {
+      data: { user },
+      error,
+    } = await client.auth.getUser();
+    if (error || !user) return null;
+    const { data: member, error: staffError } = await client
+      .from("staff_members")
+      .select("user_id,display_name,role,is_active,created_at")
+      .eq("user_id", user.id)
+      .eq("is_active", true)
+      .maybeSingle();
+    return staffError || !member ? null : { ...member, email: user.email };
+  } catch {
+    return null;
   }
+});
+
+export async function isAdminAuthenticated() {
+  return Boolean(await currentStaff());
 }
-
-export async function createAdminSession(password: string): Promise<boolean> {
-  const { adminPassword, adminSessionSecret } = getAdminAuthEnv();
-
-  if (!safeEqual(password, adminPassword)) {
-    return false;
+export async function requireStaff() {
+  const staff = await currentStaff();
+  if (!staff) redirect("/admin/login");
+  return staff;
+}
+export async function requireAdmin(permission: Permission = "content") {
+  const staff = await requireStaff();
+  if (!hasPermission(staff.role, permission)) redirect("/admin/access");
+  if (staff.role === "owner") {
+    const client = await createSupabaseStaffClient();
+    const { data, error } =
+      await client.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (error || data?.currentLevel !== "aal2") redirect("/admin/mfa");
   }
-
-  const cookieStore = await cookies();
-  cookieStore.set(ADMIN_SESSION_COOKIE, createSessionValue(adminSessionSecret), {
-    httpOnly: true,
-    maxAge: ADMIN_SESSION_MAX_AGE_SECONDS,
-    path: "/",
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production"
-  });
-
-  return true;
-}
-
-export async function clearAdminSession(): Promise<void> {
-  const cookieStore = await cookies();
-  cookieStore.delete(ADMIN_SESSION_COOKIE);
+  return staff;
 }

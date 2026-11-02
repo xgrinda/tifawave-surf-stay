@@ -1,4 +1,4 @@
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createSupabaseStaffClient } from "@/lib/supabase/staff";
 
 type AdminPackageResult =
   | {
@@ -122,7 +122,7 @@ function normalizePackageInput(input: UpsertAdminPackageInput) {
     priceCents,
     shortDescription,
     slug,
-    surfLevel
+    surfLevel,
   };
 }
 
@@ -136,7 +136,7 @@ function packagePayload(input: ReturnType<typeof normalizePackageInput>) {
     short_description: input.shortDescription,
     slug: input.slug,
     surf_level: input.surfLevel,
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
   };
 }
 
@@ -149,11 +149,11 @@ function publicErrorMessage(error: unknown): string {
 }
 
 export async function getAdminPackages(): Promise<AdminPackage[]> {
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createSupabaseStaffClient();
   const { data, error } = await supabase
     .from("packages")
     .select(
-      "id, slug, name, short_description, full_description, price_cents, duration, surf_level, inclusions, is_active, updated_at"
+      "id, slug, name, short_description, full_description, price_cents, duration, surf_level, inclusions, is_active, updated_at",
     )
     .order("is_active", { ascending: false })
     .order("display_order", { ascending: true })
@@ -174,12 +174,12 @@ export async function getAdminPackages(): Promise<AdminPackage[]> {
     surfLevel: pkg.surf_level,
     inclusions: pkg.inclusions,
     isActive: pkg.is_active,
-    updatedAt: pkg.updated_at
+    updatedAt: pkg.updated_at,
   }));
 }
 
 export async function createAdminPackage(
-  input: UpsertAdminPackageInput
+  input: UpsertAdminPackageInput,
 ): Promise<AdminPackageResult> {
   let normalized: ReturnType<typeof normalizePackageInput>;
 
@@ -188,35 +188,35 @@ export async function createAdminPackage(
   } catch (error) {
     return {
       ok: false,
-      message: publicErrorMessage(error)
+      message: publicErrorMessage(error),
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createSupabaseStaffClient();
   const { error } = await supabase.from("packages").insert({
     ...packagePayload(normalized),
-    is_active: true
+    is_active: true,
   });
 
   if (error) {
     return {
       ok: false,
-      message: error.message
+      message: error.message,
     };
   }
 
   return {
-    ok: true
+    ok: true,
   };
 }
 
 export async function updateAdminPackage(
-  input: UpsertAdminPackageInput
+  input: UpsertAdminPackageInput,
 ): Promise<AdminPackageResult> {
   if (!input.id) {
     return {
       ok: false,
-      message: "packageId is required."
+      message: "packageId is required.",
     };
   }
 
@@ -227,11 +227,11 @@ export async function updateAdminPackage(
   } catch (error) {
     return {
       ok: false,
-      message: publicErrorMessage(error)
+      message: publicErrorMessage(error),
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createSupabaseStaffClient();
   const { error } = await supabase
     .from("packages")
     .update(packagePayload(normalized))
@@ -240,45 +240,45 @@ export async function updateAdminPackage(
   if (error) {
     return {
       ok: false,
-      message: error.message
+      message: error.message,
     };
   }
 
   return {
-    ok: true
+    ok: true,
   };
 }
 
 export async function setAdminPackageActive(
   packageId: string,
-  isActive: boolean
+  isActive: boolean,
 ): Promise<AdminPackageResult> {
   const id = packageId.trim();
 
   if (!id) {
     return {
       ok: false,
-      message: "packageId is required."
+      message: "packageId is required.",
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createSupabaseStaffClient();
   const { error } = await supabase
     .from("packages")
     .update({
       is_active: isActive,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     })
     .eq("id", id);
 
   if (error) {
     return {
       ok: false,
-      message: error.message
+      message: error.message,
     };
   }
 
   return {
-    ok: true
+    ok: true,
   };
 }

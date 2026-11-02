@@ -1,4 +1,5 @@
 import { unstable_noStore as noStore } from "next/cache";
+import { createSupabaseStaffClient } from "@/lib/supabase/staff";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { Row } from "@/lib/supabase/types";
 
@@ -16,7 +17,6 @@ export type WebsiteSettings = {
   googleReviewsProfileUrl: string;
   instagramUrl: string;
   defaultCurrency: string;
-  stripeDepositAmountDisplay: string;
   supportPhone: string;
   bookingNoticeText: string;
 };
@@ -47,9 +47,9 @@ export const DEFAULT_WEBSITE_SETTINGS: WebsiteSettings = {
   googleReviewsProfileUrl: "",
   instagramUrl: "",
   defaultCurrency: "USD",
-  stripeDepositAmountDisplay: "Deposit due at checkout",
   supportPhone: "",
-  bookingNoticeText: "Your booking is confirmed after the deposit is received."
+  bookingNoticeText:
+    "Your request remains pending until the owner personally confirms it.",
 };
 
 function requiredText(value: string, fallback: string): string {
@@ -90,19 +90,20 @@ function rowToSettings(row: SettingsRow): WebsiteSettings {
     googleReviewsProfileUrl: row.google_reviews_profile_url ?? "",
     instagramUrl: row.instagram_url,
     defaultCurrency: row.default_currency,
-    stripeDepositAmountDisplay: row.stripe_deposit_amount_display,
     supportPhone: row.support_phone,
-    bookingNoticeText: row.booking_notice_text
+    bookingNoticeText: /stripe|deposit|payment|checkout|acompte|paiement/i.test(
+      row.booking_notice_text,
+    )
+      ? DEFAULT_WEBSITE_SETTINGS.bookingNoticeText
+      : row.booking_notice_text,
   };
 }
 
-function normalizeSettings(
-  input: UpdateWebsiteSettingsInput
-): WebsiteSettings {
+function normalizeSettings(input: UpdateWebsiteSettingsInput): WebsiteSettings {
   const settings = {
     businessName: requiredText(
       input.businessName,
-      DEFAULT_WEBSITE_SETTINGS.businessName
+      DEFAULT_WEBSITE_SETTINGS.businessName,
     ),
     contactEmail: input.contactEmail.trim().toLowerCase(),
     whatsappNumber: optionalText(input.whatsappNumber),
@@ -115,17 +116,13 @@ function normalizeSettings(
     instagramUrl: optionalUrl(input.instagramUrl),
     defaultCurrency: requiredText(
       input.defaultCurrency,
-      DEFAULT_WEBSITE_SETTINGS.defaultCurrency
+      DEFAULT_WEBSITE_SETTINGS.defaultCurrency,
     ).toUpperCase(),
-    stripeDepositAmountDisplay: requiredText(
-      input.stripeDepositAmountDisplay,
-      DEFAULT_WEBSITE_SETTINGS.stripeDepositAmountDisplay
-    ),
     supportPhone: optionalText(input.supportPhone),
     bookingNoticeText: requiredText(
       input.bookingNoticeText,
-      DEFAULT_WEBSITE_SETTINGS.bookingNoticeText
-    )
+      DEFAULT_WEBSITE_SETTINGS.bookingNoticeText,
+    ),
   };
 
   if (!EMAIL_PATTERN.test(settings.contactEmail)) {
@@ -152,15 +149,14 @@ function settingsToRow(settings: WebsiteSettings) {
     google_reviews_profile_url: settings.googleReviewsProfileUrl,
     instagram_url: settings.instagramUrl,
     default_currency: settings.defaultCurrency,
-    stripe_deposit_amount_display: settings.stripeDepositAmountDisplay,
     support_phone: settings.supportPhone,
     booking_notice_text: settings.bookingNoticeText,
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
   };
 }
 
 export function getWhatsappHref(
-  settings: Pick<WebsiteSettings, "businessName" | "whatsappNumber">
+  settings: Pick<WebsiteSettings, "businessName" | "whatsappNumber">,
 ): string {
   const digits = settings.whatsappNumber.replace(/\D/g, "");
 
@@ -169,7 +165,7 @@ export function getWhatsappHref(
   }
 
   const text = encodeURIComponent(
-    `Hi ${settings.businessName}, I have a question about booking.`
+    `Hi ${settings.businessName}, I have a question about booking.`,
   );
   return `https://wa.me/${digits}?text=${text}`;
 }
@@ -196,7 +192,7 @@ export async function getWebsiteSettings(): Promise<WebsiteSettings> {
 }
 
 export async function updateWebsiteSettings(
-  input: UpdateWebsiteSettingsInput
+  input: UpdateWebsiteSettingsInput,
 ): Promise<UpdateWebsiteSettingsResult> {
   let settings: WebsiteSettings;
 
@@ -206,24 +202,24 @@ export async function updateWebsiteSettings(
     return {
       ok: false,
       message:
-        error instanceof Error ? error.message : "Settings could not be saved."
+        error instanceof Error ? error.message : "Settings could not be saved.",
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createSupabaseStaffClient();
   const { error } = await supabase.from("settings").upsert({
     id: true,
-    ...settingsToRow(settings)
+    ...settingsToRow(settings),
   });
 
   if (error) {
     return {
       ok: false,
-      message: error.message
+      message: error.message,
     };
   }
 
   return {
-    ok: true
+    ok: true,
   };
 }

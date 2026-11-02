@@ -1,31 +1,14 @@
-import { getRoomIcalFeed } from "@/lib/ical/export";
-
-export const dynamic = "force-dynamic";
-
-type RoomIcalRouteProps = {
-  params: Promise<{
-    roomId: string;
-  }>;
-};
-
-export async function GET(_request: Request, { params }: RoomIcalRouteProps) {
-  const { roomId } = await params;
-  const result = await getRoomIcalFeed(roomId);
-
-  if (!result.ok) {
-    return Response.json(
-      {
-        message: result.message
-      },
-      { status: result.status }
-    );
-  }
-
-  return new Response(result.body, {
-    headers: {
-      "cache-control": "no-store",
-      "content-disposition": `inline; filename="tifawave-${result.room.slug}.ics"`,
-      "content-type": "text/calendar; charset=utf-8"
-    }
-  });
-}
+// Retired public inventory endpoint. Manual request intake does not create
+// holds or expose internal reservation identifiers. Historical records remain.
+const retired = () =>
+  Response.json(
+    {
+      message:
+        "Submit a booking request. The owner verifies and confirms availability.",
+      reason: "manual_requests_only",
+    },
+    { status: 410, headers: { "cache-control": "no-store" } },
+  );
+export const GET = retired;
+export const POST = retired;
+export const DELETE = retired;

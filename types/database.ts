@@ -6,7 +6,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
-export type Database = {
+type LegacyDatabase = {
   public: {
     Tables: {
       rooms: {
@@ -480,8 +480,48 @@ export type Database = {
         | "confirmed"
         | "cancelled"
         | "completed"
-        | "no_show";
+        | "no_show"
+        | "declined";
     };
     CompositeTypes: Record<string, never>;
+  };
+};
+
+import type {
+  OperationTables,
+  OperationFunctions,
+  BookingOperations,
+} from "./operations";
+type LegacyTables = LegacyDatabase["public"]["Tables"];
+export type Database = {
+  public: Omit<LegacyDatabase["public"], "Tables" | "Functions"> & {
+    Tables: Omit<LegacyTables, "bookings" | "blocked_dates"> &
+      OperationTables & {
+        bookings: Omit<
+          LegacyTables["bookings"],
+          "Row" | "Insert" | "Update"
+        > & {
+          Row: LegacyTables["bookings"]["Row"] & BookingOperations;
+          Insert: LegacyTables["bookings"]["Insert"] &
+            Partial<BookingOperations>;
+          Update: LegacyTables["bookings"]["Update"] &
+            Partial<BookingOperations>;
+        };
+        blocked_dates: Omit<
+          LegacyTables["blocked_dates"],
+          "Row" | "Insert" | "Update"
+        > & {
+          Row: LegacyTables["blocked_dates"]["Row"] & {
+            reconciled_at: string | null;
+          };
+          Insert: LegacyTables["blocked_dates"]["Insert"] & {
+            reconciled_at?: string | null;
+          };
+          Update: LegacyTables["blocked_dates"]["Update"] & {
+            reconciled_at?: string | null;
+          };
+        };
+      };
+    Functions: OperationFunctions;
   };
 };

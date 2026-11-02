@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/admin/auth";
 import {
   getAdminReviews,
-  getGoogleReviewsReadiness
+  getGoogleReviewsReadiness,
 } from "@/lib/admin/reviews";
 import { AdminShell } from "../_components/admin-shell";
 import { syncGoogleReviewsAction } from "./actions";
@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Reviews | Tifawave Admin",
-  description: "Protected Google reviews sync and review visibility overview."
+  description: "Protected Google reviews sync and review visibility overview.",
 };
 
 type AdminReviewsPageProps = {
@@ -26,7 +26,7 @@ function getMessage(params: Awaited<AdminReviewsPageProps["searchParams"]>) {
   if (params?.error) {
     return {
       tone: "error",
-      text: params.error
+      text: params.error,
     };
   }
 
@@ -36,7 +36,7 @@ function getMessage(params: Awaited<AdminReviewsPageProps["searchParams"]>) {
 
     return {
       tone: "success",
-      text: `${params.synced} Google reviews synced.${skippedText}`
+      text: `${params.synced} Google reviews synced.${skippedText}`,
     };
   }
 
@@ -47,7 +47,7 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat("en", {
     day: "numeric",
     month: "short",
-    year: "numeric"
+    year: "numeric",
   }).format(new Date(value));
 }
 
@@ -56,14 +56,14 @@ function statusText(value: boolean) {
 }
 
 export default async function AdminReviewsPage({
-  searchParams
+  searchParams,
 }: AdminReviewsPageProps) {
-  await requireAdmin();
+  await requireAdmin("owner");
 
   const [params, reviews, readiness] = await Promise.all([
     searchParams,
     getAdminReviews(),
-    getGoogleReviewsReadiness()
+    getGoogleReviewsReadiness(),
   ]);
   const message = getMessage(params);
 
@@ -74,7 +74,10 @@ export default async function AdminReviewsPage({
       description="Sync official Google Business Profile reviews and keep public review display honest."
       title="Reviews"
     >
-      <section className="admin-panel-section" aria-labelledby="review-sync-title">
+      <section
+        className="admin-panel-section"
+        aria-labelledby="review-sync-title"
+      >
         <div className="admin-section-heading">
           <div>
             <h2 id="review-sync-title">Google reviews sync</h2>
@@ -84,7 +87,9 @@ export default async function AdminReviewsPage({
             </p>
           </div>
           {message ? (
-            <p className={`admin-form-message admin-form-message-${message.tone}`}>
+            <p
+              className={`admin-form-message admin-form-message-${message.tone}`}
+            >
               {message.text}
             </p>
           ) : null}
@@ -129,7 +134,10 @@ export default async function AdminReviewsPage({
         </div>
       </section>
 
-      <section className="admin-panel-section" aria-labelledby="reviews-list-title">
+      <section
+        className="admin-panel-section"
+        aria-labelledby="reviews-list-title"
+      >
         <div className="admin-section-heading">
           <div>
             <h2 id="reviews-list-title">Synced reviews</h2>

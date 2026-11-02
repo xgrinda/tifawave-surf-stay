@@ -1,0 +1,45 @@
+name: Admin safety checks
+on:
+  pull_request:
+  push:
+    branches: [dev/hostel-admin]
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TIFAWAVE_TEST_POSTGRES_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run test:db
+      - run: npm audit --omit=dev
+      - run: npm run build
+      - name: Unconfigured local HTTP safety checks
+        run: |
+          mkdir -p work
+          npm run start -- --hostname 127.0.0.1 --port 3217 > work/http.log 2>&1 &
+          http_process=$!
+          trap 'kill "$http_process" || true' EXIT
+          for attempt in $(seq 1 30); do
+            curl --silent --fail http://127.0.0.1:3217/admin/login > /dev/null && break
+            sleep 1
+          done
+          npm run test:http

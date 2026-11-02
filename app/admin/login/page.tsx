@@ -1,73 +1,79 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { isAdminAuthenticated } from "@/lib/admin/auth";
+import { assertDatabaseTarget } from "@/lib/security/environment";
 import { loginAdminAction } from "./actions";
-
 export const metadata: Metadata = {
-  title: "Admin Login | Tifawave Surf Stay",
-  description: "Protected Tifawave admin login."
+  title: "Staff sign in | Tifawave",
+  robots: { index: false, follow: false },
 };
-
 export const dynamic = "force-dynamic";
-
-type AdminLoginPageProps = {
-  searchParams?: Promise<{
-    error?: string;
-  }>;
-};
-
-export default async function AdminLoginPage({
-  searchParams
-}: AdminLoginPageProps) {
-  if (await isAdminAuthenticated()) {
-    redirect("/admin");
+export default async function Login({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  let configured = true;
+  try {
+    assertDatabaseTarget();
+  } catch {
+    configured = false;
   }
-
-  const params = await searchParams;
-  const hasError = params?.error === "1";
-
+  if (configured && (await isAdminAuthenticated())) redirect("/admin");
+  const error = (await searchParams).error;
   return (
     <main className="admin-page admin-login-page">
-      <section className="admin-login-panel" aria-labelledby="admin-login-title">
-        <div className="admin-login-brand">
-          <span aria-hidden="true">T</span>
-          <div>
-            <p className="eyebrow">Tifawave admin</p>
-            <h1 id="admin-login-title">Sign in.</h1>
-          </div>
-        </div>
-        <p>Protected booking, content, and availability operations for the Tifawave team.</p>
-
-        <form className="admin-login-form" action={loginAdminAction}>
-          <label className="admin-field" htmlFor="admin-password">
-            <span>Password</span>
-            <input
-              aria-describedby={hasError ? "admin-login-error" : undefined}
-              aria-invalid={hasError}
-              autoComplete="current-password"
-              id="admin-password"
-              name="password"
-              required
-              type="password"
-            />
-          </label>
-
-          {hasError ? (
-            <p className="admin-error" id="admin-login-error">
-              Password did not match.
+      <section className="admin-login-panel">
+        <p className="eyebrow">Tifawave staff</p>
+        <h1>Sign in.</h1>
+        {configured ? (
+          <>
+            <p>
+              Use your individual staff account. Owner decisions require a
+              second authentication factor.
             </p>
-          ) : null}
-
-          <button className="btn btn-primary" type="submit">
-            Sign in
-          </button>
-        </form>
-
-        <div className="admin-login-meta" aria-label="Admin workspace notes">
-          <span>Manual confirmations</span>
-          <span>Room inventory</span>
-          <span>Guest requests</span>
-        </div>
+            <form className="admin-login-form" action={loginAdminAction}>
+              <label className="admin-field">
+                Email
+                <input
+                  name="email"
+                  type="email"
+                  autoComplete="username"
+                  required
+                  maxLength={254}
+                />
+              </label>
+              <label className="admin-field">
+                Password
+                <input
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  maxLength={256}
+                />
+              </label>
+              {error && (
+                <p className="admin-error" role="alert">
+                  Sign-in failed or this account has no active staff access.
+                </p>
+              )}
+              <button className="btn btn-primary">Sign in</button>
+            </form>
+          </>
+        ) : (
+          <div role="status">
+            <h2>Staff workspace needs configuration</h2>
+            <p>
+              Connect an isolated Supabase staging project and configure its
+              staff accounts before using this development build.
+            </p>
+            <p>
+              Operational access is disabled until the database target is
+              verified.
+            </p>
+          </div>
+        )}
       </section>
     </main>
   );

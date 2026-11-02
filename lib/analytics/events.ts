@@ -4,9 +4,7 @@ type AnalyticsEventName =
   | "booking_cta_click"
   | "availability_check"
   | "booking_hold_created"
-  | "pending_booking_created"
-  | "stripe_checkout_start"
-  | "stripe_payment_success_return";
+  | "pending_booking_created";
 
 type AnalyticsEventParams = {
   availability_status?: "available" | "unavailable" | "error";
@@ -18,7 +16,6 @@ type AnalyticsEventParams = {
   hold_duration_minutes?: number;
   link_text?: string;
   link_url?: string;
-  payment_status?: string;
   reason?: string;
   room_slug?: string;
   room_type?: string;
@@ -32,20 +29,22 @@ declare global {
     gtag?: (
       command: "config" | "event" | "consent" | "js",
       target: string | Date,
-      params?: Record<string, unknown>
+      params?: Record<string, unknown>,
     ) => void;
   }
 }
 
 function cleanEventParams(params: AnalyticsEventParams) {
   return Object.fromEntries(
-    Object.entries(params).filter(([, value]) => value !== undefined && value !== "")
+    Object.entries(params).filter(
+      ([, value]) => value !== undefined && value !== "",
+    ),
   );
 }
 
 export function trackEvent(
   eventName: AnalyticsEventName,
-  params: AnalyticsEventParams = {}
+  params: AnalyticsEventParams = {},
 ) {
   if (typeof window === "undefined" || typeof window.gtag !== "function") {
     return;
@@ -53,7 +52,7 @@ export function trackEvent(
 
   window.gtag("event", eventName, {
     ...cleanEventParams(params),
-    transport_type: "beacon"
+    transport_type: "beacon",
   });
 }
 
@@ -65,7 +64,7 @@ export function trackBookingCtaClick(params: {
   trackEvent("booking_cta_click", {
     link_text: params.linkText,
     link_url: params.linkUrl,
-    source_path: params.sourcePath
+    source_path: params.sourcePath,
   });
 }
 
@@ -81,7 +80,7 @@ export function trackAvailabilityCheck(params: {
     check_in: params.checkIn,
     check_out: params.checkOut,
     reason: params.reason ?? undefined,
-    room_slug: params.roomSlug
+    room_slug: params.roomSlug,
   });
 }
 
@@ -94,7 +93,7 @@ export function trackHoldCreated(params: {
     check_in: params.checkIn,
     check_out: params.checkOut,
     hold_duration_minutes: 12,
-    room_slug: params.roomSlug
+    room_slug: params.roomSlug,
   });
 }
 
@@ -104,21 +103,6 @@ export function trackPendingBookingCreated(params: {
 }) {
   trackEvent("pending_booking_created", {
     booking_status: params.bookingStatus,
-    room_slug: params.roomSlug
-  });
-}
-
-export function trackStripeCheckoutStart(params: { roomSlug?: string }) {
-  trackEvent("stripe_checkout_start", {
-    room_slug: params.roomSlug
-  });
-}
-
-export function trackStripePaymentSuccessReturn(params: { bookingId: string }) {
-  trackEvent("stripe_payment_success_return", {
-    payment_status: "success",
-    event_source: "payment_return",
-    // Avoid sending the booking ID itself to analytics; this only records that one exists.
-    booking_status: params.bookingId ? "confirmed" : undefined
+    room_slug: params.roomSlug,
   });
 }

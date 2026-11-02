@@ -1,4 +1,5 @@
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createSupabaseStaffClient } from "@/lib/supabase/staff";
+import { propertyToday } from "@/lib/booking/schema";
 
 export type AdminDashboardStats = {
   pendingBookings: number;
@@ -8,7 +9,7 @@ export type AdminDashboardStats = {
 };
 
 function todayDateInput(): string {
-  return new Date().toISOString().slice(0, 10);
+  return propertyToday();
 }
 
 function exactCount(count: number | null): number {
@@ -16,40 +17,38 @@ function exactCount(count: number | null): number {
 }
 
 export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createSupabaseStaffClient();
   const today = todayDateInput();
 
-  const [
-    pendingBookings,
-    confirmedUpcomingStays,
-    groupRequests,
-    blockedDates
-  ] = await Promise.all([
-    supabase
-      .from("bookings")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "pending"),
-    supabase
-      .from("bookings")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "confirmed")
-      .gte("check_in", today),
-    supabase
-      .from("bookings")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "pending")
-      .eq("booking_type", "group_request"),
-    supabase
-      .from("blocked_dates")
-      .select("id", { count: "exact", head: true })
-      .gte("end_date", today)
-  ]);
+  const [pendingBookings, confirmedUpcomingStays, groupRequests, blockedDates] =
+    await Promise.all([
+      supabase
+        .from("bookings")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending"),
+      supabase
+        .from("bookings")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "confirmed")
+        .gte("check_in", today),
+      supabase
+        .from("bookings")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending")
+        .eq("booking_type", "group_request"),
+      supabase
+        .from("reservation_allocations")
+        .select("id", { count: "exact", head: true })
+        .is("booking_id", null)
+        .eq("active", true)
+        .gte("check_out", today),
+    ]);
 
   for (const result of [
     pendingBookings,
     confirmedUpcomingStays,
     groupRequests,
-    blockedDates
+    blockedDates,
   ]) {
     if (result.error) {
       throw new Error(result.error.message);
@@ -60,6 +59,6 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
     pendingBookings: exactCount(pendingBookings.count),
     confirmedUpcomingStays: exactCount(confirmedUpcomingStays.count),
     groupRequests: exactCount(groupRequests.count),
-    blockedDates: exactCount(blockedDates.count)
+    blockedDates: exactCount(blockedDates.count),
   };
 }

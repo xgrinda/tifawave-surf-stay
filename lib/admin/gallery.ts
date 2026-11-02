@@ -1,5 +1,8 @@
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { normalizeFocalPosition, type FocalPosition } from "@/lib/image-position";
+import { createSupabaseStaffClient } from "@/lib/supabase/staff";
+import {
+  normalizeFocalPosition,
+  type FocalPosition,
+} from "@/lib/image-position";
 
 type AdminGalleryResult =
   | {
@@ -103,12 +106,12 @@ function normalizeGalleryImageInput(input: UpsertAdminGalleryImageInput) {
     focalPosition,
     imageUrl,
     isActive: input.isActive,
-    sortOrder
+    sortOrder,
   };
 }
 
 function galleryImagePayload(
-  input: ReturnType<typeof normalizeGalleryImageInput>
+  input: ReturnType<typeof normalizeGalleryImageInput>,
 ) {
   return {
     alt_text: input.altText,
@@ -118,7 +121,7 @@ function galleryImagePayload(
     image_url: input.imageUrl,
     is_active: input.isActive,
     sort_order: input.sortOrder,
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
   };
 }
 
@@ -131,11 +134,11 @@ function publicErrorMessage(error: unknown): string {
 }
 
 export async function getAdminGalleryImages(): Promise<AdminGalleryImage[]> {
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createSupabaseStaffClient();
   const { data, error } = await supabase
     .from("gallery_images")
     .select(
-      "id, image_url, caption, alt_text, category, focal_position, sort_order, is_active, updated_at"
+      "id, image_url, caption, alt_text, category, focal_position, sort_order, is_active, updated_at",
     )
     .order("is_active", { ascending: false })
     .order("category", { ascending: true })
@@ -155,12 +158,12 @@ export async function getAdminGalleryImages(): Promise<AdminGalleryImage[]> {
     focalPosition: normalizeFocalPosition(image.focal_position),
     sortOrder: image.sort_order,
     isActive: image.is_active,
-    updatedAt: image.updated_at
+    updatedAt: image.updated_at,
   }));
 }
 
 export async function createAdminGalleryImage(
-  input: UpsertAdminGalleryImageInput
+  input: UpsertAdminGalleryImageInput,
 ): Promise<AdminGalleryResult> {
   let normalized: ReturnType<typeof normalizeGalleryImageInput>;
 
@@ -169,11 +172,11 @@ export async function createAdminGalleryImage(
   } catch (error) {
     return {
       ok: false,
-      message: publicErrorMessage(error)
+      message: publicErrorMessage(error),
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createSupabaseStaffClient();
   const { error } = await supabase
     .from("gallery_images")
     .insert(galleryImagePayload(normalized));
@@ -181,22 +184,22 @@ export async function createAdminGalleryImage(
   if (error) {
     return {
       ok: false,
-      message: error.message
+      message: error.message,
     };
   }
 
   return {
-    ok: true
+    ok: true,
   };
 }
 
 export async function updateAdminGalleryImage(
-  input: UpsertAdminGalleryImageInput
+  input: UpsertAdminGalleryImageInput,
 ): Promise<AdminGalleryResult> {
   if (!input.id) {
     return {
       ok: false,
-      message: "imageId is required."
+      message: "imageId is required.",
     };
   }
 
@@ -207,11 +210,11 @@ export async function updateAdminGalleryImage(
   } catch (error) {
     return {
       ok: false,
-      message: publicErrorMessage(error)
+      message: publicErrorMessage(error),
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createSupabaseStaffClient();
   const { error } = await supabase
     .from("gallery_images")
     .update(galleryImagePayload(normalized))
@@ -220,72 +223,72 @@ export async function updateAdminGalleryImage(
   if (error) {
     return {
       ok: false,
-      message: error.message
+      message: error.message,
     };
   }
 
   return {
-    ok: true
+    ok: true,
   };
 }
 
 export async function setAdminGalleryImageActive(
   imageId: string,
-  isActive: boolean
+  isActive: boolean,
 ): Promise<AdminGalleryResult> {
   const id = imageId.trim();
 
   if (!id) {
     return {
       ok: false,
-      message: "imageId is required."
+      message: "imageId is required.",
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createSupabaseStaffClient();
   const { error } = await supabase
     .from("gallery_images")
     .update({
       is_active: isActive,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     })
     .eq("id", id);
 
   if (error) {
     return {
       ok: false,
-      message: error.message
+      message: error.message,
     };
   }
 
   return {
-    ok: true
+    ok: true,
   };
 }
 
 export async function removeAdminGalleryImage(
-  imageId: string
+  imageId: string,
 ): Promise<AdminGalleryResult> {
   const id = imageId.trim();
 
   if (!id) {
     return {
       ok: false,
-      message: "imageId is required."
+      message: "imageId is required.",
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createSupabaseStaffClient();
   const { error } = await supabase.from("gallery_images").delete().eq("id", id);
 
   if (error) {
     return {
       ok: false,
-      message: error.message
+      message: error.message,
     };
   }
 
   return {
-    ok: true
+    ok: true,
   };
 }
