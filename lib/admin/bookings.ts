@@ -17,6 +17,9 @@ export async function getAdminBookings(
     source?: string;
     page?: string;
     sort?: string;
+    arrival?: string;
+    departure?: string;
+    type?: string;
   } = {},
 ) {
   const client = await createSupabaseStaffClient();
@@ -28,6 +31,23 @@ export async function getAdminBookings(
   let query = client.from("bookings").select(fields, { count: "exact" });
   const status = bookingStatuses.find((x) => x === params.status);
   if (status) query = query.eq("status", status);
+  for (const [key, column] of [
+    ["arrival", "check_in"],
+    ["departure", "check_out"],
+  ] as const) {
+    const value = params[key];
+    if (
+      value &&
+      /^\d{4}-\d{2}-\d{2}$/.test(value) &&
+      Number.isFinite(Date.parse(value)) &&
+      new Date(value).toISOString().slice(0, 10) === value
+    )
+      query = query.eq(column, value);
+  }
+  if (
+    ["stay_only", "surf_package", "group_request"].includes(params.type || "")
+  )
+    query = query.eq("booking_type", params.type as "stay_only");
   if (
     [
       "website",
@@ -93,7 +113,9 @@ export async function getReservation(id: string) {
       .eq("active", true),
     client
       .from("email_outbox")
-      .select("id,event,status,attempts,last_error,created_at,sent_at,needs_review")
+      .select(
+        "id,event,status,attempts,last_error,created_at,sent_at,needs_review",
+      )
       .eq("booking_id", id)
       .order("created_at", { ascending: false }),
   ]);

@@ -144,6 +144,13 @@ before(async () => {
     ),
   );
 });
+test("operations workspace rejects unauthorized roles and returns complete calendar inventory",async()=>{
+ for(const role of ["anon","service","housekeeping","content_editor","stranger"] as const)await rejectsCode(as(role,c=>c.query("select public.operations_workspace('2099-01-01','2099-02-01')")),"42501");
+ const result=await as("owner",c=>c.query("select public.operations_workspace('2099-01-01','2099-02-01') value"));
+ const data=result.rows[0].value;assert.equal(data.units.length,12);assert.equal(data.units.filter((u:{kind:string})=>u.kind==="dorm_bed").length,4);
+ assert.equal(data.occupancy.reduce((n:number,x:{total:number})=>n+x.total,0),12);
+ await rejectsCode(as("reception",c=>c.query("select public.operations_workspace('2099-01-01','2099-04-01')")),"22023");
+});
 after(async () => root.end());
 
 test("all nine physical rooms and four independent dorm beds can be allocated for a 23-person group", async()=>{

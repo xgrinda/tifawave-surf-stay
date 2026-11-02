@@ -135,6 +135,10 @@ export type OperationTables = {
   }>;
 };
 export type OperationFunctions = {
+  operations_workspace: {
+    Args: { p_start: string; p_end: string };
+    Returns: Json;
+  };
   email_scheduler_health: { Args: Record<string, never>; Returns: Json };
   prepare_booking_email: {
     Args: { p_id: string; p_lease_token: string; p_delivery: Json };

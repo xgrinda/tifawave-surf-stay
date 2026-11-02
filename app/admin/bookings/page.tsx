@@ -13,6 +13,9 @@ export default async function Bookings({
     source?: string;
     page?: string;
     sort?: string;
+    arrival?: string;
+    departure?: string;
+    type?: string;
   }>;
 }) {
   await requireAdmin("reservations");
@@ -79,7 +82,25 @@ export default async function Bookings({
             <option value="guest_name">Guest name</option>
           </select>
         </label>
+        <label>
+          Request type
+          <select name="type" defaultValue={params.type || ""}>
+            <option value="">All request types</option>
+            <option value="stay_only">Stay</option>
+            <option value="surf_package">Surf package</option>
+            <option value="group_request">Group / retreat</option>
+          </select>
+        </label>
+        <label>
+          Arrival on
+          <input type="date" name="arrival" defaultValue={params.arrival} />
+        </label>
+        <label>
+          Departure on
+          <input type="date" name="departure" defaultValue={params.departure} />
+        </label>
         <button className="btn btn-secondary">Apply</button>
+        <Link href="/admin/bookings">Clear filters</Link>
       </form>
       <div className="admin-bookings-table-wrap">
         <table className="admin-bookings-table">

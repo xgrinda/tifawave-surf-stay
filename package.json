@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "tsx --test tests/security.test.ts tests/email.test.ts",
+    "test": "tsx --test tests/security.test.ts tests/email.test.ts tests/workspace.test.ts",
     "test:db": "node scripts/test-database.mjs --fresh && node scripts/test-database.mjs",
     "test:http": "tsx --test tests/http.test.ts"
   },

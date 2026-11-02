@@ -1,159 +1,223 @@
 import { requireStaff } from "@/lib/admin/auth";
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { propertyToday } from "@/lib/booking/schema";
 import { logoutAdminAction } from "../login/actions";
-
-type AdminNavKey =
+export type AdminNavKey =
   | "dashboard"
   | "bookings"
+  | "calendar"
   | "rooms"
   | "packages"
   | "reviews"
   | "gallery"
   | "blocked-dates"
-  | "settings";
-
-type AdminShellProps = {
-  active: AdminNavKey;
-  children: ReactNode;
-  className?: string;
-  description: string;
-  title: string;
-};
-
-const adminNavItems: Array<{
-  description: string;
-  href: string;
-  key: AdminNavKey;
-  label: string;
-}> = [
+  | "settings"
+  | "search"
+  | "notifications"
+  | "guests"
+  | "groups"
+  | "partners"
+  | "housekeeping"
+  | "content"
+  | "reports"
+  | "staff";
+const navigation: {
+  group: string;
+  items: { key: AdminNavKey; label: string; href: string; roles: string[] }[];
+}[] = [
   {
-    description: "Daily overview",
-    href: "/admin",
-    key: "dashboard",
-    label: "Dashboard",
+    group: "Daily operations",
+    items: [
+      {
+        key: "dashboard",
+        label: "Operations desk",
+        href: "/admin",
+        roles: ["owner", "reception"],
+      },
+      {
+        key: "bookings",
+        label: "Reservations",
+        href: "/admin/bookings",
+        roles: ["owner", "reception"],
+      },
+      {
+        key: "calendar",
+        label: "Room & bed calendar",
+        href: "/admin/calendar",
+        roles: ["owner", "reception"],
+      },
+      {
+        key: "blocked-dates",
+        label: "Inventory blocks",
+        href: "/admin/blocked-dates",
+        roles: ["owner", "reception"],
+      },
+    ],
   },
   {
-    description: "Requests and stays",
-    href: "/admin/bookings",
-    key: "bookings",
-    label: "Bookings",
+    group: "Property & website",
+    items: [
+      {
+        key: "rooms",
+        label: "Rooms & inventory",
+        href: "/admin/rooms",
+        roles: ["owner", "content_editor"],
+      },
+      {
+        key: "packages",
+        label: "Surf packages",
+        href: "/admin/packages",
+        roles: ["owner", "content_editor"],
+      },
+      {
+        key: "gallery",
+        label: "Media library",
+        href: "/admin/gallery",
+        roles: ["owner", "content_editor"],
+      },
+      {
+        key: "reviews",
+        label: "Reviews",
+        href: "/admin/reviews",
+        roles: ["owner"],
+      },
+    ],
   },
   {
-    description: "Inventory and photos",
-    href: "/admin/rooms",
-    key: "rooms",
-    label: "Rooms",
-  },
-  {
-    description: "Surf offers",
-    href: "/admin/packages",
-    key: "packages",
-    label: "Packages",
-  },
-  {
-    description: "Google sync",
-    href: "/admin/reviews",
-    key: "reviews",
-    label: "Reviews",
-  },
-  {
-    description: "Public image library",
-    href: "/admin/gallery",
-    key: "gallery",
-    label: "Gallery",
-  },
-  {
-    description: "Rooms, beds and closures",
-    href: "/admin/blocked-dates",
-    key: "blocked-dates",
-    label: "Blocked dates",
-  },
-  {
-    description: "Contact and copy",
-    href: "/admin/settings",
-    key: "settings",
-    label: "Settings",
+    group: "Management",
+    items: [
+      {
+        key: "notifications",
+        label: "Notifications",
+        href: "/admin/notifications",
+        roles: ["owner", "reception"],
+      },
+      {
+        key: "settings",
+        label: "Settings",
+        href: "/admin/settings",
+        roles: ["owner"],
+      },
+    ],
   },
 ];
-
 export async function AdminShell({
   active,
   children,
   className,
   description,
   title,
-}: AdminShellProps) {
-  const pageTitleId = "admin-page-title";
+}: {
+  active: AdminNavKey;
+  children: ReactNode;
+  className?: string;
+  description: string;
+  title: string;
+}) {
   const staff = await requireStaff();
-  const permittedNav = adminNavItems.filter(
-    (item) =>
-      staff.role === "owner" ||
-      (staff.role === "reception" &&
-        ["dashboard", "bookings", "blocked-dates"].includes(item.key)) ||
-      (staff.role === "content_editor" &&
-        ["rooms", "packages", "gallery"].includes(item.key)),
+  const links = (
+    <>
+      {navigation.map((group) => {
+        const items = group.items.filter((i) => i.roles.includes(staff.role));
+        return (
+          items.length > 0 && (
+            <div className="desk-nav-group" key={group.group}>
+              <p>{group.group}</p>
+              {items.map((item) => (
+                <Link
+                  aria-current={item.key === active ? "page" : undefined}
+                  className="admin-sidebar-link"
+                  href={item.href}
+                  key={item.key}
+                >
+                  <span>{item.label}</span>
+                </Link>
+              ))}
+            </div>
+          )
+        );
+      })}
+    </>
   );
-
   return (
-    <main className={`admin-page${className ? ` ${className}` : ""}`}>
+    <main className={`admin-page operations-desk ${className || ""}`}>
+      <a className="desk-skip" href="#desk-content">
+        Skip to workspace
+      </a>
       <div className="admin-app-frame">
         <aside className="admin-sidebar" aria-label="Admin navigation">
           <Link className="admin-sidebar-brand" href="/admin">
             <span aria-hidden="true">T</span>
             <div>
               <strong>Tifawave</strong>
-              <small>Surf Stay admin</small>
+              <small>SURF STAY · OPERATIONS</small>
             </div>
           </Link>
-
-          <nav className="admin-sidebar-nav">
-            {permittedNav.map((item) => (
-              <Link
-                aria-current={item.key === active ? "page" : undefined}
-                className="admin-sidebar-link"
-                href={item.href}
-                key={item.key}
-              >
-                <span>{item.label}</span>
-                <small>{item.description}</small>
-              </Link>
-            ))}
-          </nav>
-
+          <nav className="desk-desktop-nav">{links}</nav>
+          <details className="desk-mobile-nav">
+            <summary>Workspace menu</summary>
+            <nav>{links}</nav>
+          </details>
           <div className="admin-sidebar-footer">
-            <Link className="admin-sidebar-public-link" href="/">
-              View public site
-            </Link>
+            <Link href="/">View public website ↗</Link>
             <form action={logoutAdminAction}>
-              <button className="admin-sidebar-signout" type="submit">
-                Sign out
-              </button>
+              <button className="admin-sidebar-signout">Sign out</button>
             </form>
           </div>
         </aside>
-
-        <section
-          className="admin-bookings-shell admin-shell admin-main-panel"
-          aria-labelledby={pageTitleId}
-        >
-          <header className="admin-bookings-header admin-shell-header admin-topbar">
-            <div className="admin-shell-heading">
-              <p className="eyebrow">Tifawave operations</p>
-              <h1 id={pageTitleId}>{title}</h1>
+        <section className="admin-main-panel">
+          <div className="desk-utility-bar">
+            <form action="/admin/search" role="search">
+              <label className="sr-only" htmlFor="desk-search">
+                Search workspace
+              </label>
+              <input
+                id="desk-search"
+                name="q"
+                placeholder="Search your workspace…"
+                maxLength={80}
+              />
+              <button aria-label="Search workspace">Search</button>
+            </form>
+            <div>
+              <span className="desk-environment">
+                {process.env.TIFAWAVE_ENV || "Unconfigured"}
+              </span>
+              <time dateTime={propertyToday()}>
+                {new Date(propertyToday() + "T12:00:00Z").toLocaleDateString(
+                  "en-GB",
+                  {
+                    weekday: "short",
+                    day: "numeric",
+                    month: "short",
+                    timeZone: "Africa/Casablanca",
+                  },
+                )}
+              </time>
+              <span className="desk-identity">
+                {staff.display_name}
+                <small>{staff.role.replaceAll("_", " ")}</small>
+              </span>
+            </div>
+          </div>
+          <header className="desk-page-header">
+            <div>
+              <p className="eyebrow">
+                Tifawave / {active.replaceAll("-", " ")}
+              </p>
+              <h1>{title}</h1>
               <p>{description}</p>
             </div>
-            <div className="admin-topbar-status" aria-label="Workspace status">
-              <span>
-                {staff.display_name} · {staff.role.replaceAll("_", " ")}
-              </span>
-              <strong>
-                Owner approval · {process.env.TIFAWAVE_ENV || "not configured"}
-              </strong>
-            </div>
+            {["owner", "reception"].includes(staff.role) && (
+              <Link className="desk-header-link" href="/admin/notifications">
+                Request alerts →
+              </Link>
+            )}
           </header>
-
-          <div className="admin-content">{children}</div>
+          <div id="desk-content" className="admin-content" tabIndex={-1}>
+            {children}
+          </div>
         </section>
       </div>
     </main>
