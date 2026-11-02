@@ -1,3 +1,6 @@
+import { publishedContent } from "@/lib/content/public";
+import { ContentBody } from "@/components/content/content-body";
+import { Container } from "@/components/primitives/container";
 import type { Metadata } from "next";
 import { DayTimeline } from "@/components/home/day-timeline";
 import { FinalCta } from "@/components/home/final-cta";
@@ -12,12 +15,12 @@ import {
   getPlaceFallbackHomeImage,
   getPackageHomeImages,
   getPrimaryRoomHomeImage,
-  getTaggedGalleryHomeImage
+  getTaggedGalleryHomeImage,
 } from "@/lib/home-media";
 import { getActiveRooms } from "@/lib/rooms";
 import { getSiteUrl } from "@/lib/site";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Tifawave Surf Stay | Séjour surf à Tamraght",
   description:
     "Séjournez, surfez et ralentissez à Tamraght avec les chambres, séjours surf et réservations directes de Tifawave.",
@@ -25,29 +28,45 @@ export const metadata: Metadata = {
     canonical: `${getSiteUrl()}/fr`,
     languages: {
       en: getSiteUrl(),
-      fr: `${getSiteUrl()}/fr`
-    }
-  }
+      fr: `${getSiteUrl()}/fr`,
+    },
+  },
 };
 
+export async function generateMetadata(): Promise<Metadata> {
+  const c = await publishedContent("page", "home", "fr");
+  return {
+    ...baseMetadata,
+    ...(c?.seoTitle ? { title: c.seoTitle } : {}),
+    ...(c?.seoDescription ? { description: c.seoDescription } : {}),
+  };
+}
+
 export default async function FrenchHome() {
+  const content = await publishedContent("page", "home", "fr");
   const [rooms, galleryImages] = await Promise.all([
     getActiveRooms(),
-    getActiveGalleryImages()
+    getActiveGalleryImages(),
   ]);
   const stayImage = getPrimaryRoomHomeImage(rooms);
-  const placeImage = getTaggedGalleryHomeImage(galleryImages, [
-    "tamraght",
-    "place",
-    "sunset",
-    "view"
-  ]) ?? getPlaceFallbackHomeImage();
+  const placeImage =
+    getTaggedGalleryHomeImage(galleryImages, [
+      "tamraght",
+      "place",
+      "sunset",
+      "view",
+    ]) ?? getPlaceFallbackHomeImage();
   const packageImages = getPackageHomeImages(galleryImages);
 
   return (
     <main>
       <HeroSection locale="fr" />
       <TrustStrip locale="fr" />
+      {content && (
+        <Container>
+          <ContentBody content={content} />
+        </Container>
+      )}
       <PackagesPreview images={packageImages} locale="fr" />
       <StayPreview image={stayImage} locale="fr" />
       <DayTimeline locale="fr" />

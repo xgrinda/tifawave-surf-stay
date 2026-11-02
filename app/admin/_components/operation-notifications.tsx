@@ -30,7 +30,13 @@ export async function OperationNotifications() {
         <ul className="ops-notifications">
           {unread.map((n) => (
             <li key={n.id}>
-              <Link href={"/admin/bookings/" + n.booking_id}>
+              <Link
+                href={
+                  n.booking_id
+                    ? "/admin/bookings/" + n.booking_id
+                    : "/admin/enquiries/" + n.enquiry_id
+                }
+              >
                 {n.event.replaceAll("_", " ")} ·{" "}
                 {new Date(n.created_at).toLocaleString("en-GB", {
                   timeZone: "Africa/Casablanca",

@@ -1,5 +1,5 @@
+import { getWebsiteSettings } from "@/lib/settings";
 import { unstable_noStore as noStore } from "next/cache";
-import { homePackages } from "@/data/home-packages";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Row } from "@/lib/supabase/types";
 
@@ -21,18 +21,12 @@ export type PublicSurfPackage = {
 
 const packageTones: PackageTone[] = ["ocean", "sunset", "clay"];
 
-const currencyFormatter = new Intl.NumberFormat("en-US", {
-  currency: "USD",
-  maximumFractionDigits: 0,
-  style: "currency"
-});
-
-function formatPrice(cents: number): string {
-  if (cents <= 0) {
-    return "Ask";
-  }
-
-  return currencyFormatter.format(cents / 100);
+function formatPrice(cents: number, currency: string): string {
+  return cents > 0
+    ? new Intl.NumberFormat("en-GB", { style: "currency", currency }).format(
+        cents / 100,
+      )
+    : "Ask us";
 }
 
 function rowToPackage(
@@ -48,7 +42,8 @@ function rowToPackage(
     | "surf_level"
     | "inclusions"
   >,
-  index: number
+  index: number,
+  currency: string,
 ): PublicSurfPackage {
   return {
     id: row.id,
@@ -56,29 +51,13 @@ function rowToPackage(
     name: row.name,
     shortDescription: row.short_description,
     fullDescription: row.full_description,
-    priceLabel: formatPrice(row.price_cents),
+    priceLabel: formatPrice(row.price_cents, currency),
     unitLabel: row.duration || "package",
     surfLevel: row.surf_level,
     inclusions: row.inclusions,
-    featured: index === 1,
-    tone: packageTones[index % packageTones.length]
+    featured: false,
+    tone: packageTones[index % packageTones.length],
   };
-}
-
-function staticPackageFallback(): PublicSurfPackage[] {
-  return homePackages.map((pkg) => ({
-    id: `static-${pkg.name}`,
-    slug: pkg.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, ""),
-    name: pkg.name,
-    shortDescription: pkg.bestFor,
-    fullDescription: pkg.bestFor,
-    priceLabel: pkg.price,
-    unitLabel: pkg.unit,
-    surfLevel: "All levels",
-    inclusions: [...pkg.inclusions],
-    featured: pkg.featured,
-    tone: pkg.tone
-  }));
 }
 
 export async function getActiveSurfPackages(): Promise<PublicSurfPackage[]> {
@@ -89,24 +68,27 @@ export async function getActiveSurfPackages(): Promise<PublicSurfPackage[]> {
     const { data, error } = await supabase
       .from("packages")
       .select(
-        "id, slug, name, short_description, full_description, price_cents, duration, surf_level, inclusions"
+        "id, slug, name, short_description, full_description, price_cents, duration, surf_level, inclusions",
       )
       .eq("is_active", true)
       .order("display_order", { ascending: true })
       .order("name", { ascending: true });
 
     if (error) {
-      return staticPackageFallback();
+      return [];
     }
 
-    return data.map(rowToPackage);
+    const settings = await getWebsiteSettings();
+    return data.map((row, index) =>
+      rowToPackage(row, index, settings.defaultCurrency),
+    );
   } catch {
-    return staticPackageFallback();
+    return [];
   }
 }
 
 export async function getActiveSurfPackageBySlug(
-  slug: string
+  slug: string,
 ): Promise<PublicSurfPackage | null> {
   const normalizedSlug = slug.trim().toLowerCase();
 

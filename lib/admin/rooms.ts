@@ -1,3 +1,4 @@
+import { isPublicImageUrl } from "@/lib/image-url";
 import { createSupabaseStaffClient } from "@/lib/supabase/staff";
 import {
   normalizeFocalPosition,
@@ -135,8 +136,10 @@ function normalizeImageUrl(value: string): string {
   const normalized = value.trim();
   const url = new URL(normalized);
 
-  if (!["http:", "https:"].includes(url.protocol)) {
-    throw new Error("Image URL must start with http:// or https://.");
+  if (!isPublicImageUrl(url.toString())) {
+    throw new Error(
+      "Use an HTTPS image from the media library or an already supported image host.",
+    );
   }
 
   if (url.toString().length > 2000) {

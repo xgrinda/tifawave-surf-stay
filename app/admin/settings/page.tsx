@@ -1,3 +1,4 @@
+import { OperationalSettings } from "./operations";
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/admin/auth";
 import { getWebsiteSettings } from "@/lib/settings";
@@ -54,6 +55,7 @@ export default async function AdminSettingsPage({
       description="Manage public contact details and booking support copy."
       title="Settings"
     >
+      <OperationalSettings />
       <section
         className="admin-panel-section"
         aria-labelledby="website-settings-title"

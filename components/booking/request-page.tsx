@@ -1,3 +1,4 @@
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { Container } from "@/components/primitives/container";
 import { RequestForm } from "./request-form";
 import { getActiveRooms } from "@/lib/rooms";
@@ -5,6 +6,7 @@ import { getActiveSurfPackages } from "@/lib/surf-packages";
 import { getWebsiteSettings, getWhatsappHref } from "@/lib/settings";
 import type { Locale } from "@/lib/i18n";
 export type RequestParams = {
+  type?: string;
   roomId?: string;
   packageId?: string;
   checkIn?: string;
@@ -23,6 +25,16 @@ export async function RequestPage({
     getActiveSurfPackages(),
     getWebsiteSettings(),
   ]);
+  let rules = { minimum_nights: 1, maximum_nights: 365, notice_days: 0 };
+  try {
+    const result = await createSupabaseServerClient()
+      .from("operations_settings")
+      .select("minimum_nights,maximum_nights,notice_days")
+      .single();
+    if (result.data && !result.error) rules = result.data;
+  } catch {
+    /* An unconfigured build keeps intake disabled at the API. */
+  }
   const fr = locale === "fr";
   return (
     <main className="booking-page">
@@ -43,6 +55,7 @@ export async function RequestPage({
           </p>
         </div>
         <RequestForm
+          rules={rules}
           locale={locale}
           initial={params}
           rooms={rooms}

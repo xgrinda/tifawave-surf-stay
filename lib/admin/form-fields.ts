@@ -36,7 +36,12 @@ const definitions: Record<WorkspaceEntity, string[]> = {
     "notes",
     "archived",
   ],
-  property_room_details: ["description_en", "description_fr", "amenities"],
+  property_room_details: [
+    "description_en",
+    "description_fr",
+    "amenities",
+    "is_published",
+  ],
   room_readiness: ["status", "room_notes"],
   season_rates: [
     "unit_id",
@@ -69,6 +74,7 @@ const labels: Record<string, string> = {
   phone: "Phone / WhatsApp",
   notes: "Internal notes",
   archived: "Archive this record",
+  is_published: "Publish verified room details on its linked listing",
   kind: "Type",
   contact_name: "Contact name",
   organization: "Organization",
@@ -174,7 +180,7 @@ export function entityFields(
     const type: EntityField["type"] =
       name === "package_id"
         ? "hidden"
-        : name === "archived"
+        : ["archived", "is_published"].includes(name)
           ? "checkbox"
           : opts
             ? "select"
@@ -188,7 +194,9 @@ export function entityFields(
                     ? "email"
                     : "text";
     const defaultValue = name === "sort_order" ? 0 : opts?.[0]?.value || "";
-    let value = v[name] ?? (name === "archived" ? false : defaultValue);
+    let value =
+      v[name] ??
+      (["archived", "is_published"].includes(name) ? false : defaultValue);
     if (name === "amenities" && Array.isArray(value)) value = value.join("\n");
     if (name.endsWith("_cents") && typeof value === "number")
       value = value / 100;

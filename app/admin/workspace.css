@@ -865,3 +865,94 @@
     font-size: 13px;
   }
 }
+
+.desk-editor {
+  display: grid;
+  gap: 18px;
+  max-width: 960px;
+}
+.desk-editor details,
+.desk-editor fieldset {
+  border: 1px solid #dce4df;
+  padding: 18px;
+  border-radius: 14px;
+}
+.desk-editor details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 4px 0;
+}
+.desk-actions {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 16px 0;
+}
+.desk-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+.desk-table-scroll {
+  max-width: 100%;
+  overflow: auto;
+}
+.desk-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+.desk-table th,
+.desk-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #e4e9e5;
+  vertical-align: top;
+}
+.desk-table th {
+  font-size: 0.78rem;
+  color: #597167;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.desk-table td {
+  overflow-wrap: anywhere;
+}
+.report-chart {
+  display: flex;
+  align-items: end;
+  height: 180px;
+  gap: 3px;
+  border-bottom: 1px solid #b8c9bf;
+  overflow: hidden;
+  margin: 24px 0;
+}
+.report-chart > div {
+  height: 100%;
+  flex: 1;
+  display: flex;
+  align-items: end;
+  gap: 1px;
+  min-width: 1px;
+}
+.report-chart span,
+.report-chart i {
+  display: block;
+  flex: 1;
+  background: #285c50;
+  min-width: 1px;
+}
+.report-chart i {
+  background: #d9a570;
+}
+@media (max-width: 640px) {
+  .desk-table th,
+  .desk-table td {
+    padding: 10px;
+  }
+  .desk-editor fieldset,
+  .desk-editor details {
+    padding: 12px;
+  }
+}

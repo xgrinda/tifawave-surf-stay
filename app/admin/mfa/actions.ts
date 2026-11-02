@@ -4,8 +4,7 @@ import { createSupabaseStaffClient } from "@/lib/supabase/staff";
 import { redirect } from "next/navigation";
 export type MfaState = { error?: string; factorId?: string; qrCode?: string };
 export async function enrollFactor(): Promise<MfaState> {
-  const staff = await requireStaff();
-  if (staff.role !== "owner") return { error: "Owner account required." };
+  await requireStaff();
   const client = await createSupabaseStaffClient();
   const { data: existing } = await client.auth.mfa.listFactors();
   if (existing?.totp.length)
@@ -17,7 +16,7 @@ export async function enrollFactor(): Promise<MfaState> {
   }
   const { data, error } = await client.auth.mfa.enroll({
     factorType: "totp",
-    friendlyName: "Tifawave Owner",
+    friendlyName: "Tifawave staff",
   });
   if (error || !data)
     return { error: "Authenticator enrollment failed. Please try again." };

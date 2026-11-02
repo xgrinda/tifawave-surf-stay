@@ -1,5 +1,7 @@
 "use server";
 
+import { z } from "zod";
+import { createSupabaseStaffClient } from "@/lib/supabase/staff";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/admin/auth";
@@ -50,4 +52,34 @@ export async function updateSettingsAction(formData: FormData) {
   redirectWithMessage({
     saved: "1",
   });
+}
+
+export async function saveOperationalSettings(form: FormData) {
+  await requireAdmin("owner");
+  const p = z
+    .object({
+      p_version: z.coerce.number().int().positive(),
+      p_minimum: z.coerce.number().int().min(1).max(365),
+      p_maximum: z.coerce.number().int().min(1).max(365),
+      p_notice: z.coerce.number().int().min(0).max(365),
+      p_retention: z.coerce.number().int().min(90).max(3650),
+    })
+    .safeParse(Object.fromEntries(form));
+  if (!p.success || p.data.p_maximum < p.data.p_minimum)
+    redirectWithMessage({
+      error: "Check the booking rules and retention review period.",
+    });
+  const client = await createSupabaseStaffClient();
+  const { error } = await client.rpc("save_operations_settings", p.data);
+  if (error)
+    redirectWithMessage({
+      error:
+        error.code === "40001"
+          ? "Settings changed. Reload before saving."
+          : "Operational settings could not be saved.",
+    });
+  revalidatePath("/admin/settings");
+  revalidatePath("/book");
+  revalidatePath("/fr/book");
+  redirectWithMessage({ saved: "1" });
 }

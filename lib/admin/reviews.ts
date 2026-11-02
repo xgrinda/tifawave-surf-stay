@@ -53,21 +53,24 @@ function rowToAdminReview(review: AdminReviewRow): AdminReview {
   };
 }
 
-export async function getAdminReviews(limit = 50): Promise<AdminReview[]> {
+export async function getAdminReviews(
+  params: { page?: string; q?: string } = {},
+) {
   const supabase = await createSupabaseStaffClient();
-  const { data, error } = await supabase
+  const page = Math.max(1, Math.min(10000, parseInt(params.page || "1") || 1));
+  const q = (params.q || "").replace(/[^\p{L}\p{N} ._-]/gu, "").slice(0, 80);
+  let query = supabase
     .from("reviews")
     .select(
-      "id, source, external_review_id, reviewer_name, rating, review_text, review_date, source_url, active, updated_at",
+      "id,source,external_review_id,reviewer_name,rating,review_text,review_date,source_url,active,updated_at",
+      { count: "exact" },
     )
     .order("review_date", { ascending: false })
-    .limit(limit);
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data.map((review) => rowToAdminReview(review));
+    .range((page - 1) * 25, page * 25 - 1);
+  if (q) query = query.ilike("reviewer_name", "%" + q + "%");
+  const { data, error, count } = await query;
+  if (error) throw Error("Reviews unavailable");
+  return { rows: data.map(rowToAdminReview), count: count || 0, page, q };
 }
 
 export async function getGoogleReviewsReadiness(): Promise<GoogleReviewsReadiness> {

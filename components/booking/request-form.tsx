@@ -4,6 +4,7 @@ import type { Locale } from "@/lib/i18n";
 import { propertyToday } from "@/lib/booking/schema";
 export type RequestOption = { id: string; name: string };
 type Initial = {
+  type?: string;
   roomId?: string;
   packageId?: string;
   checkIn?: string;
@@ -17,6 +18,7 @@ export function RequestForm({
   initial,
   whatsappHref,
   contactEmail,
+  rules,
 }: {
   locale: Locale;
   rooms: RequestOption[];
@@ -24,11 +26,20 @@ export function RequestForm({
   initial: Initial;
   whatsappHref: string;
   contactEmail: string;
+  rules: {
+    minimum_nights: number;
+    maximum_nights: number;
+    notice_days: number;
+  };
 }) {
   const fr = locale === "fr";
   const label = (en: string, french: string) => (fr ? french : en);
   const [mode, setMode] = useState(
-    initial.packageId ? "surf_package" : "stay_only",
+    initial.type === "group_request"
+      ? "group_request"
+      : initial.packageId
+        ? "surf_package"
+        : "stay_only",
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -41,6 +52,23 @@ export function RequestForm({
     const data = new FormData(form);
     setBusy(true);
     setError("");
+    const arrival = String(data.get("checkIn") || ""),
+      departure = String(data.get("checkOut") || "");
+    const nights = (Date.parse(departure) - Date.parse(arrival)) / 86400000;
+    if (
+      !Number.isFinite(nights) ||
+      nights < rules.minimum_nights ||
+      nights > rules.maximum_nights
+    ) {
+      setBusy(false);
+      setError(
+        label(
+          `Choose a stay of ${rules.minimum_nights}–${rules.maximum_nights} nights.`,
+          `Choisissez un séjour de ${rules.minimum_nights} à ${rules.maximum_nights} nuits.`,
+        ),
+      );
+      return;
+    }
     key.current ||= crypto.randomUUID();
     const text = (name: string) => String(data.get(name) || "");
     const request = {
@@ -114,9 +142,11 @@ export function RequestForm({
         <p>
           {label("Request reference", "Référence")} : {saved}
         </p>
-        <a className="btn btn-primary" href={whatsappHref}>
-          WhatsApp
-        </a>
+        {whatsappHref.startsWith("https://wa.me/") && (
+          <a className="btn btn-primary" href={whatsappHref}>
+            WhatsApp
+          </a>
+        )}
         <a href={"mailto:" + contactEmail}>{contactEmail}</a>
       </section>
     );
@@ -152,6 +182,12 @@ export function RequestForm({
           "Les demandes restent en attente jusqu’à l’approbation personnelle du propriétaire.",
         )}
       </p>
+      <p>
+        {label(
+          `Website requests: ${rules.minimum_nights}–${rules.maximum_nights} nights · ${rules.notice_days} days arrival notice.`,
+          `Demandes en ligne : ${rules.minimum_nights} à ${rules.maximum_nights} nuits · préavis de ${rules.notice_days} jours.`,
+        )}
+      </p>
       <form
         onSubmit={submit}
         onChange={() => {
@@ -166,7 +202,11 @@ export function RequestForm({
               <input
                 name="checkIn"
                 type="date"
-                min={propertyToday()}
+                min={new Date(
+                  Date.parse(propertyToday()) + rules.notice_days * 86400000,
+                )
+                  .toISOString()
+                  .slice(0, 10)}
                 defaultValue={initial.checkIn}
                 required
               />
@@ -176,7 +216,11 @@ export function RequestForm({
               <input
                 name="checkOut"
                 type="date"
-                min={propertyToday()}
+                min={new Date(
+                  Date.parse(propertyToday()) + rules.notice_days * 86400000,
+                )
+                  .toISOString()
+                  .slice(0, 10)}
                 defaultValue={initial.checkOut}
                 required
               />
@@ -293,33 +337,6 @@ export function RequestForm({
                 {label("Room preferences", "Préférences de chambres")}
                 <input name="roomPreference" maxLength={160} />
               </label>
-              <div className="booking-option-grid">
-                {[
-                  [
-                    "airportTransfer",
-                    label("Airport transfer interest", "Transfert aéroport"),
-                  ],
-                  ["mealsNeeded", label("Meals interest", "Repas")],
-                  [
-                    "privateCoaching",
-                    label("Private coaching interest", "Coaching privé"),
-                  ],
-                  ["yogaInterest", label("Yoga interest", "Yoga")],
-                  [
-                    "boardRental",
-                    label("Board rental interest", "Location de planche"),
-                  ],
-                  ["wetsuitRental", label("Wetsuit interest", "Combinaison")],
-                  [
-                    "coworkingInterest",
-                    label("Coworking interest", "Coworking"),
-                  ],
-                ].map(([name, title]) => (
-                  <label key={name}>
-                    <input type="checkbox" name={name} /> {title}
-                  </label>
-                ))}
-              </div>
             </>
           )}
           {mode === "group_request" && (

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { isAdminAuthenticated } from "@/lib/admin/auth";
@@ -60,6 +61,7 @@ export default async function Login({
               )}
               <button className="btn btn-primary">Sign in</button>
             </form>
+            <Link href="/admin/recovery">Forgot your password?</Link>
           </>
         ) : (
           <div role="status">

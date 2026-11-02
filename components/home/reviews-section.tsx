@@ -4,12 +4,13 @@ import { getWebsiteSettings } from "@/lib/settings";
 
 const sectionCopy = {
   en: {
-    emptyMeta: "Official Google reviews will appear here after sync is configured.",
+    emptyMeta:
+      "Official Google reviews will appear here after sync is configured.",
     emptyTitle: "Real guest reviews, synced from the source.",
     googleReview: "Google review",
     guestReview: "Guest review",
     readMore: "Read Google reviews",
-    scoreLabel: "Average rating"
+    scoreLabel: "Average of displayed reviews",
   },
   fr: {
     emptyMeta:
@@ -18,8 +19,8 @@ const sectionCopy = {
     googleReview: "Avis Google",
     guestReview: "Avis voyageur",
     readMore: "Lire les avis Google",
-    scoreLabel: "Note moyenne"
-  }
+    scoreLabel: "Moyenne des avis affichés",
+  },
 } as const;
 
 function starText(rating: number) {
@@ -27,7 +28,7 @@ function starText(rating: number) {
 }
 
 export async function ReviewsSection({
-  locale = DEFAULT_LOCALE
+  locale = DEFAULT_LOCALE,
 }: {
   locale?: Locale;
 }) {
@@ -35,38 +36,22 @@ export async function ReviewsSection({
   const text = sectionCopy[locale];
   const [reviews, settings] = await Promise.all([
     getActiveReviews(3),
-    getWebsiteSettings()
+    getWebsiteSettings(),
   ]);
   const profileUrl = settings.googleReviewsProfileUrl || settings.googleMapsUrl;
 
-  if (reviews.length === 0) {
-    return (
-      <section className="reviews-section" aria-labelledby="reviews-section-title">
-        <div className="container-shell reviews-section-inner">
-          <p className="reviews-stars" aria-label={copy.ariaLabel}>
-            ★★★★★
-          </p>
-          <h2 id="reviews-section-title">{text.emptyTitle}</h2>
-          <p className="reviews-meta">{text.emptyMeta}</p>
-          {profileUrl ? (
-            <a className="reviews-source-link" href={profileUrl}>
-              {text.readMore}
-            </a>
-          ) : null}
-        </div>
-      </section>
-    );
-  }
+  if (reviews.length === 0) return null;
 
   const averageRating =
-    reviews.reduce((total, review) => total + review.rating, 0) / reviews.length;
+    reviews.reduce((total, review) => total + review.rating, 0) /
+    reviews.length;
 
   return (
-    <section className="reviews-section" aria-labelledby="reviews-section-title">
+    <section
+      className="reviews-section"
+      aria-labelledby="reviews-section-title"
+    >
       <div className="container-shell reviews-section-inner">
-        <p className="reviews-stars" aria-label={copy.ariaLabel}>
-          ★★★★★
-        </p>
         <h2 id="reviews-section-title">{text.emptyTitle}</h2>
         <p className="reviews-meta">
           {text.scoreLabel}: <strong>{averageRating.toFixed(1)}/5</strong>
@@ -85,7 +70,9 @@ export async function ReviewsSection({
               <footer>
                 <strong>{review.reviewerName}</strong>
                 <span>
-                  {review.source === "google" ? text.googleReview : text.guestReview}
+                  {review.source === "google"
+                    ? text.googleReview
+                    : text.guestReview}
                 </span>
               </footer>
             </article>

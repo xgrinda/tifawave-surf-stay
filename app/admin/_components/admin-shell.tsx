@@ -95,6 +95,12 @@ const navigation: {
     group: "Property & website",
     items: [
       {
+        key: "content",
+        label: "Website content",
+        href: "/admin/content",
+        roles: ["owner", "content_editor"],
+      },
+      {
         key: "rooms",
         label: "Rooms & inventory",
         href: "/admin/inventory",
@@ -123,6 +129,18 @@ const navigation: {
   {
     group: "Management",
     items: [
+      {
+        key: "reports",
+        label: "Reports & exports",
+        href: "/admin/reports",
+        roles: ["owner"],
+      },
+      {
+        key: "staff",
+        label: "Staff access",
+        href: "/admin/staff",
+        roles: ["owner"],
+      },
       {
         key: "notifications",
         label: "Notifications",
@@ -196,6 +214,8 @@ export async function AdminShell({
             <nav>{links}</nav>
           </details>
           <div className="admin-sidebar-footer">
+            <Link href="/admin/setup">Change your password</Link>
+            <Link href="/admin/mfa">Security / authenticator</Link>
             <Link href="/">View public website ↗</Link>
             <form action={logoutAdminAction}>
               <button className="admin-sidebar-signout">Sign out</button>

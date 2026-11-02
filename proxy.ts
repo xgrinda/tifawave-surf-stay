@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { assertDatabaseTarget } from "@/lib/security/environment";
+import { adminRouteRoles } from "@/lib/admin/route-access";
 import type { Database } from "@/types/database";
 
 export async function proxy(request: NextRequest) {
@@ -22,7 +23,22 @@ export async function proxy(request: NextRequest) {
       },
     );
   }
-  if (request.nextUrl.pathname.startsWith("/admin")) {
+  if (
+    request.nextUrl.pathname === "/admin" ||
+    request.nextUrl.pathname.startsWith("/admin/")
+  ) {
+    const path = request.nextUrl.pathname;
+    const isPublic = [
+      "/admin/login",
+      "/admin/recovery",
+      "/admin/setup",
+    ].includes(path);
+    const redirectTo = (pathname: string) => {
+      const redirect = NextResponse.redirect(new URL(pathname, request.url));
+      for (const cookie of response.cookies.getAll())
+        redirect.cookies.set(cookie);
+      return redirect;
+    };
     try {
       assertDatabaseTarget();
       const client = createServerClient<Database>(
@@ -49,9 +65,43 @@ export async function proxy(request: NextRequest) {
           },
         },
       );
-      await client.auth.getUser();
+      const {
+        data: { user },
+        error,
+      } = await client.auth.getUser();
+      if (!isPublic) {
+        if (error || !user) response = redirectTo("/admin/login");
+        else {
+          const member = await client
+            .from("staff_members")
+            .select("role")
+            .eq("user_id", user.id)
+            .eq("is_active", true)
+            .maybeSingle();
+          if (member.error || !member.data)
+            response = redirectTo("/admin/login");
+          else {
+            const role = member.data.role;
+            if (path === "/admin" && role === "housekeeping")
+              response = redirectTo("/admin/housekeeping");
+            else if (path === "/admin" && role === "content_editor")
+              response = redirectTo("/admin/packages");
+            else if (!adminRouteRoles(path).includes(role))
+              response = redirectTo("/admin/access");
+            else if (
+              role === "owner" &&
+              path !== "/admin/mfa" &&
+              path !== "/admin/access"
+            ) {
+              const effective = await client.rpc("staff_role", {});
+              if (effective.error || effective.data !== "owner")
+                response = redirectTo("/admin/mfa");
+            }
+          }
+        }
+      }
     } catch {
-      /* Admin pages fail closed and offer setup/sign-in. */
+      if (!isPublic) response = redirectTo("/admin/login");
     }
     response.headers.set("cache-control", "private, no-store");
   }

@@ -1,5 +1,9 @@
+import { isPublicImageUrl } from "@/lib/image-url";
 import { unstable_noStore as noStore } from "next/cache";
-import { normalizeFocalPosition, type FocalPosition } from "@/lib/image-position";
+import {
+  normalizeFocalPosition,
+  type FocalPosition,
+} from "@/lib/image-position";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type PublicGalleryImage = {
@@ -19,7 +23,9 @@ export async function getActiveGalleryImages(): Promise<PublicGalleryImage[]> {
     const supabase = createSupabaseServerClient();
     const { data, error } = await supabase
       .from("gallery_images")
-      .select("id, image_url, caption, alt_text, category, focal_position, sort_order")
+      .select(
+        "id, image_url, caption, alt_text, category, focal_position, sort_order",
+      )
       .eq("is_active", true)
       .order("category", { ascending: true })
       .order("sort_order", { ascending: true })
@@ -29,15 +35,17 @@ export async function getActiveGalleryImages(): Promise<PublicGalleryImage[]> {
       return [];
     }
 
-    return data.map((image) => ({
-      id: image.id,
-      imageUrl: image.image_url,
-      caption: image.caption,
-      altText: image.alt_text,
-      category: image.category,
-      focalPosition: normalizeFocalPosition(image.focal_position),
-      sortOrder: image.sort_order
-    }));
+    return data
+      .filter((image) => isPublicImageUrl(image.image_url))
+      .map((image) => ({
+        id: image.id,
+        imageUrl: image.image_url,
+        caption: image.caption,
+        altText: image.alt_text,
+        category: image.category,
+        focalPosition: normalizeFocalPosition(image.focal_position),
+        sortOrder: image.sort_order,
+      }));
   } catch {
     return [];
   }

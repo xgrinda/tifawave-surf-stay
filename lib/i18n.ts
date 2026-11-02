@@ -15,6 +15,7 @@ export const navItems = [
   { href: "/gallery", key: "gallery" },
   { href: "/about", key: "about" },
   { href: "/faq", key: "faq" },
+  { href: "/groups", key: "groups" },
   { href: "/book", key: "book" },
 ] as const;
 
@@ -30,7 +31,7 @@ export const i18n = {
     },
     common: {
       backHome: "Back home",
-      book: "Book",
+      book: "Request to book",
       contact: "Contact",
       from: "From",
       instagram: "Instagram",
@@ -60,27 +61,27 @@ export const i18n = {
       hero: {
         eyebrow: "Tamraght · Morocco",
         title: ["Surf the Atlantic.", "Stay in the story."],
-        copy: "A boutique surf sanctuary on Morocco's Atlantic coast — expert coaching, design-led rooms, and slow mornings a barefoot walk from the lineup.",
+        copy: "A surf stay in Tamraght, Morocco. Explore our rooms and surf packages, send your dates, and plan your stay with us personally.",
         primaryCta: "Request to book",
         primaryCtaShort: "Request dates",
         secondaryCta: "Explore Packages",
         trustLabel: "Guest trust signals",
         trustSignals: [
-          "4.9/5 guest rating",
-          "600+ guests",
-          "Free cancellation up to 30 days",
+          "9 physical rooms",
+          "Up to 23 guests",
+          "Personal booking approval",
         ],
       },
       packagesPreview: {
         eyebrow: "Surf Packages",
         title: "Choose your week.",
-        copy: "Transparent pricing, real inclusions, and a level of coaching that matches exactly where you are.",
-        featured: "Most Popular",
+        copy: "Explore the published packages, then ask us about dates, your level and the details of your trip.",
+        featured: "Surf stay",
       },
       place: {
         eyebrow: "The Place",
-        title: "Tamraght — where the desert meets the sea.",
-        copy: "A fishing village wrapped in argan hills, 20 minutes from Agadir airport and steps from some of Morocco's best waves. Souks, Paradise Valley, and call-to-prayer dusks included.",
+        title: "Your stay in Tamraght.",
+        copy: "Tifawave Surf Stay is in Tamraght, Morocco. Ask us about your arrival and the practical details of your stay.",
         cta: "Getting here & FAQ",
       },
       reviews: {
@@ -94,11 +95,15 @@ export const i18n = {
         eyebrow: "The Stay",
         title: "Rooms that feel like the calm after a session.",
         description:
-          "Lime-washed walls, linen, and light. Every room opens to the sea air or the rooftop, where mornings start with coffee and end with sunset over the Atlantic.",
-        price: "From €59 / night",
+          "Choose from double, twin and triple rooms, a family suite, or an individual bed in our four-bed dormitory.",
+        price: "Ask us for your dates",
         ctaLabel: "View rooms & suites",
         highlightsLabel: "Stay highlights",
-        highlights: ["Rooftop terrace", "Breakfast included", "Fast wifi"],
+        highlights: [
+          "4 double rooms",
+          "Family suite",
+          "4 individual dorm beds",
+        ],
       },
       timeline: {
         eyebrow: "A day at Tifawave",
@@ -138,17 +143,18 @@ export const i18n = {
         ],
       },
       trustStrip: [
-        { value: "4.9/5", label: "Google" },
-        { value: "9.6", label: "Booking.com" },
-        { value: "600+", label: "Guests since 2019" },
-        { value: "Direct", label: "Best price promise" },
+        { value: "9", label: "Physical rooms" },
+        { value: "12", label: "Bookable rooms & beds" },
+        { value: "23", label: "Guest places" },
+        { value: "Direct", label: "Manual approval" },
       ],
     },
     nav: {
       about: "About",
-      book: "Book",
+      book: "Request to book",
       faq: "FAQ",
       gallery: "Gallery",
+      groups: "Groups",
       packages: "Surf Packages",
       stay: "Stay",
     },
@@ -164,7 +170,7 @@ export const i18n = {
     },
     common: {
       backHome: "Accueil",
-      book: "Réserver",
+      book: "Demander un séjour",
       contact: "Contact",
       from: "À partir de",
       instagram: "Instagram",
@@ -194,27 +200,27 @@ export const i18n = {
       hero: {
         eyebrow: "Tamraght · Maroc",
         title: ["Surfez l'Atlantique.", "Séjournez dans l'histoire."],
-        copy: "Un refuge surf boutique sur la côte atlantique marocaine — coaching expert, chambres soignées et matins lents à quelques pas du spot.",
+        copy: "Un surf stay à Tamraght, au Maroc. Découvrez les chambres et les séjours surf, envoyez vos dates et préparez votre séjour avec nous.",
         primaryCta: "Demander un séjour",
         primaryCtaShort: "Demander des dates",
         secondaryCta: "Explorer les séjours",
         trustLabel: "Signaux de confiance",
         trustSignals: [
-          "Note clients 4,9/5",
-          "600+ voyageurs",
-          "Annulation gratuite jusqu'à 30 jours",
+          "9 chambres physiques",
+          "Jusqu’à 23 voyageurs",
+          "Confirmation personnelle",
         ],
       },
       packagesPreview: {
         eyebrow: "Séjours surf",
         title: "Choisissez votre semaine.",
-        copy: "Des tarifs clairs, de vraies inclusions et un coaching adapté précisément à votre niveau.",
-        featured: "Le plus demandé",
+        copy: "Découvrez les séjours publiés, puis contactez-nous pour les dates, votre niveau et les détails du voyage.",
+        featured: "Séjour surf",
       },
       place: {
         eyebrow: "Le lieu",
-        title: "Tamraght — là où le désert rencontre la mer.",
-        copy: "Un village de pêcheurs entouré de collines d'arganiers, à 20 minutes de l'aéroport d'Agadir et tout près de quelques-unes des meilleures vagues du Maroc. Souks, Paradise Valley et couchers de soleil inclus.",
+        title: "Votre séjour à Tamraght.",
+        copy: "Tifawave Surf Stay se trouve à Tamraght, au Maroc. Contactez-nous pour préparer votre arrivée et les détails pratiques du séjour.",
         cta: "Accès & FAQ",
       },
       reviews: {
@@ -228,11 +234,15 @@ export const i18n = {
         eyebrow: "Le séjour",
         title: "Des chambres qui respirent le calme d'après-session.",
         description:
-          "Murs à la chaux, lin et lumière. Chaque chambre s'ouvre vers l'air marin ou le rooftop, où les matins commencent par un café et finissent face à l'Atlantique.",
-        price: "À partir de 59 € / nuit",
+          "Choisissez une chambre double, twin ou triple, une suite familiale ou un lit individuel dans notre dortoir de quatre lits.",
+        price: "Demandez vos dates",
         ctaLabel: "Voir les chambres",
         highlightsLabel: "Points forts du séjour",
-        highlights: ["Rooftop", "Petit-déjeuner inclus", "Wifi rapide"],
+        highlights: [
+          "4 chambres doubles",
+          "Suite familiale",
+          "4 lits individuels",
+        ],
       },
       timeline: {
         eyebrow: "Une journée à Tifawave",
@@ -273,17 +283,18 @@ export const i18n = {
         ],
       },
       trustStrip: [
-        { value: "4,9/5", label: "Google" },
-        { value: "9,6", label: "Booking.com" },
-        { value: "600+", label: "Voyageurs depuis 2019" },
-        { value: "Direct", label: "Meilleur tarif garanti" },
+        { value: "9", label: "Chambres physiques" },
+        { value: "12", label: "Chambres et lits réservables" },
+        { value: "23", label: "Places voyageurs" },
+        { value: "Direct", label: "Confirmation manuelle" },
       ],
     },
     nav: {
       about: "À propos",
-      book: "Réserver",
+      book: "Demander un séjour",
       faq: "FAQ",
       gallery: "Galerie",
+      groups: "Groupes",
       packages: "Séjours surf",
       stay: "Séjour",
     },
@@ -338,6 +349,9 @@ function canSwitchPublicPath(pathname: string): boolean {
     pathname === "/gallery" ||
     pathname === "/about" ||
     pathname === "/faq" ||
+    ["/groups", "/partners", "/collaborate", "/contact", "/policies"].includes(
+      pathname,
+    ) ||
     pathname === "/book"
   );
 }

@@ -1,3 +1,4 @@
+import { VideoUpload } from "./video-upload";
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/admin/auth";
 import { getAdminGalleryImages } from "@/lib/admin/gallery";
@@ -5,7 +6,7 @@ import { focalPositionToCss } from "@/lib/image-position";
 import { AdminShell } from "../_components/admin-shell";
 import {
   ImageUploadField,
-  UploadSubmitButton
+  UploadSubmitButton,
 } from "../_components/image-upload-controls";
 import { MediaGuidance } from "../_components/media-guidance";
 import {
@@ -13,14 +14,14 @@ import {
   removeGalleryImageAction,
   toggleGalleryImageActiveAction,
   updateGalleryImageAction,
-  uploadGalleryImageAction
+  uploadGalleryImageAction,
 } from "./actions";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Gallery | Tifawave Admin",
-  description: "Protected Tifawave gallery image management."
+  description: "Protected Tifawave gallery image management.",
 };
 
 type AdminGalleryPageProps = {
@@ -38,35 +39,35 @@ function getMessage(params: Awaited<AdminGalleryPageProps["searchParams"]>) {
   if (params?.error) {
     return {
       tone: "error",
-      text: params.error
+      text: params.error,
     };
   }
 
   if (params?.created) {
     return {
       tone: "success",
-      text: "Gallery image created."
+      text: "Gallery image created.",
     };
   }
 
   if (params?.updated) {
     return {
       tone: "success",
-      text: "Gallery image updated."
+      text: "Gallery image updated.",
     };
   }
 
   if (params?.status) {
     return {
       tone: "success",
-      text: "Gallery image status updated."
+      text: "Gallery image status updated.",
     };
   }
 
   if (params?.removed) {
     return {
       tone: "success",
-      text: "Gallery image removed."
+      text: "Gallery image removed.",
     };
   }
 
@@ -78,7 +79,7 @@ function getMessage(params: Awaited<AdminGalleryPageProps["searchParams"]>) {
       text:
         Number.isInteger(count) && count > 1
           ? `${count} gallery images uploaded and optimized.`
-          : "Gallery image uploaded and optimized."
+          : "Gallery image uploaded and optimized.",
     };
   }
 
@@ -88,18 +89,18 @@ function getMessage(params: Awaited<AdminGalleryPageProps["searchParams"]>) {
 function formatDateTime(value: string): string {
   return new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium",
-    timeStyle: "short"
+    timeStyle: "short",
   }).format(new Date(value));
 }
 
 export default async function AdminGalleryPage({
-  searchParams
+  searchParams,
 }: AdminGalleryPageProps) {
   await requireAdmin();
 
   const [params, images] = await Promise.all([
     searchParams,
-    getAdminGalleryImages()
+    getAdminGalleryImages(),
   ]);
   const message = getMessage(params);
 
@@ -110,315 +111,357 @@ export default async function AdminGalleryPage({
       description="Manage direct image URLs, captions, categories, ordering, and visibility. Use bright, real Tifawave images with clear alt text."
       title="Gallery"
     >
-        <MediaGuidance
-          id="gallery-media-guidance-title"
-          title="Gallery photo checklist"
-          variant="gallery"
-        />
+      <VideoUpload />
+      <MediaGuidance
+        id="gallery-media-guidance-title"
+        title="Gallery photo checklist"
+        variant="gallery"
+      />
 
-        <section className="admin-panel-section" aria-labelledby="add-gallery-title">
-          <div className="admin-section-heading">
-            <h2 id="add-gallery-title">Add image</h2>
-            {message ? (
-              <p className={`admin-form-message admin-form-message-${message.tone}`}>
-                {message.text}
-              </p>
-            ) : null}
-          </div>
+      <section
+        className="admin-panel-section"
+        aria-labelledby="add-gallery-title"
+      >
+        <div className="admin-section-heading">
+          <h2 id="add-gallery-title">Add image</h2>
+          {message ? (
+            <p
+              className={`admin-form-message admin-form-message-${message.tone}`}
+            >
+              {message.text}
+            </p>
+          ) : null}
+        </div>
 
-          <form className="admin-room-form" action={createGalleryImageAction}>
-            <div className="admin-settings-grid">
-              <label className="admin-field admin-field-wide">
-                <span>Image URL</span>
-                <input
-                  name="imageUrl"
-                  placeholder="https://example.com/gallery.jpg"
-                  required
-                  type="url"
-                />
-                <small>
-                  Use a direct https image URL. Aim for at least 1800 px wide
-                  and compressed for fast loading.
-                </small>
-              </label>
-              <label className="admin-field">
-                <span>Alt text</span>
-                <input
-                  name="altText"
-                  placeholder="Surfer at sunrise in Tamraght"
-                  required
-                  type="text"
-                />
-                <small>
-                  Describe what is visible, not a slogan. Keep it under 180
-                  characters.
-                </small>
-              </label>
-              <label className="admin-field">
-                <span>Category / tag</span>
-                <input name="category" placeholder="surf" required type="text" />
-                <small>Use simple tags like surf, rooms, food, tamraght, or community.</small>
-              </label>
-              <label className="admin-field">
-                <span>Sort order</span>
-                <input defaultValue="100" min="0" name="sortOrder" required type="number" />
-              </label>
-              <label className="admin-field">
-                <span>Focal position</span>
-                <select defaultValue="center" name="focalPosition">
-                  <option value="center">Center</option>
-                  <option value="top">Top</option>
-                  <option value="bottom">Bottom</option>
-                </select>
-                <small>Use top or bottom when a portrait image crops awkwardly.</small>
-              </label>
-              <label className="admin-checkbox-field">
-                <input defaultChecked name="isActive" type="checkbox" value="true" />
-                <span>Active</span>
-              </label>
-              <label className="admin-field admin-field-wide">
-                <span>Caption</span>
-                <input
-                  name="caption"
-                  placeholder="Optional short caption for the public lightbox"
-                  type="text"
-                />
-              </label>
-            </div>
-            <button className="btn btn-primary admin-settings-submit" type="submit">
-              Add image
-            </button>
-          </form>
-
-          <form
-            className="admin-upload-form"
-            action={uploadGalleryImageAction}
-            encType="multipart/form-data"
-          >
-            <div className="admin-upload-heading">
-              <h3>Upload images</h3>
-              <p>
-                Select one or more images. Uploads are auto-rotated, resized,
-                optimized, and saved as WebP.
-              </p>
-            </div>
-            <div className="admin-settings-grid">
-              <ImageUploadField
-                help="JPG, PNG, WebP, or AVIF. Max 8 MB each before optimization."
-                label="Image files"
+        <form className="admin-room-form" action={createGalleryImageAction}>
+          <div className="admin-settings-grid">
+            <label className="admin-field admin-field-wide">
+              <span>Image URL</span>
+              <input
+                name="imageUrl"
+                placeholder="https://example.com/gallery.jpg"
+                required
+                type="url"
               />
-              <label className="admin-field">
-                <span>Alt text</span>
-                <input
-                  name="altText"
-                  placeholder="Breakfast on the Tifawave rooftop"
-                  required
-                  type="text"
-                />
-                <small>
-                  Describe what is visible, not a slogan. Keep it under 180
-                  characters.
-                </small>
-              </label>
-              <label className="admin-field">
-                <span>Category / tag</span>
-                <input name="category" placeholder="food" required type="text" />
-                <small>Use simple tags like surf, rooms, food, tamraght, or community.</small>
-              </label>
-              <label className="admin-field">
-                <span>Sort order</span>
-                <input defaultValue="100" min="0" name="sortOrder" required type="number" />
-              </label>
-              <label className="admin-field">
-                <span>Focal position</span>
-                <select defaultValue="center" name="focalPosition">
-                  <option value="center">Center</option>
-                  <option value="top">Top</option>
-                  <option value="bottom">Bottom</option>
-                </select>
-                <small>Use top or bottom when a portrait image crops awkwardly.</small>
-              </label>
-              <label className="admin-checkbox-field">
-                <input defaultChecked name="isActive" type="checkbox" value="true" />
-                <span>Active</span>
-              </label>
-              <label className="admin-field admin-field-wide">
-                <span>Caption</span>
-                <input
-                  name="caption"
-                  placeholder="Optional short caption for the public lightbox"
-                  type="text"
-                />
-              </label>
-            </div>
-            <UploadSubmitButton pendingLabel="Uploading gallery images...">
-              Upload images
-            </UploadSubmitButton>
-          </form>
-        </section>
-
-        <section className="admin-panel-section" aria-labelledby="gallery-list-title">
-          <div className="admin-section-heading">
-            <h2 id="gallery-list-title">Existing images</h2>
-            <p>{images.length} images in the gallery library.</p>
+              <small>
+                Use a direct https image URL. Aim for at least 1800 px wide and
+                compressed for fast loading.
+              </small>
+            </label>
+            <label className="admin-field">
+              <span>Alt text</span>
+              <input
+                name="altText"
+                placeholder="Surfer at sunrise in Tamraght"
+                required
+                type="text"
+              />
+              <small>
+                Describe what is visible, not a slogan. Keep it under 180
+                characters.
+              </small>
+            </label>
+            <label className="admin-field">
+              <span>Category / tag</span>
+              <input name="category" placeholder="surf" required type="text" />
+              <small>
+                Use simple tags like surf, rooms, food, tamraght, or community.
+              </small>
+            </label>
+            <label className="admin-field">
+              <span>Sort order</span>
+              <input
+                defaultValue="100"
+                min="0"
+                name="sortOrder"
+                required
+                type="number"
+              />
+            </label>
+            <label className="admin-field">
+              <span>Focal position</span>
+              <select defaultValue="center" name="focalPosition">
+                <option value="center">Center</option>
+                <option value="top">Top</option>
+                <option value="bottom">Bottom</option>
+              </select>
+              <small>
+                Use top or bottom when a portrait image crops awkwardly.
+              </small>
+            </label>
+            <label className="admin-checkbox-field">
+              <input
+                defaultChecked
+                name="isActive"
+                type="checkbox"
+                value="true"
+              />
+              <span>Active</span>
+            </label>
+            <label className="admin-field admin-field-wide">
+              <span>Caption</span>
+              <input
+                name="caption"
+                placeholder="Optional short caption for the public lightbox"
+                type="text"
+              />
+            </label>
           </div>
+          <button
+            className="btn btn-primary admin-settings-submit"
+            type="submit"
+          >
+            Add image
+          </button>
+        </form>
 
-          {images.length > 0 ? (
-            <div className="admin-gallery-list">
-              {images.map((image) => (
-                <article className="admin-gallery-card" key={image.id}>
-                  <div
-                    aria-label={image.altText}
-                    className="admin-gallery-preview"
-                    role="img"
-                    style={{
-                      backgroundImage: `url("${image.imageUrl}")`,
-                      backgroundPosition: focalPositionToCss(image.focalPosition)
-                    }}
-                  />
+        <form
+          className="admin-upload-form"
+          action={uploadGalleryImageAction}
+          encType="multipart/form-data"
+        >
+          <div className="admin-upload-heading">
+            <h3>Upload images</h3>
+            <p>
+              Select one or more images. Uploads are auto-rotated, resized,
+              optimized, and saved as WebP.
+            </p>
+          </div>
+          <div className="admin-settings-grid">
+            <ImageUploadField
+              help="JPG, PNG, WebP, or AVIF. Max 8 MB each before optimization."
+              label="Image files"
+            />
+            <label className="admin-field">
+              <span>Alt text</span>
+              <input
+                name="altText"
+                placeholder="Breakfast on the Tifawave rooftop"
+                required
+                type="text"
+              />
+              <small>
+                Describe what is visible, not a slogan. Keep it under 180
+                characters.
+              </small>
+            </label>
+            <label className="admin-field">
+              <span>Category / tag</span>
+              <input name="category" placeholder="food" required type="text" />
+              <small>
+                Use simple tags like surf, rooms, food, tamraght, or community.
+              </small>
+            </label>
+            <label className="admin-field">
+              <span>Sort order</span>
+              <input
+                defaultValue="100"
+                min="0"
+                name="sortOrder"
+                required
+                type="number"
+              />
+            </label>
+            <label className="admin-field">
+              <span>Focal position</span>
+              <select defaultValue="center" name="focalPosition">
+                <option value="center">Center</option>
+                <option value="top">Top</option>
+                <option value="bottom">Bottom</option>
+              </select>
+              <small>
+                Use top or bottom when a portrait image crops awkwardly.
+              </small>
+            </label>
+            <label className="admin-checkbox-field">
+              <input
+                defaultChecked
+                name="isActive"
+                type="checkbox"
+                value="true"
+              />
+              <span>Active</span>
+            </label>
+            <label className="admin-field admin-field-wide">
+              <span>Caption</span>
+              <input
+                name="caption"
+                placeholder="Optional short caption for the public lightbox"
+                type="text"
+              />
+            </label>
+          </div>
+          <UploadSubmitButton pendingLabel="Uploading gallery images...">
+            Upload images
+          </UploadSubmitButton>
+        </form>
+      </section>
 
-                  <div className="admin-gallery-content">
-                    <header className="admin-room-card-header">
-                      <div>
-                        <h3>{image.caption || image.altText}</h3>
-                        <p>{image.category}</p>
-                      </div>
-                      <span
-                        className={`admin-status-pill ${
-                          image.isActive ? "" : "admin-status-muted"
-                        }`}
-                      >
-                        {image.isActive ? "active" : "inactive"}
-                      </span>
-                    </header>
+      <section
+        className="admin-panel-section"
+        aria-labelledby="gallery-list-title"
+      >
+        <div className="admin-section-heading">
+          <h2 id="gallery-list-title">Existing images</h2>
+          <p>{images.length} images in the gallery library.</p>
+        </div>
 
-                    <form
-                      className="admin-room-form"
-                      action={updateGalleryImageAction}
-                    >
-                      <input name="imageId" type="hidden" value={image.id} />
-                      <div className="admin-settings-grid">
-                        <label className="admin-field admin-field-wide">
-                          <span>Image URL</span>
-                          <input
-                            defaultValue={image.imageUrl}
-                            name="imageUrl"
-                            required
-                            type="url"
-                          />
-                          <small>Use a permanent direct image URL.</small>
-                        </label>
-                        <label className="admin-field">
-                          <span>Alt text</span>
-                          <input
-                            defaultValue={image.altText}
-                            name="altText"
-                            required
-                            type="text"
-                          />
-                          <small>
-                            Describe the visible scene for accessibility and SEO.
-                          </small>
-                        </label>
-                        <label className="admin-field">
-                          <span>Category / tag</span>
-                          <input
-                            defaultValue={image.category}
-                            name="category"
-                            required
-                            type="text"
-                          />
-                        </label>
-                        <label className="admin-field">
-                          <span>Sort order</span>
-                          <input
-                            defaultValue={image.sortOrder}
-                            min="0"
-                            name="sortOrder"
-                            required
-                            type="number"
-                          />
-                        </label>
-                        <label className="admin-field">
-                          <span>Focal position</span>
-                          <select
-                            defaultValue={image.focalPosition}
-                            name="focalPosition"
-                          >
-                            <option value="center">Center</option>
-                            <option value="top">Top</option>
-                            <option value="bottom">Bottom</option>
-                          </select>
-                        </label>
-                        <label className="admin-checkbox-field">
-                          <input
-                            defaultChecked={image.isActive}
-                            name="isActive"
-                            type="checkbox"
-                            value="true"
-                          />
-                          <span>Active</span>
-                        </label>
-                        <label className="admin-field admin-field-wide">
-                          <span>Caption</span>
-                          <input
-                            defaultValue={image.caption}
-                            name="caption"
-                            type="text"
-                          />
-                        </label>
-                      </div>
-                      <div className="admin-room-card-actions">
-                        <button className="admin-status-button" type="submit">
-                          Save image
-                        </button>
-                        <span>Updated {formatDateTime(image.updatedAt)}</span>
-                      </div>
-                    </form>
+        {images.length > 0 ? (
+          <div className="admin-gallery-list">
+            {images.map((image) => (
+              <article className="admin-gallery-card" key={image.id}>
+                <div
+                  aria-label={image.altText}
+                  className="admin-gallery-preview"
+                  role="img"
+                  style={{
+                    backgroundImage: `url("${image.imageUrl}")`,
+                    backgroundPosition: focalPositionToCss(image.focalPosition),
+                  }}
+                />
 
-                    <div className="admin-status-actions">
-                      <form action={toggleGalleryImageActiveAction}>
-                        <input name="imageId" type="hidden" value={image.id} />
-                        <input
-                          name="isActive"
-                          type="hidden"
-                          value={image.isActive ? "false" : "true"}
-                        />
-                        <button
-                          className={`admin-status-button ${
-                            image.isActive ? "admin-status-danger" : ""
-                          }`}
-                          type="submit"
-                        >
-                          {image.isActive ? "Deactivate image" : "Activate image"}
-                        </button>
-                      </form>
-                      <form action={removeGalleryImageAction}>
-                        <input name="imageId" type="hidden" value={image.id} />
-                        <button
-                          className="admin-status-button admin-status-danger"
-                          type="submit"
-                        >
-                          Remove image
-                        </button>
-                      </form>
+                <div className="admin-gallery-content">
+                  <header className="admin-room-card-header">
+                    <div>
+                      <h3>{image.caption || image.altText}</h3>
+                      <p>{image.category}</p>
                     </div>
+                    <span
+                      className={`admin-status-pill ${
+                        image.isActive ? "" : "admin-status-muted"
+                      }`}
+                    >
+                      {image.isActive ? "active" : "inactive"}
+                    </span>
+                  </header>
+
+                  <form
+                    className="admin-room-form"
+                    action={updateGalleryImageAction}
+                  >
+                    <input name="imageId" type="hidden" value={image.id} />
+                    <div className="admin-settings-grid">
+                      <label className="admin-field admin-field-wide">
+                        <span>Image URL</span>
+                        <input
+                          defaultValue={image.imageUrl}
+                          name="imageUrl"
+                          required
+                          type="url"
+                        />
+                        <small>Use a permanent direct image URL.</small>
+                      </label>
+                      <label className="admin-field">
+                        <span>Alt text</span>
+                        <input
+                          defaultValue={image.altText}
+                          name="altText"
+                          required
+                          type="text"
+                        />
+                        <small>
+                          Describe the visible scene for accessibility and SEO.
+                        </small>
+                      </label>
+                      <label className="admin-field">
+                        <span>Category / tag</span>
+                        <input
+                          defaultValue={image.category}
+                          name="category"
+                          required
+                          type="text"
+                        />
+                      </label>
+                      <label className="admin-field">
+                        <span>Sort order</span>
+                        <input
+                          defaultValue={image.sortOrder}
+                          min="0"
+                          name="sortOrder"
+                          required
+                          type="number"
+                        />
+                      </label>
+                      <label className="admin-field">
+                        <span>Focal position</span>
+                        <select
+                          defaultValue={image.focalPosition}
+                          name="focalPosition"
+                        >
+                          <option value="center">Center</option>
+                          <option value="top">Top</option>
+                          <option value="bottom">Bottom</option>
+                        </select>
+                      </label>
+                      <label className="admin-checkbox-field">
+                        <input
+                          defaultChecked={image.isActive}
+                          name="isActive"
+                          type="checkbox"
+                          value="true"
+                        />
+                        <span>Active</span>
+                      </label>
+                      <label className="admin-field admin-field-wide">
+                        <span>Caption</span>
+                        <input
+                          defaultValue={image.caption}
+                          name="caption"
+                          type="text"
+                        />
+                      </label>
+                    </div>
+                    <div className="admin-room-card-actions">
+                      <button className="admin-status-button" type="submit">
+                        Save image
+                      </button>
+                      <span>Updated {formatDateTime(image.updatedAt)}</span>
+                    </div>
+                  </form>
+
+                  <div className="admin-status-actions">
+                    <form action={toggleGalleryImageActiveAction}>
+                      <input name="imageId" type="hidden" value={image.id} />
+                      <input
+                        name="isActive"
+                        type="hidden"
+                        value={image.isActive ? "false" : "true"}
+                      />
+                      <button
+                        className={`admin-status-button ${
+                          image.isActive ? "admin-status-danger" : ""
+                        }`}
+                        type="submit"
+                      >
+                        {image.isActive ? "Deactivate image" : "Activate image"}
+                      </button>
+                    </form>
+                    <form action={removeGalleryImageAction}>
+                      <input name="imageId" type="hidden" value={image.id} />
+                      <button
+                        className="admin-status-button admin-status-danger"
+                        type="submit"
+                      >
+                        Remove image
+                      </button>
+                    </form>
                   </div>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <div className="admin-empty-state">
-              <p className="eyebrow">No gallery images</p>
-              <h2>Add the first image URL.</h2>
-              <p>
-                Start with five strong images: surf, room, rooftop, breakfast,
-                and Tamraght street or sunset. Active images appear on the
-                public gallery.
-              </p>
-            </div>
-          )}
-        </section>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="admin-empty-state">
+            <p className="eyebrow">No gallery images</p>
+            <h2>Add the first image URL.</h2>
+            <p>
+              Start with five strong images: surf, room, rooftop, breakfast, and
+              Tamraght street or sunset. Active images appear on the public
+              gallery.
+            </p>
+          </div>
+        )}
+      </section>
     </AdminShell>
   );
 }

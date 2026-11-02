@@ -1,3 +1,4 @@
+import { isPublicImageUrl } from "@/lib/image-url";
 import { z } from "zod";
 const text = (max: number) => z.string().trim().max(max);
 const uuid = z.uuid().nullable();
@@ -82,6 +83,7 @@ export const moduleSchemas = {
     .strict(),
   property_room_details: z
     .object({
+      is_published: z.boolean(),
       description_en: text(5000),
       description_fr: text(5000),
       amenities: z.array(text(160)).max(40),
@@ -115,7 +117,7 @@ export const moduleSchemas = {
       image_url: z
         .url()
         .max(2048)
-        .refine((v) => v.startsWith("https://")),
+        .refine(isPublicImageUrl, "Use an image URL from the media library."),
       alt_text: text(300).min(2),
       sort_order: z.number().int().min(0).max(9999),
       archived: z.boolean(),
@@ -126,7 +128,7 @@ export function readModuleForm(
   entity: keyof typeof moduleSchemas,
   form: FormData,
 ) {
-  const booleans = new Set(["archived"]),
+  const booleans = new Set(["archived", "is_published"]),
     numbers = new Set([
       "group_size",
       "offer_cents",

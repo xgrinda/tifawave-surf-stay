@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { createGroupReservation } from "../groups/actions";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/admin/auth";
 import { moduleRecord, moduleRows } from "@/lib/admin/modules";
@@ -14,6 +15,7 @@ export type EnquiryParams = {
   stage?: string;
   id?: string;
   new?: string;
+  error?: string;
 };
 export async function EnquiryWorkspace({
   area,
@@ -73,12 +75,26 @@ export async function EnquiryWorkspace({
             <h2>{selected ? selected.reference : "New enquiry"}</h2>
             <Link href={path}>Close editor</Link>
           </div>
+          {params.error && <p role="alert">{params.error}</p>}
           <EntityForm
             entity="enquiries"
             id={selected?.id}
             version={selected?.version}
             fields={fields}
           />
+          {selected && area === "groups" && !selected.booking_id && (
+            <form action={createGroupReservation} className="desk-actions">
+              <input type="hidden" name="id" value={selected.id} />
+              <input type="hidden" name="version" value={selected.version} />
+              <button className="btn btn-secondary">
+                Create pending reservation
+              </button>
+              <small>
+                Requires saved dates and size. Owner approval and inventory
+                allocation remain separate.
+              </small>
+            </form>
+          )}
           {selected && (
             <div className="ops-toolbar">
               <a href={"mailto:" + selected.email}>Email organizer / contact</a>

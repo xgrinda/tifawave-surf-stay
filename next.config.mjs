@@ -27,13 +27,18 @@ const nextConfig = {
     },
   },
   images: {
-    qualities: [75, 82, 84, 88],
+    qualities: [75, 80, 82, 84, 88],
     remotePatterns: [
       {
         hostname: process.env.NEXT_PUBLIC_SUPABASE_URL
           ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
           : "unconfigured.supabase.co",
         protocol: "https",
+      },
+      {
+        hostname: "tuzefzcosvvhzffbxhpm.supabase.co",
+        protocol: "https",
+        pathname: "/storage/v1/object/public/tifawave-media/**",
       },
       {
         hostname: "images.unsplash.com",

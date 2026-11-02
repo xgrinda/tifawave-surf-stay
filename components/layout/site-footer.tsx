@@ -9,7 +9,7 @@ import type { WebsiteSettings } from "@/lib/settings";
 
 export function SiteFooter({
   settings,
-  whatsappHref
+  whatsappHref,
 }: {
   settings: WebsiteSettings;
   whatsappHref: string;
@@ -21,13 +21,38 @@ export function SiteFooter({
   const planLinks = [
     { href: localizedPath(locale, "/book"), label: copy.nav.book },
     { href: localizedPath(locale, "/faq"), label: copy.nav.faq },
-    { href: whatsappHref, label: copy.common.whatsapp }
+    ...(settings.whatsappNumber
+      ? [{ href: whatsappHref, label: copy.common.whatsapp }]
+      : []),
+    { href: localizedPath(locale, "/contact"), label: copy.common.contact },
+    {
+      href: localizedPath(locale, "/policies"),
+      label:
+        locale === "fr"
+          ? "Informations et conditions"
+          : "Guest information & policies",
+    },
   ];
   const exploreLinks = [
-    { href: localizedPath(locale, "/surf/packages"), label: copy.footer.surfPackages },
+    {
+      href: localizedPath(locale, "/surf/packages"),
+      label: copy.footer.surfPackages,
+    },
     { href: localizedPath(locale, "/stay"), label: copy.footer.roomsStay },
     { href: localizedPath(locale, "/gallery"), label: copy.nav.gallery },
-    { href: localizedPath(locale, "/about"), label: copy.nav.about }
+    { href: localizedPath(locale, "/about"), label: copy.nav.about },
+    {
+      href: localizedPath(locale, "/groups"),
+      label: locale === "fr" ? "Groupes et retraites" : "Groups & retreats",
+    },
+    {
+      href: localizedPath(locale, "/partners"),
+      label: locale === "fr" ? "Partenariats" : "Partnerships",
+    },
+    {
+      href: localizedPath(locale, "/collaborate"),
+      label: locale === "fr" ? "Marques et créateurs" : "Brands & creators",
+    },
   ];
 
   return (
@@ -66,7 +91,9 @@ export function SiteFooter({
 
           <div className="footer-contact" id="whatsapp">
             <h2>{copy.common.contact}</h2>
-            <a href={whatsappHref}>{copy.common.whatsapp}</a>
+            {settings.whatsappNumber && (
+              <a href={whatsappHref}>{copy.common.whatsapp}</a>
+            )}
             <a href={`mailto:${settings.contactEmail}`}>
               {settings.contactEmail}
             </a>

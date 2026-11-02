@@ -4,8 +4,7 @@ import { createSupabaseStaffClient } from "@/lib/supabase/staff";
 import { logoutAdminAction } from "../login/actions";
 import { MfaForm } from "./form";
 export default async function Mfa() {
-  const staff = await requireStaff();
-  if (staff.role !== "owner") redirect("/admin");
+  await requireStaff();
   const client = await createSupabaseStaffClient();
   const { data: level } =
     await client.auth.mfa.getAuthenticatorAssuranceLevel();

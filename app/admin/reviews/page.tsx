@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { ReviewEditor } from "./editor";
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/admin/auth";
 import {
@@ -5,7 +7,7 @@ import {
   getGoogleReviewsReadiness,
 } from "@/lib/admin/reviews";
 import { AdminShell } from "../_components/admin-shell";
-import { syncGoogleReviewsAction } from "./actions";
+import { setReviewVisibility, syncGoogleReviewsAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +19,9 @@ export const metadata: Metadata = {
 type AdminReviewsPageProps = {
   searchParams?: Promise<{
     error?: string;
+    saved?: string;
+    page?: string;
+    q?: string;
     skipped?: string;
     synced?: string;
   }>;
@@ -60,11 +65,12 @@ export default async function AdminReviewsPage({
 }: AdminReviewsPageProps) {
   await requireAdmin("owner");
 
-  const [params, reviews, readiness] = await Promise.all([
-    searchParams,
-    getAdminReviews(),
+  const params = await searchParams;
+  const [result, readiness] = await Promise.all([
+    getAdminReviews(params),
     getGoogleReviewsReadiness(),
   ]);
+  const reviews = result.rows;
   const message = getMessage(params);
 
   return (
@@ -127,20 +133,37 @@ export default async function AdminReviewsPage({
             </button>
           </form>
           <p>
-            Configure IDs in Settings and env vars in Vercel before syncing.
-            Manual fallback rows can still be added directly in Supabase with{" "}
-            <code>source=manual</code> and <code>active=true</code>.
+            Configure IDs in Settings and env vars in Vercel before syncing. Add
+            verified original guest reviews below when official sync is
+            unavailable.
           </p>
         </div>
       </section>
 
+      {params?.saved && <p role="status">Review saved.</p>}
+      <section className="desk-panel">
+        <h2>Add a verified original review</h2>
+        <p>
+          Never create sample reviews or alter the meaning of a guest’s words.
+          New reviews stay hidden unless explicitly published.
+        </p>
+        <ReviewEditor />
+      </section>
       <section
         className="admin-panel-section"
         aria-labelledby="reviews-list-title"
       >
         <div className="admin-section-heading">
           <div>
-            <h2 id="reviews-list-title">Synced reviews</h2>
+            <h2 id="reviews-list-title">Reviews · {result.count}</h2>
+            <form className="desk-actions">
+              <label className="admin-field">
+                <span>Search guest name</span>
+                <input name="q" defaultValue={result.q} maxLength={80} />
+              </label>
+              <button className="btn btn-secondary">Search</button>
+              <Link href="/admin/reviews">Clear</Link>
+            </form>
             <p>Active written reviews can appear on the homepage.</p>
           </div>
         </div>
@@ -196,6 +219,20 @@ export default async function AdminReviewsPage({
                       >
                         {review.active ? "Active" : "Hidden"}
                       </span>
+                      <form action={setReviewVisibility}>
+                        <input name="id" type="hidden" value={review.id} />
+                        <input
+                          name="updated_at"
+                          type="hidden"
+                          value={review.updatedAt}
+                        />
+                        <input
+                          name="active"
+                          type="hidden"
+                          value={String(!review.active)}
+                        />
+                        <button>{review.active ? "Hide" : "Publish"}</button>
+                      </form>
                     </td>
                   </tr>
                 ))}
@@ -212,6 +249,42 @@ export default async function AdminReviewsPage({
           </div>
         )}
       </section>
+      <div className="desk-actions">
+        {result.page > 1 && (
+          <Link
+            href={
+              "?" +
+              new URLSearchParams({
+                page: String(result.page - 1),
+                q: result.q,
+              })
+            }
+          >
+            Previous
+          </Link>
+        )}
+        {result.page * 25 < result.count && (
+          <Link
+            href={
+              "?" +
+              new URLSearchParams({
+                page: String(result.page + 1),
+                q: result.q,
+              })
+            }
+          >
+            Next
+          </Link>
+        )}
+      </div>
+      {reviews
+        .filter((r) => r.source === "manual")
+        .map((r) => (
+          <details className="desk-panel" key={r.id}>
+            <summary>Edit original review · {r.reviewerName}</summary>
+            <ReviewEditor review={r} />
+          </details>
+        ))}
     </AdminShell>
   );
 }

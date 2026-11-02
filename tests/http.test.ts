@@ -115,3 +115,57 @@ test("baseline security headers protect staff and public pages", async () => {
   );
   assert.equal(r.headers.get("x-powered-by"), null);
 });
+
+test("new enquiry, export, media and session endpoints reject cross-origin and unauthenticated requests", async () => {
+  for (const path of [
+    "/api/enquiry",
+    "/api/admin/export",
+    "/api/admin/media",
+    "/api/admin/session",
+  ]) {
+    const r = await get(path, {
+      method: "POST",
+      headers: {
+        origin: "https://attacker.example.invalid",
+        "content-type": "application/json",
+      },
+      body: "{}",
+    });
+    assert.equal(r.status, 403, path);
+  }
+  for (const path of ["/api/admin/export", "/api/admin/media"]) {
+    const r = await get(path, {
+      method: "POST",
+      headers: { origin: base.origin, "content-type": "application/json" },
+      body: "{}",
+    });
+    assert.equal(r.status, 403, path);
+  }
+});
+test("public group, partnership, collaboration and policy pages are available in both languages", async () => {
+  for (const locale of ["", "/fr"])
+    for (const path of [
+      "/groups",
+      "/partners",
+      "/collaborate",
+      "/contact",
+      "/policies",
+    ]) {
+      const r = await get(locale + path);
+      assert.equal(r.status, 200, locale + path);
+      const html = await r.text();
+      assert.ok(html.includes("Tifawave"));
+      assert.ok(!html.includes("4.9/5"));
+    }
+  const home = await (await get("/")).text();
+  for (const fiction of [
+    "600+",
+    "€59",
+    "Free cancellation up to 30 days",
+    "images.unsplash.com/photo-",
+  ])
+    assert.ok(!home.includes(fiction), fiction);
+  const image = await get("/opengraph-image");
+  assert.equal(image.status, 200);
+  assert.match(image.headers.get("content-type") || "", /image\/png/);
+});

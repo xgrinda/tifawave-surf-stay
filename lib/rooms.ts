@@ -1,5 +1,9 @@
+import { isPublicImageUrl } from "@/lib/image-url";
 import { unstable_noStore as noStore } from "next/cache";
-import { normalizeFocalPosition, type FocalPosition } from "@/lib/image-position";
+import {
+  normalizeFocalPosition,
+  type FocalPosition,
+} from "@/lib/image-position";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Row } from "@/lib/supabase/types";
 
@@ -27,7 +31,7 @@ function rowToRoom(
     Row<"rooms">,
     "id" | "slug" | "name" | "description" | "max_guests" | "base_price_cents"
   >,
-  images: PublicRoomImage[]
+  images: PublicRoomImage[],
 ): PublicRoomDetail {
   return {
     id: room.id,
@@ -36,12 +40,12 @@ function rowToRoom(
     description: room.description,
     maxGuests: room.max_guests,
     basePriceCents: room.base_price_cents,
-    images
+    images,
   };
 }
 
 async function getRoomImages(
-  roomIds: string[]
+  roomIds: string[],
 ): Promise<Map<string, PublicRoomImage[]>> {
   const imagesByRoomId = new Map<string, PublicRoomImage[]>();
 
@@ -54,7 +58,7 @@ async function getRoomImages(
     const { data: images, error } = await supabase
       .from("room_images")
       .select(
-        "id, room_id, image_url, alt_text, focal_position, sort_order, is_primary"
+        "id, room_id, image_url, alt_text, focal_position, sort_order, is_primary",
       )
       .in("room_id", roomIds)
       .order("is_primary", { ascending: false })
@@ -66,6 +70,7 @@ async function getRoomImages(
     }
 
     for (const image of images) {
+      if (!isPublicImageUrl(image.image_url)) continue;
       const roomImages = imagesByRoomId.get(image.room_id) ?? [];
       roomImages.push({
         id: image.id,
@@ -73,7 +78,7 @@ async function getRoomImages(
         altText: image.alt_text,
         focalPosition: normalizeFocalPosition(image.focal_position),
         sortOrder: image.sort_order,
-        isPrimary: image.is_primary
+        isPrimary: image.is_primary,
       });
       imagesByRoomId.set(image.room_id, roomImages);
     }
@@ -102,14 +107,16 @@ export async function getActiveRooms(): Promise<PublicRoomDetail[]> {
 
     const imagesByRoomId = await getRoomImages(rooms.map((room) => room.id));
 
-    return rooms.map((room) => rowToRoom(room, imagesByRoomId.get(room.id) ?? []));
+    return rooms.map((room) =>
+      rowToRoom(room, imagesByRoomId.get(room.id) ?? []),
+    );
   } catch {
     return [];
   }
 }
 
 export async function getActiveRoomBySlug(
-  slug: string
+  slug: string,
 ): Promise<PublicRoomDetail | null> {
   noStore();
 
