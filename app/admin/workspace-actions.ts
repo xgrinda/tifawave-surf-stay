@@ -75,14 +75,13 @@ export async function saveWorkspaceAction(
   if (error)
     return {
       ok: false,
-      message:
-        error.code === "40001"
-          ? "This record changed. Reload and review before saving."
-          : error.code === "23P01"
-            ? "These dates overlap another rate for the same unit and currency."
-            : error.code === "42501"
-              ? "Your staff role cannot make this change."
-              : "The change could not be saved. Check dates, references, required fields and inventory approval.",
+      message: ["PT409", "40001"].includes(error.code ?? "")
+        ? "This record changed. Reload and review before saving."
+        : error.code === "23P01"
+          ? "These dates overlap another rate for the same unit and currency."
+          : error.code === "42501"
+            ? "Your staff role cannot make this change."
+            : "The change could not be saved. Check dates, references, required fields and inventory approval.",
       id: id.data,
     };
   revalidatePath("/admin", "layout");

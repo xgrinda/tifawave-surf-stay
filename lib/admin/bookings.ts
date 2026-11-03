@@ -145,7 +145,7 @@ export function operationError(error: { code?: string; message?: string }) {
     return "Those rooms or beds conflict with a reservation or maintenance block. Nothing was changed.";
   if (error.code === "42501")
     return "Your current staff identity is not authorized for this action.";
-  if (error.code === "40001")
+  if (["PT409", "40001"].includes(error.code ?? ""))
     return "This record changed. Refresh and review before trying again.";
   if (error.code === "23514" || error.code === "22023") {
     const safe = [

@@ -82,7 +82,7 @@ export async function inviteStaff(form: FormData) {
         saved.error
           ? {
               error:
-                "Invitation sent, but staff access could not be assigned. Provision the returned identity from Supabase Auth before inviting again.",
+                "Invitation sent, but staff access could not be assigned. Use Assign an invited identity to finish provisioning; do not send another invitation.",
             }
           : { invited: "1" },
       ),

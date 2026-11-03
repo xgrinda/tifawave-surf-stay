@@ -87,9 +87,6 @@ export const i18n = {
       reviews: {
         ariaLabel: "Five star review",
         logosLabel: "Review scores",
-        quote:
-          '"Arrived a nervous beginner. Left riding green waves and already booking next year. The food, the people, the place — unreal."',
-        meta: "Hannah M. · United Kingdom · Coached Surf Week",
       },
       stayPreview: {
         eyebrow: "The Stay",
@@ -103,43 +100,6 @@ export const i18n = {
           "4 double rooms",
           "Family suite",
           "4 individual dorm beds",
-        ],
-      },
-      timeline: {
-        eyebrow: "A day at Tifawave",
-        title: "From dawn patrol to rooftop dinner.",
-        ariaLabel: "Daily rhythm",
-        items: [
-          {
-            time: "06:30",
-            title: "Dawn patrol",
-            description: "Offshore winds, empty lineup, coffee in hand.",
-          },
-          {
-            time: "09:00",
-            title: "Slow breakfast",
-            description: "Msemen, fruit, eggs and stories on the terrace.",
-          },
-          {
-            time: "11:00",
-            title: "Video review",
-            description: "See your session frame by frame with a coach.",
-          },
-          {
-            time: "15:00",
-            title: "Free surf",
-            description: "Guided to the break that suits the tide and you.",
-          },
-          {
-            time: "18:00",
-            title: "Hammam",
-            description: "Steam, scrub, and the best sleep you'll have.",
-          },
-          {
-            time: "20:00",
-            title: "Rooftop tagine",
-            description: "A long table, candlelight, and the swell forecast.",
-          },
         ],
       },
       trustStrip: [
@@ -226,9 +186,6 @@ export const i18n = {
       reviews: {
         ariaLabel: "Avis cinq étoiles",
         logosLabel: "Notes d'avis",
-        quote:
-          '"Je suis arrivée débutante et nerveuse. Je suis repartie sur des vagues vertes, déjà prête à revenir. La cuisine, les gens, le lieu — incroyable."',
-        meta: "Hannah M. · Royaume-Uni · Semaine surf coachée",
       },
       stayPreview: {
         eyebrow: "Le séjour",
@@ -242,44 +199,6 @@ export const i18n = {
           "4 chambres doubles",
           "Suite familiale",
           "4 lits individuels",
-        ],
-      },
-      timeline: {
-        eyebrow: "Une journée à Tifawave",
-        title: "Du surf à l'aube au dîner sur le rooftop.",
-        ariaLabel: "Rythme de la journée",
-        items: [
-          {
-            time: "06:30",
-            title: "Dawn patrol",
-            description: "Vent offshore, lineup calme, café à la main.",
-          },
-          {
-            time: "09:00",
-            title: "Petit-déjeuner lent",
-            description: "Msemen, fruits, œufs et histoires sur la terrasse.",
-          },
-          {
-            time: "11:00",
-            title: "Analyse vidéo",
-            description: "Revoyez votre session image par image avec un coach.",
-          },
-          {
-            time: "15:00",
-            title: "Free surf",
-            description:
-              "Guidé vers le spot adapté à la marée et à votre niveau.",
-          },
-          {
-            time: "18:00",
-            title: "Hammam",
-            description: "Vapeur, gommage et une nuit de sommeil parfaite.",
-          },
-          {
-            time: "20:00",
-            title: "Tajine sur le rooftop",
-            description: "Grande table, bougies et prévisions de houle.",
-          },
         ],
       },
       trustStrip: [

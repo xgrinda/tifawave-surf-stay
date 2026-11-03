@@ -60,7 +60,7 @@ export default async function FrenchHome() {
 
   return (
     <main>
-      <HeroSection locale="fr" />
+      <HeroSection locale="fr" image={placeImage || stayImage} />
       <TrustStrip locale="fr" />
       {content && (
         <Container>

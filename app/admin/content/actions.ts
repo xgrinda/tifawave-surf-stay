@@ -44,12 +44,11 @@ export async function saveContent(
     });
     if (error)
       return {
-        error:
-          error.code === "40001"
-            ? "Another editor saved this document. Reload before continuing."
-            : error.code === "23505"
-              ? "This document already exists. Open it from the list."
-              : error.message,
+        error: ["PT409", "40001"].includes(error.code ?? "")
+          ? "Another editor saved this document. Reload before continuing."
+          : error.code === "23505"
+            ? "This document already exists. Open it from the list."
+            : error.message,
       };
     revalidatePath("/", "layout");
     return { id: data };

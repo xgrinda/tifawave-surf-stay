@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { unstable_noStore as noStore } from "next/cache";
 import { createSupabaseStaffClient } from "@/lib/supabase/staff";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -6,6 +7,7 @@ import type { Row } from "@/lib/supabase/types";
 type SettingsRow = Row<"settings">;
 
 export type WebsiteSettings = {
+  breakfastIncluded: boolean;
   businessName: string;
   contactEmail: string;
   whatsappNumber: string;
@@ -36,6 +38,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CURRENCY_PATTERN = /^[A-Z]{3}$/;
 
 export const DEFAULT_WEBSITE_SETTINGS: WebsiteSettings = {
+  breakfastIncluded: false,
   businessName: "Tifawave Surf Stay",
   contactEmail: "hello@tifawave.com",
   whatsappNumber: "",
@@ -79,6 +82,7 @@ function optionalUrl(value: string): string {
 
 function rowToSettings(row: SettingsRow): WebsiteSettings {
   return {
+    breakfastIncluded: Boolean(row.breakfast_included),
     businessName: row.business_name,
     contactEmail: row.contact_email,
     whatsappNumber: row.whatsapp_number,
@@ -101,6 +105,7 @@ function rowToSettings(row: SettingsRow): WebsiteSettings {
 
 function normalizeSettings(input: UpdateWebsiteSettingsInput): WebsiteSettings {
   const settings = {
+    breakfastIncluded: input.breakfastIncluded === true,
     businessName: requiredText(
       input.businessName,
       DEFAULT_WEBSITE_SETTINGS.businessName,
@@ -138,6 +143,7 @@ function normalizeSettings(input: UpdateWebsiteSettingsInput): WebsiteSettings {
 
 function settingsToRow(settings: WebsiteSettings) {
   return {
+    breakfast_included: settings.breakfastIncluded,
     business_name: settings.businessName,
     contact_email: settings.contactEmail,
     whatsapp_number: settings.whatsappNumber,
@@ -170,7 +176,7 @@ export function getWhatsappHref(
   return `https://wa.me/${digits}?text=${text}`;
 }
 
-export async function getWebsiteSettings(): Promise<WebsiteSettings> {
+export const getWebsiteSettings = cache(async (): Promise<WebsiteSettings> => {
   noStore();
 
   try {
@@ -189,7 +195,7 @@ export async function getWebsiteSettings(): Promise<WebsiteSettings> {
   } catch {
     return DEFAULT_WEBSITE_SETTINGS;
   }
-}
+});
 
 export async function updateWebsiteSettings(
   input: UpdateWebsiteSettingsInput,

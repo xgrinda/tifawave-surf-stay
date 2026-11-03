@@ -5,7 +5,11 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Container } from "@/components/primitives/container";
-import { getActiveRooms, getActiveRoomBySlug } from "@/lib/rooms";
+import {
+  getActiveRooms,
+  getActiveRoomBySlug,
+  type PublicRoomDetail,
+} from "@/lib/rooms";
 import {
   getActiveSurfPackages,
   getActiveSurfPackageBySlug,
@@ -24,6 +28,45 @@ const price = (cents: number, currency: string, locale: Locale) =>
     : locale === "fr"
       ? "Nous consulter"
       : "Ask us";
+function translatedRoom(
+  room: PublicRoomDetail,
+  locale: Locale,
+): PublicRoomDetail {
+  if (locale !== "fr") return room;
+  const french: Record<string, { name: string; description: string }> = {
+    "private-double-room": {
+      name: "Chambre double standard",
+      description:
+        "Chambre privée avec lit double, pour deux voyageurs maximum.",
+    },
+    "private-double-room-balcony": {
+      name: "Chambre double avec balcon",
+      description:
+        "Chambre privée avec lit double et balcon, pour deux voyageurs maximum.",
+    },
+    "twin-room": {
+      name: "Chambre twin",
+      description:
+        "Chambre avec deux lits simples, pour deux voyageurs maximum.",
+    },
+    "triple-room": {
+      name: "Chambre triple",
+      description: "Chambre pour trois voyageurs maximum.",
+    },
+    "family-room-4p": {
+      name: "Suite familiale",
+      description:
+        "Suite avec un lit double et deux lits simples, vendue comme une seule unité pour quatre voyageurs maximum.",
+    },
+    "4-bed-dorm-room": {
+      name: "Lit individuel en dortoir",
+      description:
+        "Un lit réservé individuellement dans le dortoir partagé de quatre lits.",
+    },
+  };
+  return french[room.slug] ? { ...room, ...french[room.slug] } : room;
+}
+
 export async function catalogueMetadata(
   kind: "room" | "package",
   locale: Locale,
@@ -65,11 +108,12 @@ export async function catalogueMetadata(
 }
 export async function RoomList({ locale }: { locale: Locale }) {
   const fr = locale === "fr";
-  const [rooms, c, settings] = await Promise.all([
+  const [originalRooms, c, settings] = await Promise.all([
     getActiveRooms(),
     publishedContent("page", "stay", locale),
     getWebsiteSettings(),
   ]);
+  const rooms = originalRooms.map((r) => translatedRoom(r, locale));
   return (
     <main className="stay-page">
       <section className="stay-page-hero">
@@ -110,6 +154,9 @@ export async function RoomList({ locale }: { locale: Locale }) {
                 <div className="stay-room-card-body">
                   <h2>{room.name}</h2>
                   {room.description && <p>{room.description}</p>}
+                  {settings.breakfastIncluded && (
+                    <p>{fr ? "Petit-déjeuner inclus" : "Breakfast included"}</p>
+                  )}
                   <dl className="stay-room-facts">
                     <div>
                       <dt>{fr ? "Capacité" : "Capacity"}</dt>
@@ -117,7 +164,13 @@ export async function RoomList({ locale }: { locale: Locale }) {
                     </div>
                     <div>
                       <dt>
-                        {fr ? "Tarif indicatif / nuit" : "Guide price / night"}
+                        {room.slug.includes("dorm") && room.maxGuests === 1
+                          ? fr
+                            ? "Par personne et par nuit"
+                            : "Per person / night"
+                          : fr
+                            ? "Par chambre et par nuit"
+                            : "Per room / night"}
                       </dt>
                       <dd>
                         {price(
@@ -189,12 +242,13 @@ export async function RoomDetail({
   locale: Locale;
   slug: string;
 }) {
-  const [room, c, settings] = await Promise.all([
+  const [originalRoom, c, settings] = await Promise.all([
     getActiveRoomBySlug(slug),
     publishedContent("room", slug, locale),
     getWebsiteSettings(),
   ]);
-  if (!room) notFound();
+  if (!originalRoom) notFound();
+  const room = translatedRoom(originalRoom, locale);
   const fr = locale === "fr";
   const propertyDetails = await createSupabaseServerClient().rpc(
     "room_listing_details",
@@ -217,6 +271,9 @@ export async function RoomDetail({
             <p className="eyebrow">Tifawave · Tamraght</p>
             <h1>{c?.title || room.name}</h1>
             <p>{c?.summary || room.description}</p>
+            {settings.breakfastIncluded && (
+              <p>{fr ? "Petit-déjeuner inclus" : "Breakfast included"}</p>
+            )}
             <dl className="room-detail-facts">
               <div>
                 <dt>{fr ? "Capacité" : "Capacity"}</dt>
@@ -225,7 +282,15 @@ export async function RoomDetail({
                 </dd>
               </div>
               <div>
-                <dt>{fr ? "Tarif indicatif / nuit" : "Guide price / night"}</dt>
+                <dt>
+                  {room.slug.includes("dorm") && room.maxGuests === 1
+                    ? fr
+                      ? "Par personne et par nuit"
+                      : "Per person / night"
+                    : fr
+                      ? "Par chambre et par nuit"
+                      : "Per room / night"}
+                </dt>
                 <dd>
                   {price(room.basePriceCents, settings.defaultCurrency, locale)}
                 </dd>

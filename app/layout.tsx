@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     description: SITE_DESCRIPTION,
     images: [
       {
-        alt: "Surfer walking toward Atlantic waves near Tamraght",
+        alt: "Tifawave Surf Stay · Tamraght, Morocco",
         height: 630,
         url: SITE_OG_IMAGE,
         width: 1200,
@@ -68,7 +68,51 @@ export default async function RootLayout({
   return (
     <html lang={locale}>
       <body className={`${inter.variable} ${fraunces.variable}`}>
-        {!isAdmin && <GoogleAnalytics measurementId={gaMeasurementId} />}
+        {!isAdmin && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "LodgingBusiness",
+                name: settings.businessName,
+                url: getSiteUrl(),
+                address: {
+                  "@type": "PostalAddress",
+                  addressLocality: "Tamraght",
+                  addressCountry: "MA",
+                },
+                numberOfRooms: 9,
+                ...(settings.supportPhone
+                  ? { telephone: settings.supportPhone }
+                  : {}),
+                ...(settings.contactEmail
+                  ? { email: settings.contactEmail }
+                  : {}),
+                ...(settings.instagramUrl
+                  ? { sameAs: [settings.instagramUrl] }
+                  : {}),
+                ...(settings.googleMapsUrl
+                  ? { hasMap: settings.googleMapsUrl }
+                  : {}),
+                ...(settings.breakfastIncluded
+                  ? {
+                      amenityFeature: [
+                        {
+                          "@type": "LocationFeatureSpecification",
+                          name: "Breakfast included",
+                          value: true,
+                        },
+                      ],
+                    }
+                  : {}),
+              }).replaceAll("<", "\\u003c"),
+            }}
+          />
+        )}
+        {!isAdmin && process.env.TIFAWAVE_ENV === "production" && (
+          <GoogleAnalytics measurementId={gaMeasurementId} />
+        )}
         {!isAdmin && <SiteHeader />}
         {children}
         {!isAdmin && (

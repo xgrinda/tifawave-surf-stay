@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useRef, useState, type FormEvent } from "react";
 import type { Locale } from "@/lib/i18n";
 import { propertyToday } from "@/lib/booking/schema";
@@ -188,217 +189,243 @@ export function RequestForm({
           `Demandes en ligne : ${rules.minimum_nights} à ${rules.maximum_nights} nuits · préavis de ${rules.notice_days} jours.`,
         )}
       </p>
-      <form
-        onSubmit={submit}
-        onChange={() => {
-          key.current = null;
-        }}
-        className="booking-form"
-      >
-        <fieldset disabled={busy} className="request-fields">
-          <div className="request-grid">
-            <label className="admin-field">
-              {label("Arrival", "Arrivée")}
-              <input
-                name="checkIn"
-                type="date"
-                min={new Date(
-                  Date.parse(propertyToday()) + rules.notice_days * 86400000,
-                )
-                  .toISOString()
-                  .slice(0, 10)}
-                defaultValue={initial.checkIn}
-                required
-              />
-            </label>
-            <label className="admin-field">
-              {label("Departure", "Départ")}
-              <input
-                name="checkOut"
-                type="date"
-                min={new Date(
-                  Date.parse(propertyToday()) + rules.notice_days * 86400000,
-                )
-                  .toISOString()
-                  .slice(0, 10)}
-                defaultValue={initial.checkOut}
-                required
-              />
-            </label>
-            <label className="admin-field">
-              {label("Guests · maximum 23", "Voyageurs · maximum 23")}
-              <input
-                name="guests"
-                type="number"
-                min={1}
-                max={23}
-                defaultValue={
-                  Number(initial.guests) > 0
-                    ? Math.min(Number(initial.guests), 23)
-                    : 1
-                }
-                required
-              />
-            </label>
-            <label className="admin-field">
-              {label("Preferred room setup", "Configuration souhaitée")}
-              <select name="preferredKind" required defaultValue="mixed">
-                {[
-                  [
-                    "mixed",
-                    label(
-                      "Flexible / mixed rooms",
-                      "Flexible / chambres mixtes",
-                    ),
-                  ],
-                  ["double", label("Double room", "Chambre double")],
-                  ["twin", label("Twin room", "Chambre twin")],
-                  ["triple", label("Triple room", "Chambre triple")],
-                  [
-                    "family",
-                    label(
-                      "Family suite · one unit",
-                      "Suite familiale · unité entière",
-                    ),
-                  ],
-                  [
-                    "dorm",
-                    label(
-                      "Individual dorm beds",
-                      "Lits individuels en dortoir",
-                    ),
-                  ],
-                ].map(([v, t]) => (
-                  <option key={v} value={v}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-          {rooms.length > 0 && (
-            <label className="admin-field">
-              {label(
-                "Room listing preference · optional",
-                "Préférence de chambre · facultatif",
-              )}
-              <select name="roomId" defaultValue={initial.roomId || ""}>
-                <option value="">
-                  {label(
-                    "Owner will help choose",
-                    "Le propriétaire vous aidera à choisir",
-                  )}
-                </option>
-                {rooms.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-          {mode === "surf_package" && (
-            <label className="admin-field">
-              {label("Surf package", "Séjour surf")}
-              <select
-                name="packageId"
-                required
-                defaultValue={initial.packageId || ""}
-              >
-                <option value="">
-                  {label("Choose a package", "Choisir un séjour")}
-                </option>
-                {packages.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-              {!packages.length && (
-                <span>
-                  {label(
-                    "Contact us to discuss a surf stay.",
-                    "Contactez-nous pour organiser un séjour surf.",
-                  )}
-                </span>
-              )}
-            </label>
-          )}
-          {mode !== "stay_only" && (
-            <>
+      {mode === "surf_package" && packages.length === 0 ? (
+        <div className="public-empty-state">
+          <h2>
+            {label(
+              "Let’s discuss your surf plans.",
+              "Parlons de votre projet surf.",
+            )}
+          </h2>
+          <p>
+            {label(
+              "Contact us for current package options, dates and prices.",
+              "Contactez-nous pour les options, les dates et les tarifs actuels.",
+            )}
+          </p>
+          <Link
+            className="btn btn-primary"
+            href={fr ? "/fr/contact" : "/contact"}
+          >
+            {label("Send a surf enquiry", "Envoyer une demande surf")}
+          </Link>
+        </div>
+      ) : (
+        <form
+          onSubmit={submit}
+          onChange={() => {
+            key.current = null;
+          }}
+          className="booking-form"
+        >
+          <fieldset disabled={busy} className="request-fields">
+            <div className="request-grid">
+              <label className="admin-field">
+                {label("Arrival", "Arrivée")}
+                <input
+                  name="checkIn"
+                  type="date"
+                  min={new Date(
+                    Date.parse(propertyToday()) + rules.notice_days * 86400000,
+                  )
+                    .toISOString()
+                    .slice(0, 10)}
+                  defaultValue={initial.checkIn}
+                  required
+                />
+              </label>
+              <label className="admin-field">
+                {label("Departure", "Départ")}
+                <input
+                  name="checkOut"
+                  type="date"
+                  min={new Date(
+                    Date.parse(propertyToday()) + rules.notice_days * 86400000,
+                  )
+                    .toISOString()
+                    .slice(0, 10)}
+                  defaultValue={initial.checkOut}
+                  required
+                />
+              </label>
+              <label className="admin-field">
+                {label("Guests · maximum 23", "Voyageurs · maximum 23")}
+                <input
+                  name="guests"
+                  type="number"
+                  min={1}
+                  max={23}
+                  defaultValue={
+                    Number(initial.guests) > 0
+                      ? Math.min(Number(initial.guests), 23)
+                      : 1
+                  }
+                  required
+                />
+              </label>
+              <label className="admin-field">
+                {label("Preferred room setup", "Configuration souhaitée")}
+                <select name="preferredKind" required defaultValue="mixed">
+                  {[
+                    [
+                      "mixed",
+                      label(
+                        "Flexible / mixed rooms",
+                        "Flexible / chambres mixtes",
+                      ),
+                    ],
+                    ["double", label("Double room", "Chambre double")],
+                    ["twin", label("Twin room", "Chambre twin")],
+                    ["triple", label("Triple room", "Chambre triple")],
+                    [
+                      "family",
+                      label(
+                        "Family suite · one unit",
+                        "Suite familiale · unité entière",
+                      ),
+                    ],
+                    [
+                      "dorm",
+                      label(
+                        "Individual dorm beds",
+                        "Lits individuels en dortoir",
+                      ),
+                    ],
+                  ].map(([v, t]) => (
+                    <option key={v} value={v}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            {rooms.length > 0 && (
               <label className="admin-field">
                 {label(
-                  "Surf experience / level mix",
-                  "Expérience / niveaux de surf",
+                  "Room listing preference · optional",
+                  "Préférence de chambre · facultatif",
                 )}
-                <input name="surfLevel" maxLength={160} />
+                <select name="roomId" defaultValue={initial.roomId || ""}>
+                  <option value="">
+                    {label(
+                      "Owner will help choose",
+                      "Le propriétaire vous aidera à choisir",
+                    )}
+                  </option>
+                  {rooms.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            {mode === "surf_package" && (
+              <label className="admin-field">
+                {label("Surf package", "Séjour surf")}
+                <select
+                  name="packageId"
+                  required
+                  defaultValue={initial.packageId || ""}
+                >
+                  <option value="">
+                    {label("Choose a package", "Choisir un séjour")}
+                  </option>
+                  {packages.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+                {!packages.length && (
+                  <span>
+                    {label(
+                      "Contact us to discuss a surf stay.",
+                      "Contactez-nous pour organiser un séjour surf.",
+                    )}
+                  </span>
+                )}
+              </label>
+            )}
+            {mode !== "stay_only" && (
+              <>
+                <label className="admin-field">
+                  {label(
+                    "Surf experience / level mix",
+                    "Expérience / niveaux de surf",
+                  )}
+                  <input name="surfLevel" maxLength={160} />
+                </label>
+                <label className="admin-field">
+                  {label("Room preferences", "Préférences de chambres")}
+                  <input name="roomPreference" maxLength={160} />
+                </label>
+              </>
+            )}
+            {mode === "group_request" && (
+              <label className="admin-field">
+                {label(
+                  "Group / retreat name",
+                  "Nom du groupe / de la retraite",
+                )}
+                <input name="retreatName" maxLength={160} />
+              </label>
+            )}
+            <label className="admin-field">
+              {label(
+                mode === "group_request" ? "Organizer name" : "Full name",
+                mode === "group_request"
+                  ? "Nom de l’organisateur"
+                  : "Nom complet",
+              )}
+              <input
+                name="guestName"
+                autoComplete="name"
+                minLength={2}
+                maxLength={120}
+                required
+              />
+            </label>
+            <div className="request-grid">
+              <label className="admin-field">
+                Email
+                <input
+                  name="guestEmail"
+                  type="email"
+                  autoComplete="email"
+                  maxLength={254}
+                  required
+                />
               </label>
               <label className="admin-field">
-                {label("Room preferences", "Préférences de chambres")}
-                <input name="roomPreference" maxLength={160} />
+                {label("Phone / WhatsApp", "Téléphone / WhatsApp")}
+                <input
+                  name="guestPhone"
+                  type="tel"
+                  autoComplete="tel"
+                  minLength={6}
+                  maxLength={40}
+                  required
+                />
               </label>
-            </>
+            </div>
+            <label className="admin-field">
+              {label("Message / requirements", "Message / besoins")}
+              <textarea name="message" rows={4} maxLength={1600} />
+            </label>
+            <button className="btn btn-primary" type="submit">
+              {busy
+                ? label("Sending…", "Envoi…")
+                : label("Send booking request", "Envoyer la demande")}
+            </button>
+          </fieldset>
+          {error && (
+            <p role="alert" className="admin-error">
+              {error}
+            </p>
           )}
-          {mode === "group_request" && (
-            <label className="admin-field">
-              {label("Group / retreat name", "Nom du groupe / de la retraite")}
-              <input name="retreatName" maxLength={160} />
-            </label>
-          )}
-          <label className="admin-field">
-            {label(
-              mode === "group_request" ? "Organizer name" : "Full name",
-              mode === "group_request"
-                ? "Nom de l’organisateur"
-                : "Nom complet",
-            )}
-            <input
-              name="guestName"
-              autoComplete="name"
-              minLength={2}
-              maxLength={120}
-              required
-            />
-          </label>
-          <div className="request-grid">
-            <label className="admin-field">
-              Email
-              <input
-                name="guestEmail"
-                type="email"
-                autoComplete="email"
-                maxLength={254}
-                required
-              />
-            </label>
-            <label className="admin-field">
-              {label("Phone / WhatsApp", "Téléphone / WhatsApp")}
-              <input
-                name="guestPhone"
-                type="tel"
-                autoComplete="tel"
-                minLength={6}
-                maxLength={40}
-                required
-              />
-            </label>
-          </div>
-          <label className="admin-field">
-            {label("Message / requirements", "Message / besoins")}
-            <textarea name="message" rows={4} maxLength={1600} />
-          </label>
-          <button className="btn btn-primary" type="submit">
-            {busy
-              ? label("Sending…", "Envoi…")
-              : label("Send booking request", "Envoyer la demande")}
-          </button>
-        </fieldset>
-        {error && (
-          <p role="alert" className="admin-error">
-            {error}
-          </p>
-        )}
-      </form>
+        </form>
+      )}
     </section>
   );
 }

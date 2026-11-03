@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Image from "next/image";
 import { Container } from "@/components/primitives/container";
 import { focalPositionToCss } from "@/lib/image-position";
@@ -7,7 +8,7 @@ import { getActiveSurfPackages } from "@/lib/surf-packages";
 
 export async function PackagesPreview({
   images = [],
-  locale = DEFAULT_LOCALE
+  locale = DEFAULT_LOCALE,
 }: {
   images?: HomeImage[];
   locale?: Locale;
@@ -16,8 +17,37 @@ export async function PackagesPreview({
   const copy = i18n[locale];
   const preview = copy.home.packagesPreview;
 
+  if (!packages.length)
+    return (
+      <section className="packages-preview">
+        <Container>
+          <div className="packages-preview-heading">
+            <p className="eyebrow">{preview.eyebrow}</p>
+            <h2>
+              {locale === "fr"
+                ? "Parlons de votre projet surf."
+                : "Let’s plan your surf stay."}
+            </h2>
+            <p>
+              {locale === "fr"
+                ? "Indiquez vos dates et votre niveau. Contactez-nous pour connaître les options et les tarifs actuels."
+                : "Tell us your dates and surf experience. Contact us for current options and prices."}
+            </p>
+            <Link
+              className="btn btn-primary"
+              href={localizedPath(locale, "/contact")}
+            >
+              {copy.common.contact}
+            </Link>
+          </div>
+        </Container>
+      </section>
+    );
   return (
-    <section className="packages-preview" aria-labelledby="packages-preview-title">
+    <section
+      className="packages-preview"
+      aria-labelledby="packages-preview-title"
+    >
       <Container>
         <div className="packages-preview-heading">
           <p className="eyebrow">{preview.eyebrow}</p>
@@ -27,7 +57,8 @@ export async function PackagesPreview({
 
         <div className="packages-preview-grid">
           {packages.map((pkg, index) => {
-            const image = images.length > 0 ? images[index % images.length] : null;
+            const image =
+              images.length > 0 ? images[index % images.length] : null;
 
             return (
               <article
@@ -49,13 +80,17 @@ export async function PackagesPreview({
                         sizes="(max-width: 880px) 100vw, 33vw"
                         src={image.imageUrl}
                         style={{
-                          objectPosition: focalPositionToCss(image.focalPosition)
+                          objectPosition: focalPositionToCss(
+                            image.focalPosition,
+                          ),
                         }}
                       />
                     ) : null}
                   </div>
                   {pkg.featured ? (
-                    <span className="package-card-ribbon">{preview.featured}</span>
+                    <span className="package-card-ribbon">
+                      {preview.featured}
+                    </span>
                   ) : null}
                 </div>
 

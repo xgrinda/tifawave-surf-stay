@@ -72,6 +72,14 @@ export default async function AdminSettingsPage({
         </div>
 
         <form className="admin-settings-form" action={updateSettingsAction}>
+          <label className="admin-checkbox-field">
+            <input
+              type="checkbox"
+              name="breakfastIncluded"
+              defaultChecked={settings.breakfastIncluded}
+            />
+            <span>Breakfast is included in room and dorm-bed rates</span>
+          </label>
           <div className="admin-settings-grid">
             <label className="admin-field">
               <span>Business name</span>

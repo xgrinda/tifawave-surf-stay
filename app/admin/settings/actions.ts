@@ -20,6 +20,7 @@ export async function updateSettingsAction(formData: FormData) {
   await requireAdmin("owner");
 
   const result = await updateWebsiteSettings({
+    breakfastIncluded: formData.get("breakfastIncluded") === "on",
     address: stringField(formData, "address"),
     bookingNoticeText: stringField(formData, "bookingNoticeText"),
     businessName: stringField(formData, "businessName"),
@@ -73,10 +74,9 @@ export async function saveOperationalSettings(form: FormData) {
   const { error } = await client.rpc("save_operations_settings", p.data);
   if (error)
     redirectWithMessage({
-      error:
-        error.code === "40001"
-          ? "Settings changed. Reload before saving."
-          : "Operational settings could not be saved.",
+      error: ["PT409", "40001"].includes(error.code ?? "")
+        ? "Settings changed. Reload before saving."
+        : "Operational settings could not be saved.",
     });
   revalidatePath("/admin/settings");
   revalidatePath("/book");

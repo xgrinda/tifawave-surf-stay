@@ -1,5 +1,6 @@
 "use server";
 
+import { amountToMinorString } from "@/lib/admin/money";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/admin/auth";
@@ -11,7 +12,7 @@ import {
   setAdminRoomActive,
   setAdminRoomImagePrimary,
   updateAdminRoomImage,
-  updateAdminRoom
+  updateAdminRoom,
 } from "@/lib/admin/rooms";
 
 function redirectWithMessage(params: Record<string, string>): never {
@@ -33,7 +34,10 @@ function isUploadFile(value: FormDataEntryValue): value is File {
 }
 
 function fileFields(formData: FormData, key: string): File[] {
-  return formData.getAll(key).filter(isUploadFile).filter((file) => file.size > 0);
+  return formData
+    .getAll(key)
+    .filter(isUploadFile)
+    .filter((file) => file.size > 0);
 }
 
 function incrementSortOrder(value: string, index: number): string {
@@ -48,11 +52,13 @@ function incrementSortOrder(value: string, index: number): string {
 
 function roomInputFromForm(formData: FormData) {
   return {
-    basePriceCents: stringField(formData, "basePriceCents"),
+    basePriceCents: amountToMinorString(
+      stringField(formData, "basePriceAmount"),
+    ),
     description: stringField(formData, "description"),
     maxGuests: stringField(formData, "maxGuests"),
     name: stringField(formData, "name"),
-    slug: stringField(formData, "slug")
+    slug: stringField(formData, "slug"),
   };
 }
 
@@ -63,7 +69,7 @@ function roomImageInputFromForm(formData: FormData) {
     imageUrl: stringField(formData, "imageUrl"),
     isPrimary: stringField(formData, "isPrimary") === "true",
     roomId: stringField(formData, "roomId"),
-    sortOrder: stringField(formData, "sortOrder")
+    sortOrder: stringField(formData, "sortOrder"),
   };
 }
 
@@ -80,13 +86,13 @@ export async function createRoomAction(formData: FormData) {
 
   if (!result.ok) {
     redirectWithMessage({
-      error: result.message
+      error: result.message,
     });
   }
 
   revalidateRooms();
   redirectWithMessage({
-    created: "1"
+    created: "1",
   });
 }
 
@@ -95,18 +101,18 @@ export async function updateRoomAction(formData: FormData) {
 
   const result = await updateAdminRoom({
     ...roomInputFromForm(formData),
-    id: stringField(formData, "roomId")
+    id: stringField(formData, "roomId"),
   });
 
   if (!result.ok) {
     redirectWithMessage({
-      error: result.message
+      error: result.message,
     });
   }
 
   revalidateRooms();
   redirectWithMessage({
-    updated: "1"
+    updated: "1",
   });
 }
 
@@ -115,18 +121,18 @@ export async function toggleRoomActiveAction(formData: FormData) {
 
   const result = await setAdminRoomActive(
     stringField(formData, "roomId"),
-    stringField(formData, "isActive") === "true"
+    stringField(formData, "isActive") === "true",
   );
 
   if (!result.ok) {
     redirectWithMessage({
-      error: result.message
+      error: result.message,
     });
   }
 
   revalidateRooms();
   redirectWithMessage({
-    status: "1"
+    status: "1",
   });
 }
 
@@ -137,13 +143,13 @@ export async function createRoomImageAction(formData: FormData) {
 
   if (!result.ok) {
     redirectWithMessage({
-      error: result.message
+      error: result.message,
     });
   }
 
   revalidateRooms();
   redirectWithMessage({
-    image: "1"
+    image: "1",
   });
 }
 
@@ -156,14 +162,14 @@ export async function uploadRoomImageAction(formData: FormData) {
 
   if (files.length === 0) {
     redirectWithMessage({
-      error: "Choose at least one image file to upload."
+      error: "Choose at least one image file to upload.",
     });
   }
 
   for (const [index, file] of files.entries()) {
     const upload = await uploadAdminImage({
       file,
-      folder: "rooms"
+      folder: "rooms",
     });
 
     if (!upload.ok) {
@@ -175,7 +181,7 @@ export async function uploadRoomImageAction(formData: FormData) {
         error:
           createdCount > 0
             ? `${createdCount} image uploads finished, but ${file.name} failed: ${upload.message}`
-            : upload.message
+            : upload.message,
       });
     }
 
@@ -183,7 +189,7 @@ export async function uploadRoomImageAction(formData: FormData) {
       ...input,
       imageUrl: upload.publicUrl,
       isPrimary: input.isPrimary && index === 0,
-      sortOrder: incrementSortOrder(input.sortOrder, index)
+      sortOrder: incrementSortOrder(input.sortOrder, index),
     });
 
     if (!result.ok) {
@@ -197,7 +203,7 @@ export async function uploadRoomImageAction(formData: FormData) {
         error:
           createdCount > 0
             ? `${createdCount} image uploads finished, but ${file.name} could not be saved: ${result.message}`
-            : result.message
+            : result.message,
       });
     }
 
@@ -206,7 +212,7 @@ export async function uploadRoomImageAction(formData: FormData) {
 
   revalidateRooms();
   redirectWithMessage({
-    uploaded: String(createdCount)
+    uploaded: String(createdCount),
   });
 }
 
@@ -215,35 +221,37 @@ export async function updateRoomImageAction(formData: FormData) {
 
   const result = await updateAdminRoomImage({
     ...roomImageInputFromForm(formData),
-    id: stringField(formData, "imageId")
+    id: stringField(formData, "imageId"),
   });
 
   if (!result.ok) {
     redirectWithMessage({
-      error: result.message
+      error: result.message,
     });
   }
 
   revalidateRooms();
   redirectWithMessage({
-    image: "1"
+    image: "1",
   });
 }
 
 export async function setRoomImagePrimaryAction(formData: FormData) {
   await requireAdmin();
 
-  const result = await setAdminRoomImagePrimary(stringField(formData, "imageId"));
+  const result = await setAdminRoomImagePrimary(
+    stringField(formData, "imageId"),
+  );
 
   if (!result.ok) {
     redirectWithMessage({
-      error: result.message
+      error: result.message,
     });
   }
 
   revalidateRooms();
   redirectWithMessage({
-    image: "1"
+    image: "1",
   });
 }
 
@@ -254,12 +262,12 @@ export async function removeRoomImageAction(formData: FormData) {
 
   if (!result.ok) {
     redirectWithMessage({
-      error: result.message
+      error: result.message,
     });
   }
 
   revalidateRooms();
   redirectWithMessage({
-    image: "1"
+    image: "1",
   });
 }

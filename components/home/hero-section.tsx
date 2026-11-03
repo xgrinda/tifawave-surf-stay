@@ -1,3 +1,4 @@
+import type { HomeImage } from "@/lib/home-media";
 import { publishedContent } from "@/lib/content/public";
 import { HeroMedia } from "./hero-media";
 import Link from "next/link";
@@ -6,8 +7,10 @@ import { DEFAULT_LOCALE, i18n, localizedPath, type Locale } from "@/lib/i18n";
 
 export async function HeroSection({
   locale = DEFAULT_LOCALE,
+  image,
 }: {
   locale?: Locale;
+  image?: HomeImage | null;
 }) {
   const copy = i18n[locale].home.hero;
   const content = await publishedContent("page", "home", locale);
@@ -15,11 +18,11 @@ export async function HeroSection({
   return (
     <section className="home-hero" aria-labelledby="home-hero-title">
       <div className="home-hero-bg" />
-      {content?.heroImage && (
+      {(content?.heroImage || image?.imageUrl) && (
         <HeroMedia
-          image={content.heroImage}
-          alt={content.heroAlt}
-          video={content.heroVideo}
+          image={content?.heroImage || image!.imageUrl}
+          alt={content?.heroAlt || image?.altText || ""}
+          video={content?.heroVideo || ""}
           locale={locale}
         />
       )}

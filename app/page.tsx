@@ -60,7 +60,7 @@ export default async function Home() {
 
   return (
     <main>
-      <HeroSection />
+      <HeroSection image={placeImage || stayImage} />
       <TrustStrip />
       {content && (
         <Container>

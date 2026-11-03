@@ -414,6 +414,7 @@ type LegacyDatabase = {
       settings: {
         Row: {
           id: boolean;
+          breakfast_included: boolean;
           business_name: string;
           contact_email: string;
           whatsapp_number: string;
@@ -433,6 +434,7 @@ type LegacyDatabase = {
         };
         Insert: {
           id?: boolean;
+          breakfast_included?: boolean;
           business_name?: string;
           contact_email?: string;
           whatsapp_number?: string;
@@ -452,6 +454,7 @@ type LegacyDatabase = {
         };
         Update: {
           id?: boolean;
+          breakfast_included?: boolean;
           business_name?: string;
           contact_email?: string;
           whatsapp_number?: string;

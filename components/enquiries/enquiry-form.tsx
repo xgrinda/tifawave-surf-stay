@@ -156,7 +156,7 @@ export function EnquiryForm({
               ? "Téléphone / WhatsApp (facultatif)"
               : "Phone / WhatsApp (optional)"}
           </span>
-          <input name="phone" type="tel" autoComplete="tel" maxLength={60} />
+          <input name="phone" type="tel" autoComplete="tel" maxLength={40} />
         </label>
         <label className="admin-field">
           <span>
@@ -164,7 +164,7 @@ export function EnquiryForm({
           </span>
           <input
             name="organization"
-            maxLength={180}
+            maxLength={160}
             autoComplete="organization"
           />
         </label>
@@ -191,7 +191,7 @@ export function EnquiryForm({
           name="message"
           rows={6}
           minLength={10}
-          maxLength={4000}
+          maxLength={3000}
           required
         />
       </label>

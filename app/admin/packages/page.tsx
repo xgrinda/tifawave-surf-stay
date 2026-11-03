@@ -1,3 +1,4 @@
+import { getWebsiteSettings } from "@/lib/settings";
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/admin/auth";
 import { getAdminPackages } from "@/lib/admin/packages";
@@ -5,14 +6,14 @@ import { AdminShell } from "../_components/admin-shell";
 import {
   createPackageAction,
   togglePackageActiveAction,
-  updatePackageAction
+  updatePackageAction,
 } from "./actions";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Packages | Tifawave Admin",
-  description: "Protected Tifawave surf package management."
+  description: "Protected Tifawave surf package management.",
 };
 
 type AdminPackagesPageProps = {
@@ -28,28 +29,28 @@ function getMessage(params: Awaited<AdminPackagesPageProps["searchParams"]>) {
   if (params?.error) {
     return {
       tone: "error",
-      text: params.error
+      text: params.error,
     };
   }
 
   if (params?.created) {
     return {
       tone: "success",
-      text: "Package created."
+      text: "Package created.",
     };
   }
 
   if (params?.updated) {
     return {
       tone: "success",
-      text: "Package updated."
+      text: "Package updated.",
     };
   }
 
   if (params?.status) {
     return {
       tone: "success",
-      text: "Package status updated."
+      text: "Package status updated.",
     };
   }
 
@@ -59,20 +60,21 @@ function getMessage(params: Awaited<AdminPackagesPageProps["searchParams"]>) {
 function formatDateTime(value: string): string {
   return new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium",
-    timeStyle: "short"
+    timeStyle: "short",
   }).format(new Date(value));
 }
 
 export default async function AdminPackagesPage({
-  searchParams
+  searchParams,
 }: AdminPackagesPageProps) {
   await requireAdmin();
 
   const [params, packages] = await Promise.all([
     searchParams,
-    getAdminPackages()
+    getAdminPackages(),
   ]);
   const message = getMessage(params);
+  const settings = await getWebsiteSettings();
 
   return (
     <AdminShell
@@ -81,210 +83,242 @@ export default async function AdminPackagesPage({
       description="Manage package copy, pricing, surf level, inclusions, and status."
       title="Surf packages"
     >
-        <section className="admin-panel-section" aria-labelledby="add-package-title">
-          <div className="admin-section-heading">
-            <h2 id="add-package-title">Add package</h2>
-            {message ? (
-              <p className={`admin-form-message admin-form-message-${message.tone}`}>
-                {message.text}
-              </p>
-            ) : null}
+      <p className="ops-warning">
+        The original starter offers remain unpublished. Publish only real offers
+        and inclusions supplied by the Owner.
+      </p>
+      <section
+        className="admin-panel-section"
+        aria-labelledby="add-package-title"
+      >
+        <div className="admin-section-heading">
+          <h2 id="add-package-title">Add package</h2>
+          {message ? (
+            <p
+              className={`admin-form-message admin-form-message-${message.tone}`}
+            >
+              {message.text}
+            </p>
+          ) : null}
+        </div>
+
+        <form className="admin-room-form" action={createPackageAction}>
+          <div className="admin-settings-grid">
+            <label className="admin-field">
+              <span>Name</span>
+              <input name="name" required type="text" />
+            </label>
+            <label className="admin-field">
+              <span>Slug</span>
+              <input
+                name="slug"
+                placeholder="coached-surf-week"
+                required
+                type="text"
+              />
+            </label>
+            <label className="admin-field">
+              <span>Offer price · {settings.defaultCurrency}</span>
+              <input
+                min="0"
+                name="priceAmount"
+                step="0.01"
+                max="999999.99"
+                required
+                type="number"
+              />
+            </label>
+            <label className="admin-field">
+              <span>Duration</span>
+              <input name="duration" placeholder="week" required type="text" />
+            </label>
+            <label className="admin-field admin-field-wide">
+              <span>Short description</span>
+              <input name="shortDescription" required type="text" />
+            </label>
+            <label className="admin-field admin-field-wide">
+              <span>Full description</span>
+              <textarea name="fullDescription" required rows={4} />
+            </label>
+            <label className="admin-field">
+              <span>Surf level</span>
+              <input
+                name="surfLevel"
+                placeholder="Beginner to intermediate"
+                required
+                type="text"
+              />
+            </label>
+            <label className="admin-field admin-field-wide">
+              <span>Inclusions</span>
+              <textarea
+                name="inclusions"
+                placeholder={"One inclusion per line"}
+                required
+                rows={4}
+              />
+            </label>
           </div>
+          <button
+            className="btn btn-primary admin-settings-submit"
+            type="submit"
+          >
+            Add package
+          </button>
+        </form>
+      </section>
 
-          <form className="admin-room-form" action={createPackageAction}>
-            <div className="admin-settings-grid">
-              <label className="admin-field">
-                <span>Name</span>
-                <input name="name" required type="text" />
-              </label>
-              <label className="admin-field">
-                <span>Slug</span>
-                <input name="slug" placeholder="coached-surf-week" required type="text" />
-              </label>
-              <label className="admin-field">
-                <span>Price cents</span>
-                <input min="0" name="priceCents" required type="number" />
-              </label>
-              <label className="admin-field">
-                <span>Duration</span>
-                <input name="duration" placeholder="week" required type="text" />
-              </label>
-              <label className="admin-field admin-field-wide">
-                <span>Short description</span>
-                <input name="shortDescription" required type="text" />
-              </label>
-              <label className="admin-field admin-field-wide">
-                <span>Full description</span>
-                <textarea name="fullDescription" required rows={4} />
-              </label>
-              <label className="admin-field">
-                <span>Surf level</span>
-                <input
-                  name="surfLevel"
-                  placeholder="Beginner to intermediate"
-                  required
-                  type="text"
-                />
-              </label>
-              <label className="admin-field admin-field-wide">
-                <span>Inclusions</span>
-                <textarea
-                  name="inclusions"
-                  placeholder={"One inclusion per line"}
-                  required
-                  rows={4}
-                />
-              </label>
-            </div>
-            <button className="btn btn-primary admin-settings-submit" type="submit">
-              Add package
-            </button>
-          </form>
-        </section>
+      <section
+        className="admin-panel-section"
+        aria-labelledby="package-list-title"
+      >
+        <div className="admin-section-heading">
+          <h2 id="package-list-title">Existing packages</h2>
+          <p>{packages.length} packages in the current catalog.</p>
+        </div>
 
-        <section className="admin-panel-section" aria-labelledby="package-list-title">
-          <div className="admin-section-heading">
-            <h2 id="package-list-title">Existing packages</h2>
-            <p>{packages.length} packages in the current catalog.</p>
-          </div>
-
-          {packages.length > 0 ? (
-            <div className="admin-room-list">
-              {packages.map((pkg, index) => (
-                <details
-                  className="admin-room-card admin-collapsible-card"
-                  key={pkg.id}
-                  open={index === 0}
-                >
-                  <summary className="admin-room-card-header admin-collapsible-summary">
-                    <div>
-                      <h3 id={pkg.id}>{pkg.name}</h3><a href={"/admin/packages/"+pkg.id}>Manage activities & photographs →</a>
-                      <p>{pkg.slug}</p>
-                    </div>
-                    <div className="admin-collapsible-summary-meta">
-                      <span
-                        className={`admin-status-pill ${
-                          pkg.isActive ? "" : "admin-status-muted"
-                        }`}
-                      >
-                        {pkg.isActive ? "active" : "inactive"}
-                      </span>
-                      <span className="admin-collapsible-cue">Edit package</span>
-                    </div>
-                  </summary>
-
-                  <form className="admin-room-form" action={updatePackageAction}>
-                    <input name="packageId" type="hidden" value={pkg.id} />
-                    <div className="admin-settings-grid">
-                      <label className="admin-field">
-                        <span>Name</span>
-                        <input
-                          defaultValue={pkg.name}
-                          name="name"
-                          required
-                          type="text"
-                        />
-                      </label>
-                      <label className="admin-field">
-                        <span>Slug</span>
-                        <input
-                          defaultValue={pkg.slug}
-                          name="slug"
-                          required
-                          type="text"
-                        />
-                      </label>
-                      <label className="admin-field">
-                        <span>Price cents</span>
-                        <input
-                          defaultValue={pkg.priceCents}
-                          min="0"
-                          name="priceCents"
-                          required
-                          type="number"
-                        />
-                      </label>
-                      <label className="admin-field">
-                        <span>Duration</span>
-                        <input
-                          defaultValue={pkg.duration}
-                          name="duration"
-                          required
-                          type="text"
-                        />
-                      </label>
-                      <label className="admin-field admin-field-wide">
-                        <span>Short description</span>
-                        <input
-                          defaultValue={pkg.shortDescription}
-                          name="shortDescription"
-                          required
-                          type="text"
-                        />
-                      </label>
-                      <label className="admin-field admin-field-wide">
-                        <span>Full description</span>
-                        <textarea
-                          defaultValue={pkg.fullDescription}
-                          name="fullDescription"
-                          required
-                          rows={4}
-                        />
-                      </label>
-                      <label className="admin-field">
-                        <span>Surf level</span>
-                        <input
-                          defaultValue={pkg.surfLevel}
-                          name="surfLevel"
-                          required
-                          type="text"
-                        />
-                      </label>
-                      <label className="admin-field admin-field-wide">
-                        <span>Inclusions</span>
-                        <textarea
-                          defaultValue={pkg.inclusions.join("\n")}
-                          name="inclusions"
-                          required
-                          rows={4}
-                        />
-                      </label>
-                    </div>
-                    <div className="admin-room-card-actions">
-                      <button className="admin-status-button" type="submit">
-                        Save package
-                      </button>
-                      <span>Updated {formatDateTime(pkg.updatedAt)}</span>
-                    </div>
-                  </form>
-
-                  <form action={togglePackageActiveAction}>
-                    <input name="packageId" type="hidden" value={pkg.id} />
-                    <input
-                      name="isActive"
-                      type="hidden"
-                      value={pkg.isActive ? "false" : "true"}
-                    />
-                    <button
-                      className={`admin-status-button ${
-                        pkg.isActive ? "admin-status-danger" : ""
+        {packages.length > 0 ? (
+          <div className="admin-room-list">
+            {packages.map((pkg, index) => (
+              <details
+                className="admin-room-card admin-collapsible-card"
+                key={pkg.id}
+                open={index === 0}
+              >
+                <summary className="admin-room-card-header admin-collapsible-summary">
+                  <div>
+                    <h3 id={pkg.id}>{pkg.name}</h3>
+                    <a href={"/admin/packages/" + pkg.id}>
+                      Manage activities & photographs →
+                    </a>
+                    <p>{pkg.slug}</p>
+                  </div>
+                  <div className="admin-collapsible-summary-meta">
+                    <span
+                      className={`admin-status-pill ${
+                        pkg.isActive ? "" : "admin-status-muted"
                       }`}
-                      type="submit"
                     >
-                      {pkg.isActive ? "Deactivate package" : "Activate package"}
+                      {pkg.isActive ? "active" : "inactive"}
+                    </span>
+                    <span className="admin-collapsible-cue">Edit package</span>
+                  </div>
+                </summary>
+
+                <form className="admin-room-form" action={updatePackageAction}>
+                  <input name="packageId" type="hidden" value={pkg.id} />
+                  <div className="admin-settings-grid">
+                    <label className="admin-field">
+                      <span>Name</span>
+                      <input
+                        defaultValue={pkg.name}
+                        name="name"
+                        required
+                        type="text"
+                      />
+                    </label>
+                    <label className="admin-field">
+                      <span>Slug</span>
+                      <input
+                        defaultValue={pkg.slug}
+                        name="slug"
+                        required
+                        type="text"
+                      />
+                    </label>
+                    <label className="admin-field">
+                      <span>Offer price · {settings.defaultCurrency}</span>
+                      <input
+                        defaultValue={pkg.priceCents / 100}
+                        min="0"
+                        name="priceAmount"
+                        step="0.01"
+                        max="999999.99"
+                        required
+                        type="number"
+                      />
+                    </label>
+                    <label className="admin-field">
+                      <span>Duration</span>
+                      <input
+                        defaultValue={pkg.duration}
+                        name="duration"
+                        required
+                        type="text"
+                      />
+                    </label>
+                    <label className="admin-field admin-field-wide">
+                      <span>Short description</span>
+                      <input
+                        defaultValue={pkg.shortDescription}
+                        name="shortDescription"
+                        required
+                        type="text"
+                      />
+                    </label>
+                    <label className="admin-field admin-field-wide">
+                      <span>Full description</span>
+                      <textarea
+                        defaultValue={pkg.fullDescription}
+                        name="fullDescription"
+                        required
+                        rows={4}
+                      />
+                    </label>
+                    <label className="admin-field">
+                      <span>Surf level</span>
+                      <input
+                        defaultValue={pkg.surfLevel}
+                        name="surfLevel"
+                        required
+                        type="text"
+                      />
+                    </label>
+                    <label className="admin-field admin-field-wide">
+                      <span>Inclusions</span>
+                      <textarea
+                        defaultValue={pkg.inclusions.join("\n")}
+                        name="inclusions"
+                        required
+                        rows={4}
+                      />
+                    </label>
+                  </div>
+                  <div className="admin-room-card-actions">
+                    <button className="admin-status-button" type="submit">
+                      Save package
                     </button>
-                  </form>
-                </details>
-              ))}
-            </div>
-          ) : (
-            <div className="admin-empty-state">
-              <p className="eyebrow">No packages</p>
-              <h2>Add the first surf package.</h2>
-              <p>Active packages can appear on the homepage and packages page.</p>
-            </div>
-          )}
-        </section>
+                    <span>Updated {formatDateTime(pkg.updatedAt)}</span>
+                  </div>
+                </form>
+
+                <form action={togglePackageActiveAction}>
+                  <input name="packageId" type="hidden" value={pkg.id} />
+                  <input
+                    name="isActive"
+                    type="hidden"
+                    value={pkg.isActive ? "false" : "true"}
+                  />
+                  <button
+                    className={`admin-status-button ${
+                      pkg.isActive ? "admin-status-danger" : ""
+                    }`}
+                    type="submit"
+                  >
+                    {pkg.isActive ? "Deactivate package" : "Activate package"}
+                  </button>
+                </form>
+              </details>
+            ))}
+          </div>
+        ) : (
+          <div className="admin-empty-state">
+            <p className="eyebrow">No packages</p>
+            <h2>Add the first surf package.</h2>
+            <p>Active packages can appear on the homepage and packages page.</p>
+          </div>
+        )}
+      </section>
     </AdminShell>
   );
 }

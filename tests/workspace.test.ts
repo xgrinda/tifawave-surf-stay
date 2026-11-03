@@ -93,3 +93,13 @@ test("public images reject unsafe schemes and unsupported hosts before reaching 
     false,
   );
 });
+
+import { amountToMinorString } from "../lib/admin/money.ts";
+test("currency forms store exact cents and reject fractional cents or scientific notation", () => {
+  assert.equal(amountToMinorString("35"), "3500");
+  assert.equal(amountToMinorString("15.00"), "1500");
+  assert.equal(amountToMinorString("35.01"), "3501");
+  assert.equal(amountToMinorString("0"), "0");
+  for (const invalid of ["1e3", "35.001", "-1", "NaN", "", "35,00"])
+    assert.equal(amountToMinorString(invalid), "NaN");
+});

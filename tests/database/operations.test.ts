@@ -260,7 +260,7 @@ test("workspace saves enforce optimistic versions, allowlists and audit actors",
   await saveEntity("guest_profiles", { notes: "Reviewed" }, "reception", id, 1);
   await rejectsCode(
     saveEntity("guest_profiles", { notes: "Stale" }, "reception", id, 1),
-    "40001",
+    "PT409",
   );
   await rejectsCode(saveEntity("bookings", { status: "confirmed" }), "22023");
   await rejectsCode(
@@ -539,7 +539,7 @@ test("email delivery bodies are frozen before sending and cannot change on retry
         payload,
       ]),
     ),
-    "40001",
+    "PT409",
   );
 });
 
@@ -988,7 +988,7 @@ test("stale updates cannot overwrite an Owner decision", async () => {
   await command(id, "confirm", approved());
   await rejectsCode(
     command(id, "cancel", { note: "Stale cancellation" }),
-    "40001",
+    "PT409",
   );
 });
 test("decline and cancellation are distinct and queue the appropriate emails", async () => {
@@ -1125,7 +1125,7 @@ test("email claims are exclusive, lease guarded, and idempotent across retries",
         randomUUID(),
       ]),
     ),
-    "40001",
+    "PT409",
   );
   await as("service", (c) =>
     c.query("select public.finish_booking_email($1,$2,false)", [
@@ -1471,7 +1471,7 @@ test("CMS publication isolates drafts, permissions and revisions without renderi
   assert.equal(restored.version, 4);
   assert.equal(restored.draft.title, "Verified draft");
   assert.equal(restored.published.title, "Published title");
-  await rejectsCode(save("owner", id, 3, { title: "Stale edit" }), "40001");
+  await rejectsCode(save("owner", id, 3, { title: "Stale edit" }), "PT409");
   await rejectsCode(
     save(
       "owner",
@@ -1649,7 +1649,7 @@ test("Owner settings persist, enforce public booking rules and preserve manual o
     as("owner", (c) =>
       c.query("select public.save_operations_settings(1,1,365,0,730)"),
     ),
-    "40001",
+    "PT409",
   );
   await as("owner", (c) =>
     c.query("select public.save_operations_settings(2,1,365,0,730)"),
@@ -1929,5 +1929,30 @@ test("immediate enquiry mail claims cannot consume unrelated booking or enquiry 
   await rejectsCode(
     as("owner", (c) => c.query("select public.claim_enquiry_emails($1)", [e])),
     "42501",
+  );
+});
+
+test("Reception and Housekeeping cannot change package activity records", async () => {
+  const pkg = (await root.query("select id from public.packages limit 1"))
+    .rows[0].id;
+  const id = await saveEntity(
+    "package_activities",
+    { package_id: pkg, title: "Permission fixture", archived: false },
+    "content_editor",
+  );
+  for (const role of ["reception", "housekeeping", "stranger"] as const) {
+    await rejectsCode(
+      saveEntity("package_activities", { title: "Forbidden" }, role, id, 1),
+      role === "stranger" ? "42501" : "PT409",
+    );
+  }
+  assert.equal(
+    (
+      await root.query(
+        "select title,version from public.package_activities where id=$1",
+        [id],
+      )
+    ).rows[0].title,
+    "Permission fixture",
   );
 });

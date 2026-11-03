@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/admin/auth";
 import { createSupabaseStaffClient } from "@/lib/supabase/staff";
 import { AdminShell } from "../_components/admin-shell";
@@ -16,6 +17,14 @@ export default async function Staff({
     .select("*")
     .order("created_at");
   if (error) throw Error("Staff directory unavailable");
+  const authUsers = await createSupabaseAdminClient().auth.admin.listUsers({
+    page: 1,
+    perPage: 1000,
+  });
+  if (authUsers.error) throw Error("Invited identities could not be loaded");
+  const unassigned = authUsers.data.users.filter(
+    (u) => !data.some((s) => s.user_id === u.id),
+  );
   return (
     <AdminShell
       active="staff"
@@ -80,6 +89,43 @@ export default async function Staff({
           </form>
         ))}
       </section>
+      {unassigned.length > 0 && (
+        <section className="desk-panel">
+          <h2>Assign an invited identity</h2>
+          <p>
+            Use this to finish provisioning an account already created in
+            Supabase Auth. Verify the email before granting staff access.
+          </p>
+          <form action={updateStaff} className="desk-editor">
+            <label className="admin-field">
+              <span>Existing identity</span>
+              <select name="user">
+                {unassigned.map((u) => (
+                  <option value={u.id} key={u.id}>
+                    {u.email} · {u.id}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="admin-field">
+              <span>Display name</span>
+              <input name="name" required maxLength={120} />
+            </label>
+            <label className="admin-field">
+              <span>Initial role</span>
+              <select name="role">
+                <option value="reception">Reception</option>
+                <option value="housekeeping">Housekeeping</option>
+                <option value="content_editor">Content Editor</option>
+              </select>
+            </label>
+            <label>
+              <input name="active" type="checkbox" defaultChecked /> Active
+            </label>
+            <button className="btn btn-primary">Assign staff access</button>
+          </form>
+        </section>
+      )}
       <section className="desk-panel">
         <h2>Invite staff</h2>
         <p>
