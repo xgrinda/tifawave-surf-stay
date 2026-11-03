@@ -961,6 +961,93 @@ try {
     },
   );
   await check(
+    "notification read actions are idempotent, personal to each staff member and reject unauthorized roles",
+    async () => {
+      const notice = await ok(
+        owner()
+          .from("operation_notifications")
+          .select("id")
+          .eq("enquiry_id", enquiryId)
+          .limit(1)
+          .single(),
+      );
+      const page = await request("/admin/notifications", "owner");
+      assert.equal(page.status, 200);
+      const html = await page.text();
+      const match = [...html.matchAll(/<form\b[^>]*>([\s\S]*?)<\/form>/g)].find(
+        (v) =>
+          v[1].includes('name="notificationId"') &&
+          v[1].includes('value="' + notice.id + '"'),
+      );
+      assert.ok(match, "Notification action form missing");
+      const data = new FormData();
+      const decode = (v: string) =>
+        v
+          .replaceAll("&quot;", '"')
+          .replaceAll("&#x27;", "'")
+          .replaceAll("&amp;", "&")
+          .replaceAll("&lt;", "<")
+          .replaceAll("&gt;", ">");
+      for (const tag of match[1].match(/<input\b[^>]*>/g) || []) {
+        const name = tag.match(/\bname="([^"]*)"/),
+          value = tag.match(/\bvalue="([^"]*)"/);
+        if (name) data.append(decode(name[1]), decode(value?.[1] || ""));
+      }
+      assert.ok([...data.keys()].some((k) => k.startsWith("$ACTION_")));
+      for (let attempt = 0; attempt < 2; attempt++)
+        assert.equal(
+          (await request("/admin/notifications", "owner", data)).status,
+          200,
+        );
+      assert.equal(
+        (
+          await ok(
+            owner()
+              .from("notification_reads")
+              .select("user_id")
+              .eq("notification_id", notice.id),
+          )
+        ).length,
+        1,
+      );
+      assert.equal(
+        (
+          await ok(
+            people.reception.client
+              .from("notification_reads")
+              .select("user_id")
+              .eq("notification_id", notice.id),
+          )
+        ).length,
+        0,
+      );
+      await refuses(
+        people.reception.client
+          .from("notification_reads")
+          .insert({ notification_id: notice.id, user_id: people.owner.id }),
+      );
+      assert.equal(
+        (await request("/admin/notifications", "reception", data)).status,
+        200,
+      );
+      const reads = await ok(
+        admin
+          .from("notification_reads")
+          .select("user_id")
+          .eq("notification_id", notice.id),
+      );
+      assert.deepEqual(
+        new Set(reads.map((r) => r.user_id)),
+        new Set([people.owner.id, people.reception.id]),
+      );
+      for (const role of ["housekeeping", "content_editor"]) {
+        const denied = await request("/admin/notifications", role, data);
+        assert.ok([303, 307].includes(denied.status));
+        assert.match(denied.headers.get("location") || "", /\/admin\/access/);
+      }
+    },
+  );
+  await check(
     "staff deactivation and sign-out revoke existing sessions; access changes record the actual Owner",
     async () => {
       await ok(
