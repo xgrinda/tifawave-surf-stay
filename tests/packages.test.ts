@@ -1,3 +1,4 @@
+import { requestContextQuery } from "../lib/booking/navigation";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
@@ -190,4 +191,18 @@ test("both package emails include frozen variant, level, extras, rate basis and 
     assert.ok(!mail.html.includes("<b>Double</b>"));
     assert.match(mail.subject, /attente|demande/);
   }
+});
+
+test("language switching retains package/variant/dates without copying contact or price fields", () => {
+  const q = requestContextQuery(
+    "?packageId=11111111-1111-4111-8111-111111111111&variantId=twin-room&checkIn=2031-06-01&checkOut=2031-06-08&guests=2&guestEmail=private@example.invalid&message=private&price=1",
+  );
+  assert.equal(new URLSearchParams(q).get("variantId"), "twin-room");
+  assert.equal(new URLSearchParams(q).get("guests"), "2");
+  assert.ok(!q.includes("private"));
+  assert.ok(!q.includes("price"));
+  assert.equal(
+    requestContextQuery("?variantId=unsafe/value&checkIn=2031-02-30&guests=24"),
+    "",
+  );
 });

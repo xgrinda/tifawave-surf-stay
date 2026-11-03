@@ -131,7 +131,7 @@ export function RequestForm({
       packageVariant: mode === "surf_package" ? text("packageVariant") : "",
       packageExtras:
         mode === "surf_package" ? data.getAll("packageExtras").map(String) : [],
-      preferredKind: text("preferredKind"),
+      preferredKind: mode === "surf_package" ? "mixed" : text("preferredKind"),
       checkIn: text("checkIn"),
       checkOut: text("checkOut"),
       guests: Number(text("guests")),
@@ -339,45 +339,47 @@ export function RequestForm({
                   required
                 />
               </label>
-              <label className="admin-field">
-                {label("Preferred room setup", "Configuration souhaitée")}
-                <select
-                  name="preferredKind"
-                  required
-                  defaultValue={initial.preferredKind || "mixed"}
-                >
-                  {[
-                    [
-                      "mixed",
-                      label(
-                        "Flexible / mixed rooms",
-                        "Flexible / chambres mixtes",
-                      ),
-                    ],
-                    ["double", label("Double room", "Chambre double")],
-                    ["twin", label("Twin room", "Chambre twin")],
-                    ["triple", label("Triple room", "Chambre triple")],
-                    [
-                      "family",
-                      label(
-                        "Family suite · one unit",
-                        "Suite familiale · unité entière",
-                      ),
-                    ],
-                    [
-                      "dorm",
-                      label(
-                        "Individual dorm beds",
-                        "Lits individuels en dortoir",
-                      ),
-                    ],
-                  ].map(([v, t]) => (
-                    <option key={v} value={v}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              {mode !== "surf_package" && (
+                <label className="admin-field">
+                  {label("Preferred room setup", "Configuration souhaitée")}
+                  <select
+                    name="preferredKind"
+                    required
+                    defaultValue={initial.preferredKind || "mixed"}
+                  >
+                    {[
+                      [
+                        "mixed",
+                        label(
+                          "Flexible / mixed rooms",
+                          "Flexible / chambres mixtes",
+                        ),
+                      ],
+                      ["double", label("Double room", "Chambre double")],
+                      ["twin", label("Twin room", "Chambre twin")],
+                      ["triple", label("Triple room", "Chambre triple")],
+                      [
+                        "family",
+                        label(
+                          "Family suite · one unit",
+                          "Suite familiale · unité entière",
+                        ),
+                      ],
+                      [
+                        "dorm",
+                        label(
+                          "Individual dorm beds",
+                          "Lits individuels en dortoir",
+                        ),
+                      ],
+                    ].map(([v, t]) => (
+                      <option key={v} value={v}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
             </div>
             {rooms.length > 0 && mode !== "surf_package" && (
               <label className="admin-field">
