@@ -150,6 +150,7 @@ export default async function Detail({
         {b.external_reference && (
           <p>OTA / external reference: {b.external_reference}</p>
         )}
+        {b.room_preference && <p>Room requirements: {b.room_preference}</p>}
         {b.retreat_name && <p>Group: {b.retreat_name}</p>}
         {b.surf_level && <p>Surf level: {b.surf_level}</p>}
         <p>Guest message: {b.notes || "—"}</p>
