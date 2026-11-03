@@ -1,4 +1,3 @@
-import { isPublicImageUrl } from "@/lib/image-url";
 import { z } from "zod";
 import Image from "next/image";
 import Link from "next/link";
@@ -10,10 +9,7 @@ import {
   getActiveRoomBySlug,
   type PublicRoomDetail,
 } from "@/lib/rooms";
-import {
-  getActiveSurfPackages,
-  getActiveSurfPackageBySlug,
-} from "@/lib/surf-packages";
+import { getActiveSurfPackageBySlug } from "@/lib/surf-packages";
 import { getWebsiteSettings } from "@/lib/settings";
 import { publishedContent } from "@/lib/content/public";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -80,7 +76,7 @@ export async function catalogueMetadata(
   const item = slug
     ? kind === "room"
       ? await getActiveRoomBySlug(slug)
-      : await getActiveSurfPackageBySlug(slug)
+      : await getActiveSurfPackageBySlug(slug, locale)
     : null;
   const path =
     (kind === "room" ? "/stay" : "/surf/packages") + (slug ? "/" + slug : "");
@@ -99,7 +95,10 @@ export async function catalogueMetadata(
     description:
       c?.seoDescription ||
       c?.summary ||
-      "Tifawave Surf Stay · Tamraght, Morocco. Personal booking requests and manual confirmation.",
+      (item && "shortDescription" in item ? item.shortDescription : null) ||
+      (locale === "fr"
+        ? "Tifawave Surf Stay · Tamraght, Maroc. Demandes de séjour et confirmation manuelle."
+        : "Tifawave Surf Stay · Tamraght, Morocco. Personal booking requests and manual confirmation."),
     alternates: {
       canonical: localizedPath(locale, path),
       languages: { en: path, fr: "/fr" + path },
@@ -372,207 +371,5 @@ export async function RoomDetail({
     </main>
   );
 }
-export async function PackageList({ locale }: { locale: Locale }) {
-  const fr = locale === "fr";
-  const [packages, c] = await Promise.all([
-    getActiveSurfPackages(),
-    publishedContent("page", "packages", locale),
-  ]);
-  return (
-    <main className="surf-packages-page">
-      <section className="surf-packages-hero">
-        <Container>
-          <p className="eyebrow">Tifawave · Tamraght</p>
-          <h1>{c?.title || (fr ? "Séjours surf" : "Surf packages")}</h1>
-          <p>
-            {c?.summary ||
-              (fr
-                ? "Découvrez nos offres publiées et contactez-nous pour préparer votre voyage."
-                : "Explore our published offers and contact us to plan your trip.")}
-          </p>
-        </Container>
-      </section>
-      <section className="surf-packages-list">
-        <Container>
-          <ContentBody content={c} />
-          <div className="surf-packages-grid">
-            {packages.map((pkg) => (
-              <article className="surf-package-panel" key={pkg.id}>
-                <p className="eyebrow">{pkg.surfLevel}</p>
-                <h2>{pkg.name}</h2>
-                <p>{pkg.shortDescription}</p>
-                <p>
-                  {pkg.priceLabel} {pkg.unitLabel && " / " + pkg.unitLabel}
-                </p>
-                <div className="surf-package-card-actions">
-                  <Link
-                    className="btn btn-primary"
-                    href={localizedPath(locale, "/surf/packages/" + pkg.slug)}
-                  >
-                    {fr ? "Voir les détails" : "View details"}
-                  </Link>
-                  <Link
-                    href={
-                      localizedPath(locale, "/book") + "?packageId=" + pkg.id
-                    }
-                  >
-                    {fr ? "Demander ce séjour" : "Enquire about this package"}
-                  </Link>
-                </div>
-              </article>
-            ))}
-          </div>
-          {!packages.length && (
-            <div className="public-empty-state">
-              <h2>
-                {fr
-                  ? "Parlons de votre projet surf."
-                  : "Tell us about your surf plans."}
-              </h2>
-              <p>
-                {fr
-                  ? "Contactez-nous pour connaître les options actuelles."
-                  : "Contact us for current package options."}
-              </p>
-              <Link
-                className="btn btn-primary"
-                href={localizedPath(locale, "/contact")}
-              >
-                {fr ? "Nous contacter" : "Contact us"}
-              </Link>
-            </div>
-          )}
-        </Container>
-      </section>
-    </main>
-  );
-}
-export async function PackageDetail({
-  locale,
-  slug,
-}: {
-  locale: Locale;
-  slug: string;
-}) {
-  const [pkg, c] = await Promise.all([
-    getActiveSurfPackageBySlug(slug),
-    publishedContent("package", slug, locale),
-  ]);
-  if (!pkg) notFound();
-  const fr = locale === "fr";
-  const client = createSupabaseServerClient();
-  const [activities, photos] = await Promise.all([
-    client
-      .from("package_activities")
-      .select("id,title,description,duration_minutes,sort_order")
-      .eq("package_id", pkg.id)
-      .order("sort_order"),
-    client
-      .from("package_photos")
-      .select("id,image_url,alt_text,sort_order")
-      .eq("package_id", pkg.id)
-      .order("sort_order"),
-  ]);
-  if (activities.error || photos.error)
-    throw Error("Package details unavailable");
-  return (
-    <main className="surf-package-detail-page">
-      <section className="surf-package-detail-hero">
-        <Container className="surf-package-detail-hero-inner">
-          <div>
-            <p className="eyebrow">{fr ? "Séjour surf" : "Surf package"}</p>
-            <h1>{c?.title || pkg.name}</h1>
-            <p>{c?.summary || pkg.fullDescription}</p>
-            <div className="surf-package-detail-actions">
-              <Link
-                className="btn btn-primary"
-                href={localizedPath(locale, "/book") + "?packageId=" + pkg.id}
-              >
-                {fr ? "Demander ce séjour" : "Enquire about this package"}
-              </Link>
-              <Link
-                className="btn btn-secondary"
-                href={localizedPath(locale, "/surf/packages")}
-              >
-                {fr ? "Tous les séjours" : "All packages"}
-              </Link>
-            </div>
-          </div>
-          <aside className="surf-package-summary">
-            <dl>
-              {pkg.surfLevel && (
-                <div>
-                  <dt>{fr ? "Niveau" : "Level"}</dt>
-                  <dd>{pkg.surfLevel}</dd>
-                </div>
-              )}
-              {pkg.unitLabel && (
-                <div>
-                  <dt>{fr ? "Durée" : "Duration"}</dt>
-                  <dd>{pkg.unitLabel}</dd>
-                </div>
-              )}
-              <div>
-                <dt>{fr ? "Tarif indicatif" : "Guide price"}</dt>
-                <dd>{pkg.priceLabel}</dd>
-              </div>
-            </dl>
-          </aside>
-        </Container>
-      </section>
-      <section className="surf-package-detail-body">
-        <Container>
-          <ContentBody content={c} />
-          {pkg.inclusions.length > 0 && (
-            <section className="surf-package-inclusions">
-              <h2>
-                {fr ? "Inclus dans cette offre" : "Included in this offer"}
-              </h2>
-              <ul>
-                {pkg.inclusions.map((i) => (
-                  <li key={i}>{i}</li>
-                ))}
-              </ul>
-            </section>
-          )}
-          {activities.data.length > 0 && (
-            <section className="surf-package-day">
-              <h2>{fr ? "Activités" : "Activities"}</h2>
-              <div className="surf-package-day-list">
-                {activities.data.map((a) => (
-                  <article key={a.id}>
-                    <h3>{a.title}</h3>
-                    <p>{a.description}</p>
-                    {a.duration_minutes && (
-                      <small>{a.duration_minutes} min</small>
-                    )}
-                  </article>
-                ))}
-              </div>
-            </section>
-          )}
-          <div className="room-detail-gallery-grid">
-            {photos.data
-              .filter((p) => isPublicImageUrl(p.image_url))
-              .map((photo) => (
-                <div className="room-detail-gallery-image" key={photo.id}>
-                  <Image
-                    src={photo.image_url}
-                    alt={photo.alt_text}
-                    fill
-                    sizes="(max-width:880px) 100vw,33vw"
-                    quality={82}
-                  />
-                </div>
-              ))}
-          </div>
-          <p>
-            {fr
-              ? "Votre demande reste en attente. Les détails, le tarif et les disponibilités sont vérifiés personnellement avant confirmation."
-              : "Your request remains pending. Details, price and availability are checked personally before confirmation."}
-          </p>
-        </Container>
-      </section>
-    </main>
-  );
-}
+
+export { PackageList, PackageDetail } from "./package-catalogue-pages";

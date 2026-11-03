@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PackageRequestSummary } from "@/components/booking/package-request-summary";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/auth";
 import { getReservation } from "@/lib/admin/bookings";
@@ -48,6 +49,7 @@ export default async function Detail({
           Operation saved. Current status: {b.status}.
         </p>
       )}
+      <PackageRequestSummary value={b.package_selection} />
       <section className="desk-panel">
         <h2>Quote & stay progress</h2>
         <p>

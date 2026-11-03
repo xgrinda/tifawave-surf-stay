@@ -4,18 +4,22 @@ import { requireAdmin } from "@/lib/admin/auth";
 import { createSupabaseStaffClient } from "@/lib/supabase/staff";
 import { entityFields } from "@/lib/admin/form-fields";
 import { AdminShell } from "../../_components/admin-shell";
+import { PackageEditor } from "../package-editor";
 import { EntityForm } from "../../_components/entity-form";
 export default async function PackageDetails({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ saved?: string }>;
 }) {
-  await requireAdmin("content");
+  const staff = await requireAdmin("content");
   const { id } = await params;
+  const feedback = await searchParams;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const db = await createSupabaseStaffClient();
   const [pkg, activities, photos] = await Promise.all([
-    db.from("packages").select("id,name,is_active").eq("id", id).maybeSingle(),
+    db.from("packages").select("*").eq("id", id).maybeSingle(),
     db
       .from("package_activities")
       .select("*")
@@ -30,16 +34,31 @@ export default async function PackageDetails({
   if (pkg.error || activities.error || photos.error)
     throw Error("Package details could not be loaded.");
   if (!pkg.data) notFound();
+  const rooms = await db
+    .from("rooms")
+    .select("id,name")
+    .eq("is_active", true)
+    .order("name");
   return (
     <AdminShell
       active="packages"
       title={pkg.data.name}
-      description="Structured activities and authentic photographs for this package. Public visibility follows the package's active status."
+      description="Edit the full bilingual offer below. Activities and genuine photographs use the retained controls; visibility follows Owner-approved publication."
     >
+      {feedback.saved && (
+        <p role="status" className="ops-success">
+          Package saved. Public status: {pkg.data.publication_status}.
+        </p>
+      )}
+      <section className="desk-panel">
+        <PackageEditor
+          pkg={pkg.data}
+          rooms={rooms.data || []}
+          owner={staff.role === "owner"}
+        />
+      </section>
       <div className="ops-toolbar">
-        <Link href={"/admin/packages#" + id}>
-          ← Package description, inclusions & price
-        </Link>
+        <Link href={"/admin/packages#" + id}>← Full package catalogue</Link>
         <Link href="/admin/gallery">Upload photographs in Media library →</Link>
       </div>
       <section className="desk-panel">

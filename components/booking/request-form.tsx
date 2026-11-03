@@ -1,6 +1,14 @@
 "use client";
 import Link from "next/link";
 import { useRef, useState, type FormEvent } from "react";
+import type { PublicSurfPackage } from "@/lib/surf-packages";
+import {
+  localized,
+  levelLabel,
+  money,
+  pricingBasis,
+  packageEstimate,
+} from "@/lib/packages/catalogue";
 import type { Locale } from "@/lib/i18n";
 import { propertyToday } from "@/lib/booking/schema";
 import { trackPendingBookingCreated } from "@/lib/analytics/events";
@@ -10,6 +18,7 @@ type Initial = {
   type?: string;
   roomId?: string;
   packageId?: string;
+  variantId?: string;
   checkIn?: string;
   checkOut?: string;
   guests?: string;
@@ -25,7 +34,7 @@ export function RequestForm({
 }: {
   locale: Locale;
   rooms: RequestOption[];
-  packages: RequestOption[];
+  packages: PublicSurfPackage[];
   initial: Initial;
   whatsappHref: string;
   contactEmail: string;
@@ -40,10 +49,31 @@ export function RequestForm({
   const [mode, setMode] = useState(
     initial.type === "group_request"
       ? "group_request"
-      : initial.packageId
+      : initial.packageId || initial.type === "surf_package"
         ? "surf_package"
         : "stay_only",
   );
+  const [packageId, setPackageId] = useState(
+    packages.some((p) => p.id === initial.packageId) ? initial.packageId! : "",
+  );
+  const selectedPackage = packages.find((p) => p.id === packageId);
+  const [variantId, setVariantId] = useState(initial.variantId || "");
+  const [arrival, setArrival] = useState(initial.checkIn || "");
+  const [departure, setDeparture] = useState(initial.checkOut || "");
+  const [party, setParty] = useState(Number(initial.guests) || 1);
+  const [extras, setExtras] = useState<string[]>([]);
+  const selectedVariant = selectedPackage?.catalogue.variants.find(
+    (v) => v.id === variantId,
+  );
+  const estimate = selectedPackage
+    ? packageEstimate(
+        selectedPackage.catalogue,
+        variantId,
+        arrival,
+        party,
+        extras,
+      )
+    : null;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState<string>();
@@ -72,12 +102,35 @@ export function RequestForm({
       );
       return;
     }
+    if (
+      mode === "surf_package" &&
+      selectedPackage?.catalogue.nights !== nights
+    ) {
+      setBusy(false);
+      setError(
+        label(
+          "Choose exactly " +
+            selectedPackage?.catalogue.nights +
+            " nights for this package.",
+          "Choisissez exactement " +
+            selectedPackage?.catalogue.nights +
+            " nuits pour ce séjour.",
+        ),
+      );
+      return;
+    }
     key.current ||= crypto.randomUUID();
     const text = (name: string) => String(data.get(name) || "");
     const request = {
       bookingType: mode,
-      roomId: text("roomId"),
+      roomId:
+        mode === "surf_package"
+          ? selectedVariant?.roomId || ""
+          : text("roomId"),
       packageId: mode === "surf_package" ? text("packageId") : "",
+      packageVariant: mode === "surf_package" ? text("packageVariant") : "",
+      packageExtras:
+        mode === "surf_package" ? data.getAll("packageExtras").map(String) : [],
       preferredKind: text("preferredKind"),
       checkIn: text("checkIn"),
       checkOut: text("checkOut"),
@@ -235,6 +288,22 @@ export function RequestForm({
                   )
                     .toISOString()
                     .slice(0, 10)}
+                  onChange={(e) => {
+                    setArrival(e.target.value);
+                    if (
+                      mode === "surf_package" &&
+                      selectedPackage?.catalogue.nights &&
+                      e.target.value
+                    )
+                      setDeparture(
+                        new Date(
+                          Date.parse(e.target.value) +
+                            selectedPackage.catalogue.nights * 86400000,
+                        )
+                          .toISOString()
+                          .slice(0, 10),
+                      );
+                  }}
                   defaultValue={initial.checkIn}
                   required
                 />
@@ -249,13 +318,15 @@ export function RequestForm({
                   )
                     .toISOString()
                     .slice(0, 10)}
-                  defaultValue={initial.checkOut}
+                  value={departure}
+                  onChange={(e) => setDeparture(e.target.value)}
                   required
                 />
               </label>
               <label className="admin-field">
                 {label("Guests · maximum 23", "Voyageurs · maximum 23")}
                 <input
+                  onChange={(e) => setParty(Number(e.target.value))}
                   name="guests"
                   type="number"
                   min={1}
@@ -308,7 +379,7 @@ export function RequestForm({
                 </select>
               </label>
             </div>
-            {rooms.length > 0 && (
+            {rooms.length > 0 && mode !== "surf_package" && (
               <label className="admin-field">
                 {label(
                   "Room listing preference · optional",
@@ -335,7 +406,24 @@ export function RequestForm({
                 <select
                   name="packageId"
                   required
-                  defaultValue={initial.packageId || ""}
+                  value={packageId}
+                  onChange={(e) => {
+                    setPackageId(e.target.value);
+                    const p = packages.find((p) => p.id === e.target.value);
+                    if (
+                      Number.isFinite(Date.parse(arrival)) &&
+                      p?.catalogue.nights
+                    )
+                      setDeparture(
+                        new Date(
+                          Date.parse(arrival) + p.catalogue.nights * 86400000,
+                        )
+                          .toISOString()
+                          .slice(0, 10),
+                      );
+                    setVariantId("");
+                    setExtras([]);
+                  }}
                 >
                   <option value="">
                     {label("Choose a package", "Choisir un séjour")}
@@ -356,15 +444,122 @@ export function RequestForm({
                 )}
               </label>
             )}
+            {mode === "surf_package" && selectedPackage && (
+              <section className="package-request-options">
+                <p>
+                  {selectedPackage.unitLabel} · {selectedPackage.pricingLabel}
+                </p>
+                <label className="admin-field">
+                  {label("Accommodation variant", "Variante d’hébergement")}
+                  <select
+                    required
+                    name="packageVariant"
+                    value={selectedVariant ? variantId : ""}
+                    onChange={(e) => setVariantId(e.target.value)}
+                  >
+                    <option value="">
+                      {label(
+                        "Choose your room option",
+                        "Choisissez votre hébergement",
+                      )}
+                    </option>
+                    {selectedPackage.catalogue.variants.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {localized(v.label, v.labelFr, locale)} ·{" "}
+                        {money(
+                          v.priceCents,
+                          selectedPackage.catalogue.currency,
+                          locale,
+                        )}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="admin-field">
+                  {label("Your surf level", "Votre niveau de surf")}
+                  <select name="surfLevel" required defaultValue="">
+                    <option value="">
+                      {label("Choose your level", "Choisissez votre niveau")}
+                    </option>
+                    {selectedPackage.catalogue.levels.map((l) => (
+                      <option key={l} value={l}>
+                        {levelLabel(l, locale)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {!!selectedPackage.catalogue.extras.length && (
+                  <fieldset>
+                    <legend>
+                      {label(
+                        "Optional extras · request only",
+                        "Options facultatives · sur demande",
+                      )}
+                    </legend>
+                    {selectedPackage.catalogue.extras.map((e) => (
+                      <label className="admin-field" key={e.id}>
+                        <span>
+                          <input
+                            name="packageExtras"
+                            type="checkbox"
+                            value={e.id}
+                            checked={extras.includes(e.id)}
+                            onChange={(a) =>
+                              setExtras(
+                                a.target.checked
+                                  ? [...extras, e.id]
+                                  : extras.filter((x) => x !== e.id),
+                              )
+                            }
+                          />{" "}
+                          {localized(e.label, e.labelFr, locale)} ·{" "}
+                          {money(
+                            e.priceCents,
+                            selectedPackage.catalogue.currency,
+                            locale,
+                          )}{" "}
+                          · {pricingBasis(e.basis, locale)}
+                        </span>
+                      </label>
+                    ))}
+                  </fieldset>
+                )}
+                <p>
+                  {label(
+                    "Dates must match the package duration. Seasonal prices follow your arrival date and cover the whole stay.",
+                    "Les dates doivent correspondre à la durée du séjour. Le tarif saisonnier dépend de votre date d’arrivée et couvre le séjour complet.",
+                  )}
+                </p>
+                {estimate && (
+                  <p role="status">
+                    <strong>
+                      {label("Indicative total", "Total indicatif")} :{" "}
+                      {money(
+                        estimate.total,
+                        selectedPackage.catalogue.currency,
+                        locale,
+                      )}
+                    </strong>{" "}
+                    ·{" "}
+                    {label(
+                      "Verified again on the server; final services and quote require Owner confirmation. No payment is taken.",
+                      "Vérifié à nouveau sur le serveur ; les prestations et le devis final doivent être confirmés par le propriétaire. Aucun paiement en ligne.",
+                    )}
+                  </p>
+                )}
+              </section>
+            )}
             {mode !== "stay_only" && (
               <>
-                <label className="admin-field">
-                  {label(
-                    "Surf experience / level mix",
-                    "Expérience / niveaux de surf",
-                  )}
-                  <input name="surfLevel" maxLength={160} />
-                </label>
+                {mode !== "surf_package" && (
+                  <label className="admin-field">
+                    {label(
+                      "Surf experience / level mix",
+                      "Expérience / niveaux de surf",
+                    )}
+                    <input name="surfLevel" maxLength={160} />
+                  </label>
+                )}
                 <label className="admin-field">
                   {label("Room preferences", "Préférences de chambres")}
                   <input name="roomPreference" maxLength={160} />

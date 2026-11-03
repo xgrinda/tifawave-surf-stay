@@ -86,6 +86,9 @@ type LegacyDatabase = {
       };
       packages: {
         Row: {
+          publication_status: "draft" | "published" | "archived";
+          catalogue: Json;
+          version: number;
           id: string;
           slug: string;
           name: string;
@@ -101,6 +104,9 @@ type LegacyDatabase = {
           updated_at: string;
         };
         Insert: {
+          publication_status?: "draft" | "published" | "archived";
+          catalogue?: Json;
+          version?: number;
           id?: string;
           slug: string;
           name: string;
@@ -116,6 +122,9 @@ type LegacyDatabase = {
           updated_at?: string;
         };
         Update: {
+          publication_status?: "draft" | "published" | "archived";
+          catalogue?: Json;
+          version?: number;
           id?: string;
           slug?: string;
           name?: string;
@@ -173,6 +182,8 @@ type LegacyDatabase = {
       };
       bookings: {
         Row: {
+          package_variant: string | null;
+          package_selection: Json;
           id: string;
           room_id: string | null;
           package_id: string | null;
@@ -208,6 +219,8 @@ type LegacyDatabase = {
           updated_at: string;
         };
         Insert: {
+          package_variant?: string | null;
+          package_selection?: Json;
           id?: string;
           room_id?: string | null;
           package_id?: string | null;
@@ -242,6 +255,8 @@ type LegacyDatabase = {
           updated_at?: string;
         };
         Update: {
+          package_variant?: string | null;
+          package_selection?: Json;
           id?: string;
           room_id?: string | null;
           package_id?: string | null;

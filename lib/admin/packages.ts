@@ -1,284 +1,73 @@
+import { z } from "zod";
 import { createSupabaseStaffClient } from "@/lib/supabase/staff";
-
-type AdminPackageResult =
-  | {
-      ok: true;
-    }
-  | {
-      ok: false;
-      message: string;
-    };
-
-export type AdminPackage = {
-  id: string;
-  slug: string;
-  name: string;
-  shortDescription: string;
-  fullDescription: string;
-  priceCents: number;
-  duration: string;
-  surfLevel: string;
-  inclusions: string[];
-  isActive: boolean;
-  updatedAt: string;
-};
-
-export type UpsertAdminPackageInput = {
-  id?: string;
-  slug: string;
-  name: string;
-  shortDescription: string;
-  fullDescription: string;
-  priceCents: string;
-  duration: string;
-  surfLevel: string;
-  inclusions: string;
-};
-
-const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-
-function normalizeRequiredText(value: string): string {
-  return value.trim().replace(/\s+/g, " ");
-}
-
-function normalizeLongText(value: string): string {
-  return value.trim().replace(/[ \t]+/g, " ");
-}
-
-function normalizeSlug(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-function parseNonNegativeInteger(value: string, label: string): number {
-  const parsed = Number(value);
-
-  if (!Number.isInteger(parsed) || parsed < 0) {
-    throw new Error(`${label} must be a non-negative integer.`);
-  }
-
-  return parsed;
-}
-
-function parseInclusions(value: string): string[] {
-  const inclusions = value
-    .split(/\r?\n/)
-    .map((item) => normalizeRequiredText(item))
-    .filter(Boolean);
-
-  if (inclusions.length === 0) {
-    throw new Error("Add at least one inclusion.");
-  }
-
-  if (inclusions.some((item) => item.length > 160)) {
-    throw new Error("Each inclusion must be 160 characters or fewer.");
-  }
-
-  return inclusions;
-}
-
-function normalizePackageInput(input: UpsertAdminPackageInput) {
-  const name = normalizeRequiredText(input.name);
-  const slug = normalizeSlug(input.slug);
-  const shortDescription = normalizeLongText(input.shortDescription);
-  const fullDescription = normalizeLongText(input.fullDescription);
-  const priceCents = parseNonNegativeInteger(input.priceCents, "Price cents");
-  const duration = normalizeRequiredText(input.duration);
-  const surfLevel = normalizeRequiredText(input.surfLevel);
-  const inclusions = parseInclusions(input.inclusions);
-
-  if (name.length < 2 || name.length > 120) {
-    throw new Error("Package name must be between 2 and 120 characters.");
-  }
-
-  if (!SLUG_PATTERN.test(slug)) {
-    throw new Error("Slug must contain letters, numbers, and hyphens.");
-  }
-
-  if (shortDescription.length < 10 || shortDescription.length > 220) {
-    throw new Error("Short description must be between 10 and 220 characters.");
-  }
-
-  if (fullDescription.length < 10 || fullDescription.length > 1400) {
-    throw new Error("Full description must be between 10 and 1400 characters.");
-  }
-
-  if (duration.length < 2 || duration.length > 80) {
-    throw new Error("Duration must be between 2 and 80 characters.");
-  }
-
-  if (surfLevel.length < 2 || surfLevel.length > 100) {
-    throw new Error("Surf level must be between 2 and 100 characters.");
-  }
-
-  return {
-    duration,
-    fullDescription,
-    inclusions,
-    name,
-    priceCents,
-    shortDescription,
-    slug,
-    surfLevel,
-  };
-}
-
-function packagePayload(input: ReturnType<typeof normalizePackageInput>) {
-  return {
-    duration: input.duration,
-    full_description: input.fullDescription,
-    inclusions: input.inclusions,
-    name: input.name,
-    price_cents: input.priceCents,
-    short_description: input.shortDescription,
-    slug: input.slug,
-    surf_level: input.surfLevel,
-    updated_at: new Date().toISOString(),
-  };
-}
-
-function publicErrorMessage(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "Package could not be saved.";
-}
-
-export async function getAdminPackages(): Promise<AdminPackage[]> {
-  const supabase = await createSupabaseStaffClient();
-  const { data, error } = await supabase
+import type { Row } from "@/lib/supabase/types";
+import { catalogueSchema } from "@/lib/packages/catalogue";
+export type AdminPackage = Row<"packages">;
+export async function getAdminPackages() {
+  const db = await createSupabaseStaffClient();
+  const { data, error } = await db
     .from("packages")
-    .select(
-      "id, slug, name, short_description, full_description, price_cents, duration, surf_level, inclusions, is_active, updated_at",
-    )
-    .order("is_active", { ascending: false })
-    .order("display_order", { ascending: true })
-    .order("name", { ascending: true });
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data.map((pkg) => ({
-    id: pkg.id,
-    slug: pkg.slug,
-    name: pkg.name,
-    shortDescription: pkg.short_description,
-    fullDescription: pkg.full_description,
-    priceCents: pkg.price_cents,
-    duration: pkg.duration,
-    surfLevel: pkg.surf_level,
-    inclusions: pkg.inclusions,
-    isActive: pkg.is_active,
-    updatedAt: pkg.updated_at,
-  }));
+    .select("*")
+    .order("display_order")
+    .order("name");
+  if (error) throw Error("Packages could not be loaded.");
+  return data;
 }
-
-export async function createAdminPackage(
-  input: UpsertAdminPackageInput,
-): Promise<AdminPackageResult> {
-  let normalized: ReturnType<typeof normalizePackageInput>;
-
-  try {
-    normalized = normalizePackageInput(input);
-  } catch (error) {
+const inputSchema = z.object({
+  id: z.uuid().optional(),
+  version: z.number().int().positive().optional(),
+  slug: z
+    .string()
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+    .max(120),
+  name: z.string().trim().min(2).max(120),
+  short_description: z.string().trim().min(10).max(300),
+  full_description: z.string().trim().min(10).max(4000),
+  inclusions: z.array(z.string().trim().min(1).max(300)).max(30),
+  display_order: z.number().int().min(0).max(10000),
+  publication_status: z.enum(["draft", "published", "archived"]),
+  catalogue: catalogueSchema,
+});
+export async function saveAdminPackage(input: unknown) {
+  const parsed = inputSchema.safeParse(input);
+  if (!parsed.success)
     return {
       ok: false,
-      message: publicErrorMessage(error),
+      message: parsed.error.issues[0]?.message || "Check package details.",
     };
-  }
-
-  const supabase = await createSupabaseStaffClient();
-  const { error } = await supabase.from("packages").insert({
-    ...packagePayload(normalized),
-    is_active: true,
-  });
-
-  if (error) {
-    return {
-      ok: false,
-      message: error.message,
-    };
-  }
-
-  return {
-    ok: true,
+  const { id, version, catalogue, ...rest } = parsed.data;
+  const payload = {
+    ...rest,
+    catalogue,
+    price_cents: 0,
+    is_active: rest.publication_status === "published",
+    duration: catalogue.nights ? catalogue.nights + " nights" : "",
+    surf_level: catalogue.levels.join(", "),
   };
-}
-
-export async function updateAdminPackage(
-  input: UpsertAdminPackageInput,
-): Promise<AdminPackageResult> {
-  if (!input.id) {
+  const db = await createSupabaseStaffClient();
+  const result = id
+    ? await db
+        .from("packages")
+        .update(payload)
+        .eq("id", id)
+        .eq("version", version || 0)
+        .select("id")
+        .maybeSingle()
+    : await db.from("packages").insert(payload).select("id").single();
+  if (result.error)
     return {
       ok: false,
-      message: "packageId is required.",
+      message:
+        result.error.code === "23505"
+          ? "That slug is already in use."
+          : result.error.code === "42501"
+            ? "Only the Owner can approve, publish or edit a published offer."
+            : "Check bilingual content, room variants, seasonal dates and Owner verification before publishing.",
     };
-  }
-
-  let normalized: ReturnType<typeof normalizePackageInput>;
-
-  try {
-    normalized = normalizePackageInput(input);
-  } catch (error) {
+  if (!result.data)
     return {
       ok: false,
-      message: publicErrorMessage(error),
+      message: "This package changed. Refresh before saving.",
     };
-  }
-
-  const supabase = await createSupabaseStaffClient();
-  const { error } = await supabase
-    .from("packages")
-    .update(packagePayload(normalized))
-    .eq("id", input.id);
-
-  if (error) {
-    return {
-      ok: false,
-      message: error.message,
-    };
-  }
-
-  return {
-    ok: true,
-  };
-}
-
-export async function setAdminPackageActive(
-  packageId: string,
-  isActive: boolean,
-): Promise<AdminPackageResult> {
-  const id = packageId.trim();
-
-  if (!id) {
-    return {
-      ok: false,
-      message: "packageId is required.",
-    };
-  }
-
-  const supabase = await createSupabaseStaffClient();
-  const { error } = await supabase
-    .from("packages")
-    .update({
-      is_active: isActive,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", id);
-
-  if (error) {
-    return {
-      ok: false,
-      message: error.message,
-    };
-  }
-
-  return {
-    ok: true,
-  };
+  return { ok: true, id: result.data.id };
 }

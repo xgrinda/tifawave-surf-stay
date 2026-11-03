@@ -1956,3 +1956,444 @@ test("Reception and Housekeeping cannot change package activity records", async 
     "Permission fixture",
   );
 });
+
+// Synthetic prices below exist only in disposable local databases, never real Tifawave offers.
+async function packageFixture(overrides: Record<string, unknown> = {}) {
+  const room = (
+    await root.query(
+      "select id from public.rooms where slug='private-double-room'",
+    )
+  ).rows[0].id;
+  const catalogue = {
+    nameFr: "Séjour de test isolé",
+    shortFr: "Une description française réservée aux tests.",
+    descriptionFr:
+      "Description complète pour vérifier les offres dans une base jetable.",
+    nights: 7,
+    levels: ["beginner", "intermediate"],
+    inclusionsFr: ["Petit-déjeuner"],
+    exclusions: ["Dinner"],
+    exclusionsFr: ["Dîner"],
+    proposed: [],
+    proposedFr: [],
+    currency: "EUR",
+    pricingBasis: "person",
+    featured: true,
+    arrangementsVerified: true,
+    variants: [
+      {
+        id: "double",
+        roomId: room,
+        label: "Double option",
+        labelFr: "Option double",
+        priceCents: 10000,
+      },
+    ],
+    extras: [
+      {
+        id: "extra-test",
+        label: "Test extra",
+        labelFr: "Option de test",
+        priceCents: 2000,
+        basis: "person",
+      },
+    ],
+    seasons: [
+      {
+        id: "summer",
+        label: "Synthetic season",
+        start: "2031-06-01",
+        end: "2031-07-01",
+        variantId: "double",
+        priceCents: 15000,
+      },
+    ],
+    ...overrides,
+  };
+  const { rows } = await root.query(
+    "insert into public.packages(slug,name,short_description,full_description,inclusions,publication_status,catalogue) values($1,'Isolated test package','Description only for a disposable test','Full description only for disposable catalogue tests',array['Breakfast'],'draft',$2) returning *",
+    ["fixture-" + randomUUID(), catalogue],
+  );
+  return { row: rows[0], catalogue };
+}
+async function publishFixture(id: string) {
+  return as("owner", (c) =>
+    c.query(
+      "update public.packages set publication_status='published' where id=$1 returning *",
+      [id],
+    ),
+  );
+}
+function surfRequest(id: string, patch: Record<string, unknown> = {}) {
+  return request({
+    bookingType: "surf_package",
+    packageId: id,
+    packageVariant: "double",
+    packageExtras: ["extra-test"],
+    surfLevel: "beginner",
+    checkIn: "2031-06-20",
+    checkOut: "2031-06-27",
+    ...patch,
+  });
+}
+
+test("four requested package specifications are unpublished drafts without invented prices", async () => {
+  const { rows } = await root.query(
+    "select name,publication_status,is_active,catalogue from public.packages where slug in ('surf-stay-week','short-surf-escape','surf-yoga-retreat','surf-guiding-week') order by display_order",
+  );
+  assert.equal(rows.length, 4);
+  assert.deepEqual(
+    rows.map((r) => r.catalogue.nights),
+    [7, 3, 7, 7],
+  );
+  for (const r of rows) {
+    assert.equal(r.is_active, false);
+    assert.equal(r.publication_status, "draft");
+    assert.equal(r.catalogue.arrangementsVerified, false);
+    assert.ok(r.catalogue.proposed.length);
+    assert.ok(
+      r.catalogue.variants.every(
+        (v: { priceCents: unknown }) => v.priceCents === null,
+      ),
+    );
+  }
+  assert.equal(rows[3].catalogue.featured, false);
+});
+test("package drafts are editable by Content Editor but hidden from public clients", async () => {
+  const { row } = await packageFixture({ arrangementsVerified: false });
+  const edited = await as("content_editor", (c) =>
+    c.query(
+      "update public.packages set name='Edited draft' where id=$1 returning version",
+      [row.id],
+    ),
+  );
+  assert.equal(edited.rowCount, 1);
+  assert.equal(edited.rows[0].version, 2);
+  for (const role of ["anon", "stranger"] as Role[])
+    assert.equal(
+      (
+        await as(role, (c) =>
+          c.query("select id from public.packages where id=$1", [row.id]),
+        )
+      ).rowCount,
+      0,
+    );
+  await assert.rejects(() => submit(surfRequest(row.id)));
+});
+test("only active MFA Owner can publish and all EN/FR arrangements must be verified", async () => {
+  const { row } = await packageFixture();
+  for (const role of [
+    "content_editor",
+    "reception",
+    "housekeeping",
+    "stranger",
+  ] as Role[])
+    await as(role, async (c) => {
+      try {
+        const r = await c.query(
+          "update public.packages set publication_status='published' where id=$1 returning id",
+          [row.id],
+        );
+        assert.equal(r.rowCount, 0);
+      } catch (e) {
+        assert.ok(["42501"].includes((e as { code: string }).code));
+      }
+    }).catch((e) => {
+      if ((e as { code: string }).code !== "25P02") throw e;
+    });
+  assert.equal(
+    (
+      await as(
+        "owner",
+        (c) =>
+          c.query(
+            "update public.packages set publication_status='published' where id=$1 returning id",
+            [row.id],
+          ),
+        "aal1",
+      )
+    ).rowCount,
+    0,
+  );
+  const published = await publishFixture(row.id);
+  assert.equal(published.rowCount, 1);
+  assert.equal(published.rows[0].is_active, true);
+  assert.equal(
+    (
+      await as("anon", (c) =>
+        c.query("select id from public.packages where id=$1", [row.id]),
+      )
+    ).rowCount,
+    1,
+  );
+  await assert.rejects(() =>
+    as("content_editor", (c) =>
+      c.query(
+        "update public.packages set name='Unapproved change' where id=$1",
+        [row.id],
+      ),
+    ),
+  );
+  for (const changes of [
+    { nameFr: "" },
+    { arrangementsVerified: false },
+    { variants: [], seasons: [] },
+    { proposed: ["Unverified transport"] },
+    { inclusionsFr: [] },
+    { levels: [] },
+  ]) {
+    const bad = await packageFixture(changes);
+    await assert.rejects(() => publishFixture(bad.row.id));
+  }
+});
+test("Reception, Housekeeping and anonymous package writes cannot alter catalogue data", async () => {
+  const { row } = await packageFixture();
+  for (const role of [
+    "reception",
+    "housekeeping",
+    "anon",
+    "stranger",
+  ] as Role[]) {
+    const r = await as(role, (c) =>
+      c.query(
+        "update public.packages set price_cents=1 where id=$1 returning id",
+        [row.id],
+      ),
+    ).catch(() => null);
+    assert.ok(r === null || r.rowCount === 0);
+  }
+  assert.equal(
+    (
+      await root.query("select price_cents from public.packages where id=$1", [
+        row.id,
+      ])
+    ).rows[0].price_cents,
+    0,
+  );
+});
+test("package seasonal rates reject overlaps and support explicit unknown quote amounts", async () => {
+  const bad = packageFixture({
+    seasons: [
+      {
+        id: "a",
+        label: "A",
+        start: "2031-06-01",
+        end: "2031-07-01",
+        variantId: "",
+        priceCents: 100,
+      },
+      {
+        id: "b",
+        label: "B",
+        start: "2031-06-15",
+        end: "2031-07-15",
+        variantId: "double",
+        priceCents: 200,
+      },
+    ],
+  });
+  await assert.rejects(() => bad);
+  const { row } = await packageFixture({
+    extras: [
+      {
+        id: "extra-test",
+        label: "Quote extra",
+        labelFr: "Option sur devis",
+        priceCents: null,
+        basis: "booking",
+      },
+    ],
+  });
+  await publishFixture(row.id);
+  const id = await submit(surfRequest(row.id));
+  const s = (
+    await root.query(
+      "select package_selection from public.bookings where id=$1",
+      [id],
+    )
+  ).rows[0].package_selection;
+  assert.equal(s.totalCents, null);
+});
+test("package request uses arrival seasonal price, party basis and extras from locked catalogue", async () => {
+  const { row } = await packageFixture();
+  await publishFixture(row.id);
+  const id = await submit(surfRequest(row.id, { locale: "fr", guests: 2 }));
+  const b = (
+    await root.query("select * from public.bookings where id=$1", [id])
+  ).rows[0];
+  assert.equal(b.status, "pending");
+  assert.equal(b.package_variant, "double");
+  assert.equal(b.package_selection.basePriceCents, 15000);
+  assert.equal(b.package_selection.totalCents, 34000);
+  assert.equal(b.package_selection.name, "Séjour de test isolé");
+  assert.equal(b.package_selection.variantLabel, "Option double");
+  assert.equal(b.package_selection.extras[0].label, "Option de test");
+  assert.equal(b.quoted_amount_cents, null);
+  assert.equal(
+    (
+      await root.query(
+        "select count(*)::int n from public.reservation_allocations where booking_id=$1",
+        [id],
+      )
+    ).rows[0].n,
+    0,
+  );
+  const mails = (
+    await root.query(
+      "select payload from public.email_outbox where booking_id=$1",
+      [id],
+    )
+  ).rows;
+  assert.equal(mails.length, 2);
+  assert.equal(mails[0].payload.packageSelection.totalCents, 34000);
+});
+test("season end is exclusive and arrivals price the whole package across boundaries", async () => {
+  const { row } = await packageFixture();
+  await publishFixture(row.id);
+  for (const [arrival, departure, amount] of [
+    ["2031-06-30", "2031-07-07", 15000],
+    ["2031-07-01", "2031-07-08", 10000],
+  ]) {
+    const id = await submit(
+      surfRequest(row.id, {
+        checkIn: arrival,
+        checkOut: departure,
+        packageExtras: [],
+      }),
+    );
+    assert.equal(
+      (
+        await root.query(
+          "select package_selection from public.bookings where id=$1",
+          [id],
+        )
+      ).rows[0].package_selection.basePriceCents,
+      amount,
+    );
+  }
+});
+test("invalid variants, room substitutions, duration, level and extras are rejected atomically", async () => {
+  const { row } = await packageFixture();
+  await publishFixture(row.id);
+  const other = (
+    await root.query(
+      "select id from public.rooms where slug<>'private-double-room' limit 1",
+    )
+  ).rows[0].id;
+  for (const patch of [
+    { packageVariant: "missing" },
+    { roomId: other },
+    { checkOut: "2031-06-28" },
+    { surfLevel: "advanced" },
+    { packageExtras: ["unknown"] },
+    { packageExtras: ["extra-test", "extra-test"] },
+  ])
+    await assert.rejects(() => submit(surfRequest(row.id, patch)));
+});
+test("public price and confirmation spoofing cannot change pending package snapshots", async () => {
+  const { row } = await packageFixture();
+  await publishFixture(row.id);
+  const id = await submit(
+    surfRequest(row.id, {
+      priceCents: 1,
+      quoted_amount_cents: 1,
+      status: "confirmed",
+      package_selection: { totalCents: 1 },
+      packageSelection: { totalCents: 1 },
+    }),
+  );
+  const b = (
+    await root.query(
+      "select status,quoted_amount_cents,package_selection from public.bookings where id=$1",
+      [id],
+    )
+  ).rows[0];
+  assert.equal(b.status, "pending");
+  assert.equal(b.quoted_amount_cents, null);
+  assert.equal(b.package_selection.totalCents, 34000);
+});
+test("catalogue edits and withdrawal preserve request snapshots and idempotent retries", async () => {
+  const { row } = await packageFixture();
+  await publishFixture(row.id);
+  const key = randomUUID(),
+    d = surfRequest(row.id),
+    id = await submit(d, key);
+  const before = (
+    await root.query(
+      "select package_selection from public.bookings where id=$1",
+      [id],
+    )
+  ).rows[0].package_selection;
+  await as("owner", (c) =>
+    c.query(
+      "update public.packages set name='Changed catalogue title',publication_status='draft' where id=$1",
+      [row.id],
+    ),
+  );
+  assert.equal(await submit(d, key), id);
+  assert.deepEqual(
+    (
+      await root.query(
+        "select package_selection from public.bookings where id=$1",
+        [id],
+      )
+    ).rows[0].package_selection,
+    before,
+  );
+  await assert.rejects(() => submit(d));
+  await assert.rejects(() =>
+    root.query(
+      "update public.bookings set package_selection='{}' where id=$1",
+      [id],
+    ),
+  );
+});
+test("optimistic package versions prevent stale admin overwrites", async () => {
+  const { row } = await packageFixture({ arrangementsVerified: false });
+  await as("content_editor", (c) =>
+    c.query(
+      "update public.packages set name='Current edit' where id=$1 and version=1",
+      [row.id],
+    ),
+  );
+  const result = await as("content_editor", (c) =>
+    c.query(
+      "update public.packages set name='Stale edit' where id=$1 and version=1 returning id",
+      [row.id],
+    ),
+  );
+  assert.equal(result.rowCount, 0);
+});
+
+test("Reception can record a pending manual package selection with a frozen verified snapshot", async () => {
+  const { row } = await packageFixture();
+  await publishFixture(row.id);
+  const result = await as("reception", (c) =>
+    c.query("select public.create_manual_request($1,'direct',$2) id", [
+      surfRequest(row.id),
+      randomUUID(),
+    ]),
+  );
+  const b = (
+    await root.query(
+      "select status,package_selection from public.bookings where id=$1",
+      [result.rows[0].id],
+    )
+  ).rows[0];
+  assert.equal(b.status, "pending");
+  assert.equal(b.package_selection.variantId, "double");
+  assert.equal(b.package_selection.totalCents, 34000);
+});
+
+test("package per-party base is counted once while per-person extras scale by guests", async () => {
+  const { row } = await packageFixture({ pricingBasis: "booking" });
+  await publishFixture(row.id);
+  const id = await submit(surfRequest(row.id, { guests: 3 }));
+  const b = (
+    await root.query(
+      "select package_selection from public.bookings where id=$1",
+      [id],
+    )
+  ).rows[0];
+  assert.equal(b.package_selection.totalCents, 21000);
+});

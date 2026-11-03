@@ -6,7 +6,7 @@ Prepared 3 November 2026. These are review instructions, not authorization to ex
 
 - Obtain the Owner’s final approval for the exact commit, production configuration, migration/data patch and cutover window.
 - **Hosting:** the existing Vercel team was verified as Hobby in its billing page. Vercel restricts Hobby to personal non-commercial use; obtain approval for a business-eligible Vercel plan before releasing the hostel website. No paid upgrade was made. See [Vercel Hobby guidance](https://vercel.com/docs/plans/hobby).
-- **Owner-approved clean start supersedes legacy reconciliation:** old reservations are managed separately. After a verified encrypted full backup/isolated restore and final release approval, clear pre-upgrade bookings/holds using `approved-clean-start.sql` **before** the twelve new migrations. Follow `clean-start-release.md`; no old allocations or guest links are imported. An empty new calendar is not actual availability. Check the separate reservation list and both OTAs for every confirmation.
+- **Owner-approved clean start supersedes legacy reconciliation:** old reservations are managed separately. After a verified encrypted full backup/isolated restore and final release approval, clear pre-upgrade bookings/holds using `approved-clean-start.sql` **before** the thirteen new migrations. Follow `clean-start-release.md`; no old allocations or guest links are imported. An empty new calendar is not actual availability. Check the separate reservation list and both OTAs for every confirmation.
 - **Database maintenance:** production was read-verified as PostgreSQL 17.6. Approve backed-up/rehearsed maintenance to a supported security-patched version; [Supabase documents security fixes in 17.11](https://supabase.com/changelog/postgres-15-19-17-11-breaking-changes). No upgrade was executed.
 - Confirm logical room/bed labels on site, the approved EUR rates, breakfast inclusion, guest policies, production notification inbox and actual business contact details.
 - Supply genuine surf packages and cinematic video if they are to be published. They can remain unpublished; the room-request and custom-enquiry flows work without invented offers. Obtain any review/source permissions. Optional Google integration can remain disabled.
@@ -34,9 +34,9 @@ It refuses remote hosts, creates disposable databases, restores a custom-format 
 
 ## Migrations and approved catalogue patch
 
-Read-only inspection found the production history matches the original sixteen migrations, through `202605260002_add_google_reviews_foundation.sql`. Staging has twenty-eight. Compare again immediately before release; stop on unexpected drift. Do not rerun original seed migrations, reset the database, import staging reservations/Auth users, or run the staging-only public-content import against production.
+Read-only inspection found the production history matches the original sixteen migrations, through `202605260002_add_google_reviews_foundation.sql`. Staging has twenty-nine after the package catalogue upgrade. Compare again immediately before release; stop on unexpected drift. Do not rerun original seed migrations, reset the database, import staging reservations/Auth users, or run the staging-only public-content import against production.
 
-Apply the following twelve new files in their recorded order, preserving their migration versions. Test the exact sequence against the approved recovery copy first. The enum addition must be committed before later files use its value.
+Apply the following thirteen new files in their recorded order, preserving their migration versions. Test the exact sequence against the approved recovery copy first. The enum addition must be committed before later files use its value.
 
 ```text
 202611020001_add_declined_status.sql
@@ -51,6 +51,7 @@ Apply the following twelve new files in their recorded order, preserving their m
 20261102202111_property_breakfast_setting.sql
 20261102202633_verified_room_listing_links.sql
 20261103011751_actionable_conflict_responses.sql
+20261103202556_editable_surf_package_catalogue.sql
 ```
 
 The migrations preserve historical booking/payment fields when rows exist; the Owner's separately guarded clean-start action now precedes them, leaving no legacy bookings to import. Historical rows remain in the verified encrypted backup. Payment runtime remains removed. The physical listing initializer fills only missing category associations and re-enables the room activation guard inside its transaction. Check all nine associations, twelve units, capacity 23, active guards and **zero legacy allocations/outbox jobs** after migration. Logical D01/D02 are standard doubles and D03/D04 are balcony doubles; the Owner must match/rename these against actual rooms.

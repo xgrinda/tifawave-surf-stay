@@ -83,7 +83,14 @@ export async function createManualRequestAction(form: FormData) {
     message: text("message"),
     externalReference: text("externalReference"),
     locale: text("locale"),
-    packageId: text("packageId"),
+    packageId: text("bookingType") === "surf_package" ? text("packageId") : "",
+    packageVariant:
+      text("bookingType") === "surf_package" ? text("packageVariant") : "",
+    packageExtras:
+      text("bookingType") === "surf_package"
+        ? form.getAll("packageExtras").map(String)
+        : [],
+    surfLevel: text("bookingType") === "surf_package" ? text("surfLevel") : "",
   });
   if (!parsed.success) redirect("/admin/bookings/new?error=details");
   const source = z

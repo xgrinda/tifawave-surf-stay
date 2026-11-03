@@ -1,0 +1,87 @@
+.sp-catalogue h1,
+.sp-catalogue h2,
+.sp-catalogue h3 {
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 400;
+}
+.sp-catalogue .surf-package-panel {
+  display: flex;
+  flex-direction: column;
+}
+.sp-catalogue .surf-package-card-actions {
+  margin-top: auto;
+}
+.sp-catalogue .sp-price {
+  font-size: 1.6rem;
+}
+.sp-catalogue small {
+  display: block;
+  font:
+    400 0.85rem/1.5 var(--font-body),
+    Arial,
+    sans-serif;
+  margin: 10px 0 20px;
+}
+.sp-catalogue .sp-two,
+.sp-catalogue .sp-variants {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px;
+}
+.sp-catalogue .sp-variants article {
+  padding: 30px;
+  background: #eee6d8;
+  border: 1px solid #d6cbbb;
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+}
+.sp-catalogue .sp-variants .btn {
+  margin-top: auto;
+}
+.sp-catalogue .surf-package-detail-body section {
+  margin: 50px 0;
+}
+.sp-catalogue .sp-hero-photo {
+  position: relative;
+  height: 420px;
+  overflow: hidden;
+}
+.sp-catalogue .sp-hero-photo img {
+  object-fit: cover;
+}
+.sp-catalogue .sp-request {
+  padding: 45px;
+  background: #eee6d8;
+}
+.sp-catalogue dt {
+  font-size: 0.85rem;
+  margin-top: 20px;
+}
+.sp-catalogue dd {
+  margin: 5px 0;
+}
+.sp-catalogue .surf-package-summary h2 {
+  font-size: 2rem;
+}
+.sp-catalogue ul {
+  padding-left: 22px;
+}
+.sp-catalogue li {
+  margin-bottom: 10px;
+}
+@media (max-width: 700px) {
+  .sp-catalogue .sp-two,
+  .sp-catalogue .sp-variants {
+    grid-template-columns: 1fr;
+  }
+  .sp-catalogue .sp-hero-photo {
+    height: 270px;
+  }
+  .sp-catalogue .sp-request {
+    padding: 26px;
+  }
+  .sp-catalogue .surf-package-detail-hero-inner {
+    grid-template-columns: 1fr;
+  }
+}

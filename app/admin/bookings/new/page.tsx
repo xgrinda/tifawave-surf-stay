@@ -1,3 +1,4 @@
+import { ManualPackageOptions } from "./package-options";
 import { requireAdmin } from "@/lib/admin/auth";
 import { randomUUID } from "node:crypto";
 import { getActiveSurfPackages } from "@/lib/surf-packages";
@@ -88,17 +89,7 @@ export default async function NewRequest({
             </select>
           </label>
         </div>
-        <label className="admin-field">
-          Package (required for surf-package requests)
-          <select name="packageId">
-            <option value="">None</option>
-            {packages.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <ManualPackageOptions packages={packages} />
         <label className="admin-field">
           Guest / organizer name
           <input name="guestName" minLength={2} maxLength={120} required />

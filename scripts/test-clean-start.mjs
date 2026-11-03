@@ -133,7 +133,7 @@ try {
   const inventory=(await db.query("select (select count(*)::int from public.physical_rooms) rooms,(select count(*)::int from public.inventory_units) units,(select sum(capacity)::int from public.inventory_units) capacity,(select count(*)::int from public.bookings) bookings,(select count(*)::int from public.reservation_allocations) allocations,(select count(*)::int from public.email_outbox) emails")).rows[0];
   assert.deepEqual(inventory,{rooms:9,units:12,capacity:23,bookings:0,allocations:0,emails:0});
   assert.equal((await db.query("select count(*)::int n from auth.users where id=$1",[owner])).rows[0].n,1);
-  pass("all twelve operations migrations initialize nine rooms/twelve units/23 guests with no legacy allocations or emails");
+  pass("all reviewed operations/catalogue migrations initialize nine rooms/twelve units/23 guests with no legacy allocations or emails");
   await assert.rejects(db.query(sql),/precede the new operations migrations/);await db.query("rollback");
   pass("reset refuses an already-upgraded operational database");
   await db.query("insert into public.staff_members(user_id,display_name,role) values($1,'Local Owner','owner')",[owner]);

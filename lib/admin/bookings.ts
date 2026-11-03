@@ -1,7 +1,7 @@
 import "server-only";
 import { createSupabaseStaffClient } from "@/lib/supabase/staff";
 const fields =
-  "id,reference,status,version,locale,booking_source,external_reference,booking_type,guest_name,guest_email,guest_phone,guests,check_in,check_out,notes,surf_level,group_size,room_preference,package_id,preferred_kind,preferred_listing_id,retreat_name,airport_transfer,board_rental,wetsuit_rental,meals_needed,yoga_interest,private_coaching,coworking_interest,booking_com_checked_at,airbnb_checked_at,decision_at,created_at,quoted_amount_cents,quote_currency" as const;
+  "id,reference,status,version,locale,booking_source,external_reference,booking_type,guest_name,guest_email,guest_phone,guests,check_in,check_out,notes,surf_level,group_size,room_preference,package_id,package_variant,package_selection,preferred_kind,preferred_listing_id,retreat_name,airport_transfer,board_rental,wetsuit_rental,meals_needed,yoga_interest,private_coaching,coworking_interest,booking_com_checked_at,airbnb_checked_at,decision_at,created_at,quoted_amount_cents,quote_currency" as const;
 export const bookingStatuses = [
   "pending",
   "confirmed",

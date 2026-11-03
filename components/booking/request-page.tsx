@@ -10,6 +10,7 @@ export type RequestParams = {
   type?: string;
   roomId?: string;
   packageId?: string;
+  variantId?: string;
   checkIn?: string;
   checkOut?: string;
   guests?: string;
@@ -23,7 +24,7 @@ export async function RequestPage({
 }) {
   const [rooms, packages, settings] = await Promise.all([
     getActiveRooms(),
-    getActiveSurfPackages(),
+    getActiveSurfPackages(locale),
     getWebsiteSettings(),
   ]);
   let rules = { minimum_nights: 1, maximum_nights: 365, notice_days: 0 };

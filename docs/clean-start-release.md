@@ -16,7 +16,7 @@ Read-only production inspection found the original sixteen migration versions,
 foreign keys to bookings/holds. There are no new allocation/outbox tables yet.
 These counts are a planning snapshot, not permission to delete any later data.
 
-Run the separate `approved-clean-start.sql` **before** the twelve operations
+Run the separate `approved-clean-start.sql` **before** the thirteen operations/catalogue
 migrations, with intake, old payment/webhook routes, staff and background writes
 paused under the approved cutover procedure. This avoids creating guest links,
 legacy allocation requirements or notifications from historical bookings.
@@ -81,7 +81,7 @@ assumed. [Backup guidance](https://supabase.com/docs/guides/platform/backups).
 
 ## Upgrade and go-live checks after the approved reset
 
-- Apply only the twelve reviewed new migrations in recorded order, committing
+- Apply only the thirteen reviewed new migrations in recorded order, committing
   the enum addition before dependent files. Apply the guarded approved catalogue
   patch separately. Never rerun original seed migrations or copy staging Auth,
   reservations, media or settings wholesale into production.

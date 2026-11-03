@@ -1,10 +1,14 @@
-import { getWebsiteSettings } from "@/lib/settings";
 import { unstable_noStore as noStore } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type { Row } from "@/lib/supabase/types";
-
-type PackageTone = "ocean" | "sunset" | "clay";
-
+import type { Locale } from "@/lib/i18n";
+import {
+  catalogueSchema,
+  localized,
+  levelLabel,
+  money,
+  pricingBasis,
+  type PackageCatalogue,
+} from "@/lib/packages/catalogue";
 export type PublicSurfPackage = {
   id: string;
   slug: string;
@@ -13,90 +17,70 @@ export type PublicSurfPackage = {
   fullDescription: string;
   priceLabel: string;
   unitLabel: string;
+  pricingLabel: string;
   surfLevel: string;
   inclusions: string[];
   featured: boolean;
-  tone: PackageTone;
+  tone: "ocean" | "sunset" | "clay";
+  catalogue: PackageCatalogue;
 };
-
-const packageTones: PackageTone[] = ["ocean", "sunset", "clay"];
-
-function formatPrice(cents: number, currency: string): string {
-  return cents > 0
-    ? new Intl.NumberFormat("en-GB", { style: "currency", currency }).format(
-        cents / 100,
-      )
-    : "Ask us";
-}
-
-function rowToPackage(
-  row: Pick<
-    Row<"packages">,
-    | "id"
-    | "slug"
-    | "name"
-    | "short_description"
-    | "full_description"
-    | "price_cents"
-    | "duration"
-    | "surf_level"
-    | "inclusions"
-  >,
-  index: number,
-  currency: string,
-): PublicSurfPackage {
-  return {
-    id: row.id,
-    slug: row.slug,
-    name: row.name,
-    shortDescription: row.short_description,
-    fullDescription: row.full_description,
-    priceLabel: formatPrice(row.price_cents, currency),
-    unitLabel: row.duration || "package",
-    surfLevel: row.surf_level,
-    inclusions: row.inclusions,
-    featured: false,
-    tone: packageTones[index % packageTones.length],
-  };
-}
-
-export async function getActiveSurfPackages(): Promise<PublicSurfPackage[]> {
+export async function getActiveSurfPackages(
+  locale: Locale = "en",
+): Promise<PublicSurfPackage[]> {
   noStore();
-
   try {
-    const supabase = createSupabaseServerClient();
-    const { data, error } = await supabase
+    const db = createSupabaseServerClient();
+    const { data, error } = await db
       .from("packages")
-      .select(
-        "id, slug, name, short_description, full_description, price_cents, duration, surf_level, inclusions",
-      )
+      .select("*")
       .eq("is_active", true)
-      .order("display_order", { ascending: true })
-      .order("name", { ascending: true });
-
-    if (error) {
-      return [];
-    }
-
-    const settings = await getWebsiteSettings();
-    return data.map((row, index) =>
-      rowToPackage(row, index, settings.defaultCurrency),
-    );
+      .eq("publication_status", "published")
+      .order("display_order")
+      .order("name");
+    if (error || !data) return [];
+    return data.flatMap((p, i) => {
+      const parsed = catalogueSchema.safeParse(p.catalogue);
+      if (!parsed.success || !parsed.data.arrangementsVerified) return [];
+      const c = parsed.data;
+      const rates = [...c.variants, ...c.seasons]
+        .map((v) => v.priceCents)
+        .filter((v): v is number => v !== null);
+      return [
+        {
+          id: p.id,
+          slug: p.slug,
+          name: localized(p.name, c.nameFr, locale),
+          shortDescription: localized(p.short_description, c.shortFr, locale),
+          fullDescription: localized(
+            p.full_description,
+            c.descriptionFr,
+            locale,
+          ),
+          priceLabel: rates.length
+            ? (locale === "fr" ? "À partir de " : "From ") +
+              money(Math.min(...rates), c.currency, locale)
+            : money(null, c.currency, locale),
+          unitLabel: c.nights + (locale === "fr" ? " nuits" : " nights"),
+          pricingLabel: pricingBasis(c.pricingBasis, locale),
+          surfLevel: c.levels.map((l) => levelLabel(l, locale)).join(" · "),
+          inclusions: locale === "fr" ? c.inclusionsFr : p.inclusions,
+          featured: c.featured,
+          tone: (["ocean", "sunset", "clay"] as const)[i % 3],
+          catalogue: c,
+        },
+      ];
+    });
   } catch {
     return [];
   }
 }
-
 export async function getActiveSurfPackageBySlug(
   slug: string,
-): Promise<PublicSurfPackage | null> {
-  const normalizedSlug = slug.trim().toLowerCase();
-
-  if (!normalizedSlug) {
-    return null;
-  }
-
-  const packages = await getActiveSurfPackages();
-
-  return packages.find((pkg) => pkg.slug === normalizedSlug) ?? null;
+  locale: Locale = "en",
+) {
+  return (
+    (await getActiveSurfPackages(locale)).find(
+      (p) => p.slug === slug.trim().toLowerCase(),
+    ) ?? null
+  );
 }

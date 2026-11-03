@@ -21,6 +21,7 @@ export const emailSnapshotSchema = z.object({
   bookingType: z.string(),
   package: z.string().nullable(),
   units: z.array(z.string()),
+  packageSelection: z.unknown().optional(),
   templateAdditions: z.record(z.string(), z.string().max(4000)).optional(),
   contactEmail: z.string().email().nullable().optional(),
 });
@@ -139,6 +140,102 @@ export function reservationEmail(
       ? [[fr ? "Attribution" : "Allocation", data.units.join(", ")]]
       : []),
   ];
+  const selection = z
+    .object({
+      id: z.string(),
+      variantId: z.string(),
+      variantLabel: z.string(),
+      surfLevel: z.string(),
+      nights: z.number(),
+      currency: z.string(),
+      basis: z.string(),
+      basePriceCents: z.number().nullable(),
+      totalCents: z.number().nullable(),
+      season: z.string().nullable(),
+      extras: z.array(
+        z.object({
+          id: z.string(),
+          label: z.string(),
+          priceCents: z.number().nullable(),
+          basis: z.string(),
+        }),
+      ),
+      inclusions: z.array(z.string()),
+      exclusions: z.array(z.string()),
+    })
+    .safeParse(data.packageSelection);
+  if (selection.success) {
+    const s = selection.data;
+    const amount = (value: number | null) =>
+      value === null
+        ? fr
+          ? "Sur devis"
+          : "Personal quote"
+        : new Intl.NumberFormat(fr ? "fr-FR" : "en-GB", {
+            style: "currency",
+            currency: s.currency,
+          }).format(value / 100);
+    const basis = (v: string) =>
+      v === "person"
+        ? fr
+          ? "par personne, séjour complet"
+          : "per person, whole stay"
+        : fr
+          ? "pour le groupe, séjour complet"
+          : "per party, whole stay";
+    const levels: Record<string, string[]> = {
+      beginner: ["Beginner", "Débutant"],
+      improver: ["Improver", "En progression"],
+      intermediate: ["Intermediate", "Intermédiaire"],
+      advanced: ["Advanced", "Avancé"],
+    };
+    rows.push(
+      [fr ? "Identifiant du séjour" : "Package ID", s.id],
+      [
+        fr ? "Hébergement demandé" : "Requested room variant",
+        s.variantLabel + " (" + s.variantId + ")",
+      ],
+      [fr ? "Durée" : "Duration", s.nights + (fr ? " nuits" : " nights")],
+      [
+        fr ? "Niveau de surf" : "Surf level",
+        levels[s.surfLevel]?.[fr ? 1 : 0] || s.surfLevel,
+      ],
+      [
+        fr ? "Base indicative" : "Indicative base",
+        amount(s.basePriceCents) + " · " + basis(s.basis),
+      ],
+      [
+        fr ? "Total indicatif du groupe" : "Indicative party total",
+        amount(s.totalCents),
+      ],
+      [
+        fr ? "Options demandées" : "Requested extras",
+        s.extras
+          .map(
+            (e) =>
+              e.label +
+              " (" +
+              e.id +
+              ") · " +
+              amount(e.priceCents) +
+              " · " +
+              basis(e.basis),
+          )
+          .join("; ") || (fr ? "Aucune" : "None"),
+      ],
+      [
+        fr ? "Inclus au moment de la demande" : "Inclusions at request time",
+        s.inclusions.join("; "),
+      ],
+      [fr ? "Non inclus" : "Exclusions", s.exclusions.join("; ")],
+    );
+    rows.push([
+      fr ? "Validation" : "Review",
+      fr
+        ? "Prestations et devis à confirmer personnellement ; aucun paiement en ligne."
+        : "Services and final quote require personal confirmation; no online payment.",
+    ]);
+  }
   if (alert) {
     rows.push(["Email", data.email], ["Phone / WhatsApp", data.phone || "—"]);
     if (data.preference) rows.push(["Preference", data.preference]);

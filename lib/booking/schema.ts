@@ -23,6 +23,21 @@ const requestFields = z
     bookingType: z.enum(["stay_only", "surf_package", "group_request"]),
     roomId: optionalId,
     packageId: optionalId,
+    packageVariant: z
+      .string()
+      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+      .max(64)
+      .or(z.literal(""))
+      .default(""),
+    packageExtras: z
+      .array(
+        z
+          .string()
+          .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+          .max(64),
+      )
+      .max(15)
+      .default([]),
     preferredKind: z
       .enum(["double", "twin", "triple", "family", "dorm", "mixed"])
       .default("mixed"),
@@ -63,7 +78,7 @@ function checkedRequest(allowPast: boolean) {
         message:
           "Choose future arrival/departure dates, up to 365 nights apart.",
       });
-    if (d.bookingType === "surf_package" && !d.packageId)
+    if (d.bookingType === "surf_package" && (!d.packageId || !d.packageVariant))
       ctx.addIssue({
         code: "custom",
         path: ["packageId"],

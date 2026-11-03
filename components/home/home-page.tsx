@@ -75,7 +75,7 @@ export async function HomePage({ locale }: { locale: Locale }) {
   ] = await Promise.all([
     getActiveRooms(),
     getActiveGalleryImages(),
-    getActiveSurfPackages(),
+    getActiveSurfPackages(locale),
     publishedContent("page", "home", locale),
     getWebsiteSettings(),
     publishedContent("page", "packages", locale),
@@ -666,42 +666,45 @@ export async function HomePage({ locale }: { locale: Locale }) {
             <h2 id="hc-packages-title">{offers.heading}</h2>
             <p>{offers.body}</p>
           </div>
-          {packages.length ? (
+          {packages.some((p) => p.featured) ? (
             <div className="hc-offer-grid">
-              {packages.slice(0, 3).map((pkg) => (
-                <article className="hc-offer" key={pkg.id}>
-                  <span className="hc-pill">{pkg.unitLabel}</span>
-                  <h3>{pkg.name}</h3>
-                  <p>{pkg.shortDescription}</p>
-                  <ul>
-                    {pkg.inclusions.slice(0, 5).map((v) => (
-                      <li key={v}>{v}</li>
-                    ))}
-                  </ul>
-                  <p className="hc-offer-price">
-                    {pkg.priceLabel}
-                    <small> / {pkg.unitLabel}</small>
-                  </p>
-                  <Link
-                    href={path("/surf/packages/" + pkg.slug)}
-                    className="hc-text-link"
-                  >
-                    {t(
-                      "Full inclusions & accommodation",
-                      "Prestations & hébergement",
-                    )}{" "}
-                    →
-                  </Link>
-                  <Link
-                    className="btn btn-primary"
-                    href={packageRequestPath(locale, pkg.id)}
-                    data-home-cta="package_request"
-                    data-intent="surf"
-                  >
-                    {t("Request this package", "Demander ce séjour")}
-                  </Link>
-                </article>
-              ))}
+              {packages
+                .filter((p) => p.featured)
+                .slice(0, 3)
+                .map((pkg) => (
+                  <article className="hc-offer" key={pkg.id}>
+                    <span className="hc-pill">{pkg.unitLabel}</span>
+                    <h3>{pkg.name}</h3>
+                    <p>{pkg.shortDescription}</p>
+                    <ul>
+                      {pkg.inclusions.slice(0, 5).map((v) => (
+                        <li key={v}>{v}</li>
+                      ))}
+                    </ul>
+                    <p className="hc-offer-price">
+                      {pkg.priceLabel}
+                      <small>{pkg.pricingLabel}</small>
+                    </p>
+                    <Link
+                      href={path("/surf/packages/" + pkg.slug)}
+                      className="hc-text-link"
+                    >
+                      {t(
+                        "Full inclusions & accommodation",
+                        "Prestations & hébergement",
+                      )}{" "}
+                      →
+                    </Link>
+                    <Link
+                      className="btn btn-primary"
+                      href={packageRequestPath(locale, pkg.id)}
+                      data-home-cta="package_request"
+                      data-intent="surf"
+                    >
+                      {t("Request this package", "Demander ce séjour")}
+                    </Link>
+                  </article>
+                ))}
             </div>
           ) : (
             <>
