@@ -38,7 +38,8 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CURRENCY_PATTERN = /^[A-Z]{3}$/;
 
 export const DEFAULT_WEBSITE_SETTINGS: WebsiteSettings = {
-  breakfastIncluded: false,
+  // Owner-confirmed property defaults; never fall back to starter USD rates.
+  breakfastIncluded: true,
   businessName: "Tifawave Surf Stay",
   contactEmail: "hello@tifawave.com",
   whatsappNumber: "",
@@ -49,7 +50,7 @@ export const DEFAULT_WEBSITE_SETTINGS: WebsiteSettings = {
   googleBusinessLocationId: "",
   googleReviewsProfileUrl: "",
   instagramUrl: "",
-  defaultCurrency: "USD",
+  defaultCurrency: "EUR",
   supportPhone: "",
   bookingNoticeText:
     "Your request remains pending until the owner personally confirms it.",

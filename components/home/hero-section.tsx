@@ -8,9 +8,11 @@ import { DEFAULT_LOCALE, i18n, localizedPath, type Locale } from "@/lib/i18n";
 export async function HeroSection({
   locale = DEFAULT_LOCALE,
   image,
+  breakfastIncluded = false,
 }: {
   locale?: Locale;
   image?: HomeImage | null;
+  breakfastIncluded?: boolean;
 }) {
   const copy = i18n[locale].home.hero;
   const content = await publishedContent("page", "home", locale);
@@ -21,9 +23,15 @@ export async function HeroSection({
       {(content?.heroImage || image?.imageUrl) && (
         <HeroMedia
           image={content?.heroImage || image!.imageUrl}
-          alt={content?.heroAlt || image?.altText || ""}
+          alt={
+            content?.heroAlt ||
+            (locale === "fr"
+              ? "Vue de Tifawave à Tamraght"
+              : image?.altText || "Tifawave in Tamraght")
+          }
           video={content?.heroVideo || ""}
           locale={locale}
+          position={image?.focalPosition}
         />
       )}
       <div className="home-hero-wave" />
@@ -40,9 +48,15 @@ export async function HeroSection({
         </h1>
         <p className="home-hero-copy">{content?.summary || copy.copy}</p>
         <div className="home-hero-actions">
-          <a className="btn btn-primary" href={localizedPath(locale, "/book")}>
-            <span className="hero-cta-long">{copy.primaryCta}</span>
-            <span className="hero-cta-short">{copy.primaryCtaShort}</span>
+          <a
+            className="btn btn-primary"
+            href="#surf-packages"
+            data-home-cta="hero_packages"
+            data-intent="surf"
+          >
+            {locale === "fr"
+              ? "Explorer les séjours surf"
+              : "Explore Surf Packages"}
             <svg
               aria-hidden="true"
               width="16"
@@ -57,13 +71,36 @@ export async function HeroSection({
           </a>
           <Link
             className="btn btn-ghost-dark"
-            href={localizedPath(locale, "/surf/packages")}
+            href="#rooms"
+            data-home-cta="hero_rooms"
+            data-intent="room"
           >
-            {copy.secondaryCta}
+            {locale === "fr" ? "Trouver ma chambre" : "Find Your Room"}
           </Link>
         </div>
+        <Link
+          className="hc-hero-request"
+          href={localizedPath(locale, "/book")}
+          data-home-cta="hero_request"
+          data-intent="room"
+        >
+          {locale === "fr"
+            ? "Déjà vos dates ? Demander un séjour"
+            : "Have dates in mind? Request to book"}{" "}
+          <span aria-hidden="true">→</span>
+        </Link>
         <div className="home-hero-trust" aria-label={copy.trustLabel}>
-          {copy.trustSignals.map((signal) => (
+          {[
+            ...(breakfastIncluded
+              ? [
+                  locale === "fr"
+                    ? "Petit-déjeuner inclus"
+                    : "Breakfast included",
+                ]
+              : []),
+            locale === "fr" ? "Confirmation manuelle" : "Manual confirmation",
+            locale === "fr" ? "Aucun paiement en ligne" : "No online payment",
+          ].map((signal) => (
             <span key={signal}>{signal}</span>
           ))}
         </div>

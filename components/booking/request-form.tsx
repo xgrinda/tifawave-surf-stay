@@ -3,8 +3,10 @@ import Link from "next/link";
 import { useRef, useState, type FormEvent } from "react";
 import type { Locale } from "@/lib/i18n";
 import { propertyToday } from "@/lib/booking/schema";
+import { trackPendingBookingCreated } from "@/lib/analytics/events";
 export type RequestOption = { id: string; name: string };
 type Initial = {
+  preferredKind?: string;
   type?: string;
   roomId?: string;
   packageId?: string;
@@ -115,7 +117,10 @@ export function RequestForm({
             "Votre demande n’a pas pu être enregistrée. Vérifiez les informations ou contactez Tifawave.",
           ),
         );
-      } else setSaved(result.bookingId);
+      } else {
+        setSaved(result.bookingId);
+        trackPendingBookingCreated({ bookingStatus: "pending" });
+      }
     } catch {
       setError(
         label(
@@ -265,7 +270,11 @@ export function RequestForm({
               </label>
               <label className="admin-field">
                 {label("Preferred room setup", "Configuration souhaitée")}
-                <select name="preferredKind" required defaultValue="mixed">
+                <select
+                  name="preferredKind"
+                  required
+                  defaultValue={initial.preferredKind || "mixed"}
+                >
                   {[
                     [
                       "mixed",

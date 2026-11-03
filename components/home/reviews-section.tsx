@@ -1,90 +1,124 @@
-import { DEFAULT_LOCALE, i18n, type Locale } from "@/lib/i18n";
+import Link from "next/link";
+import { Container } from "@/components/primitives/container";
+import { DEFAULT_LOCALE, localizedPath, type Locale } from "@/lib/i18n";
 import { getActiveReviews } from "@/lib/reviews";
-import { getWebsiteSettings } from "@/lib/settings";
-
-const sectionCopy = {
-  en: {
-    emptyMeta:
-      "Official Google reviews will appear here after sync is configured.",
-    emptyTitle: "Real guest reviews, synced from the source.",
-    googleReview: "Google review",
-    guestReview: "Guest review",
-    readMore: "Read Google reviews",
-    scoreLabel: "Average of displayed reviews",
-  },
-  fr: {
-    emptyMeta:
-      "Les avis Google officiels apparaîtront ici après configuration de la synchronisation.",
-    emptyTitle: "De vrais avis voyageurs, synchronisés depuis la source.",
-    googleReview: "Avis Google",
-    guestReview: "Avis voyageur",
-    readMore: "Lire les avis Google",
-    scoreLabel: "Moyenne des avis affichés",
-  },
-} as const;
-
-function starText(rating: number) {
-  return "★".repeat(rating);
-}
 
 export async function ReviewsSection({
   locale = DEFAULT_LOCALE,
 }: {
   locale?: Locale;
 }) {
-  const copy = i18n[locale].home.reviews;
-  const text = sectionCopy[locale];
-  const [reviews, settings] = await Promise.all([
-    getActiveReviews(3),
-    getWebsiteSettings(),
-  ]);
-  const profileUrl = settings.googleReviewsProfileUrl || settings.googleMapsUrl;
-
-  if (reviews.length === 0) return null;
-
-  const averageRating =
-    reviews.reduce((total, review) => total + review.rating, 0) /
-    reviews.length;
-
+  const fr = locale === "fr";
+  const reviews = (await getActiveReviews(12))
+    .filter((r) => {
+      try {
+        const url = new URL(r.sourceUrl);
+        return url.protocol === "https:" && r.rating >= 1 && r.rating <= 5;
+      } catch {
+        return false;
+      }
+    })
+    .slice(0, 3);
   return (
-    <section
-      className="reviews-section"
-      aria-labelledby="reviews-section-title"
-    >
-      <div className="container-shell reviews-section-inner">
-        <h2 id="reviews-section-title">{text.emptyTitle}</h2>
-        <p className="reviews-meta">
-          {text.scoreLabel}: <strong>{averageRating.toFixed(1)}/5</strong>
-        </p>
-
-        <div className="reviews-grid" aria-label={copy.logosLabel}>
-          {reviews.map((review) => (
-            <article className="review-card" key={review.id}>
-              <p
-                className="review-card-stars"
-                aria-label={`${review.rating} out of 5`}
-              >
-                {starText(review.rating)}
-              </p>
-              <blockquote>{review.reviewText}</blockquote>
-              <footer>
-                <strong>{review.reviewerName}</strong>
-                <span>
-                  {review.source === "google"
-                    ? text.googleReview
-                    : text.guestReview}
-                </span>
-              </footer>
-            </article>
-          ))}
+    <section className="hc-section hc-trust" aria-labelledby="hc-trust-title">
+      <Container>
+        <div className="hc-heading">
+          <p className="eyebrow">{fr ? "En toute confiance" : "Guest trust"}</p>
+          <h2 id="hc-trust-title">
+            {reviews.length
+              ? fr
+                ? "Les mots de nos voyageurs."
+                : "In our guests’ words."
+              : fr
+                ? "Un vrai lieu. Un contact personnel."
+                : "A real place. A personal reply."}
+          </h2>
+          <p>
+            {fr
+              ? "Vous préparez votre séjour avec Tifawave, directement et personnellement."
+              : "Plan your stay directly with Tifawave, one conversation at a time."}
+          </p>
         </div>
-
-        {profileUrl ? (
-          <a className="reviews-source-link" href={profileUrl}>
-            {text.readMore}
-          </a>
-        ) : null}
-      </div>
+        {reviews.length ? (
+          <div className="hc-review-grid">
+            {reviews.map((r) => (
+              <article key={r.id}>
+                <p
+                  className="hc-stars"
+                  aria-label={fr ? `${r.rating} sur 5` : `${r.rating} out of 5`}
+                >
+                  {"★".repeat(r.rating)}
+                </p>
+                <blockquote>{r.reviewText}</blockquote>
+                <strong>{r.reviewerName}</strong>
+                <small>
+                  {new Date(r.reviewDate).toLocaleDateString(
+                    fr ? "fr-FR" : "en-GB",
+                    { year: "numeric", month: "short", timeZone: "UTC" },
+                  )}
+                </small>
+                <a
+                  href={r.sourceUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hc-text-link"
+                >
+                  {fr ? "Lire l’avis à la source" : "Read the original review"}{" "}
+                  ↗
+                </a>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="hc-trust-grid">
+            {(fr
+              ? [
+                  [
+                    "01",
+                    "Vous envoyez vos dates",
+                    "Une demande simple, sans paiement en ligne.",
+                  ],
+                  [
+                    "02",
+                    "Nous vérifions personnellement",
+                    "Booking.com, Airbnb et les réservations gérées séparément.",
+                  ],
+                  [
+                    "03",
+                    "Le propriétaire confirme",
+                    "Votre demande reste en attente jusqu’à notre confirmation.",
+                  ],
+                ]
+              : [
+                  [
+                    "01",
+                    "You send your dates",
+                    "A simple request, without online payment.",
+                  ],
+                  [
+                    "02",
+                    "We check personally",
+                    "Booking.com, Airbnb and separately managed reservations.",
+                  ],
+                  [
+                    "03",
+                    "The Owner confirms",
+                    "Your request remains Pending until we confirm it.",
+                  ],
+                ]
+            ).map(([n, title, body]) => (
+              <article key={n}>
+                <span>{n}</span>
+                <h3>{title}</h3>
+                <p>{body}</p>
+              </article>
+            ))}
+          </div>
+        )}
+        <Link className="hc-text-link" href={localizedPath(locale, "/about")}>
+          {fr ? "Découvrir Tifawave" : "Get to know Tifawave"} →
+        </Link>
+      </Container>
     </section>
   );
 }

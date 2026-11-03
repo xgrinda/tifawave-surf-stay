@@ -26,6 +26,7 @@ export function GoogleAnalytics({ measurementId }: GoogleAnalyticsProps) {
       allow_google_signals: false,
       anonymize_ip: true,
       page_path: pagePath,
+      page_location: window.location.origin + pagePath,
     });
   }, [measurementId, pathname]);
 
@@ -48,6 +49,11 @@ export function GoogleAnalytics({ measurementId }: GoogleAnalyticsProps) {
       }
 
       const url = new URL(link.href);
+      if (
+        link.hasAttribute("data-home-cta") &&
+        document.querySelector("main[data-homepage]")
+      )
+        return;
 
       const isBookingPath =
         url.pathname === "/book" || url.pathname === "/fr/book";
@@ -95,6 +101,7 @@ export function GoogleAnalytics({ measurementId }: GoogleAnalyticsProps) {
             allow_ad_personalization_signals: false,
             allow_google_signals: false,
             anonymize_ip: true,
+            page_location: window.location.origin + window.location.pathname,
             send_page_view: false
           });
         `}

@@ -54,9 +54,11 @@ export async function enquiryMetadata(
 export async function EnquiryPage({
   area,
   locale,
+  initialMessage,
 }: {
   area: string;
   locale: Locale;
+  initialMessage?: string;
 }) {
   const c = await publishedContent("page", area, locale);
   const fr = locale === "fr";
@@ -82,7 +84,7 @@ export async function EnquiryPage({
             </Link>
           </p>
         )}
-        {area !== "policies" && <EnquiryForm area={area} locale={locale} />}
+        {area !== "policies" && <EnquiryForm area={area} locale={locale} initialMessage={initialMessage} />}
         {area === "policies" && (
           <Link
             className="btn btn-primary"

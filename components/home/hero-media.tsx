@@ -2,16 +2,19 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import type { Locale } from "@/lib/i18n";
+import { focalPositionToCss, type FocalPosition } from "@/lib/image-position";
 export function HeroMedia({
   image,
   alt,
   video,
   locale,
+  position = "center",
 }: {
   image: string;
   alt: string;
   video: string;
   locale: Locale;
+  position?: FocalPosition;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
   const [loaded, setLoaded] = useState(false);
@@ -69,7 +72,15 @@ export function HeroMedia({
   return (
     <>
       <div className="hero-property-media">
-        <Image src={image} alt={alt} fill priority sizes="100vw" quality={80} />
+        <Image
+          src={image}
+          alt={alt}
+          fill
+          priority
+          sizes="100vw"
+          quality={80}
+          style={{ objectPosition: focalPositionToCss(position) }}
+        />
         {video && (
           <video
             ref={ref}

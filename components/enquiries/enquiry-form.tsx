@@ -2,12 +2,15 @@
 import { useRef, useState } from "react";
 import { enquirySchema } from "@/lib/enquiries/schema";
 import type { Locale } from "@/lib/i18n";
+import { trackEvent } from "@/lib/analytics/events";
 export function EnquiryForm({
   area,
   locale,
+  initialMessage = "",
 }: {
   area: string;
   locale: Locale;
+  initialMessage?: string;
 }) {
   const fr = locale === "fr";
   const group = area === "groups";
@@ -55,6 +58,7 @@ export function EnquiryForm({
     );
   return (
     <form
+      id="enquiry"
       className="public-enquiry-form"
       onSubmit={async (e) => {
         e.preventDefault();
@@ -106,6 +110,8 @@ export function EnquiryForm({
           const result = await response.json();
           if (!response.ok) throw Error(result.message || "Please try again.");
           setSent(true);
+          if (["contact","groups","partners","collaborate"].includes(area))
+            trackEvent("enquiry_created", { event_source: area, locale });
         } catch (err) {
           setError(
             err instanceof Error
@@ -189,6 +195,7 @@ export function EnquiryForm({
         <span>{fr ? "Votre projet" : "Your plans"}</span>
         <textarea
           name="message"
+          defaultValue={initialMessage}
           rows={6}
           minLength={10}
           maxLength={3000}

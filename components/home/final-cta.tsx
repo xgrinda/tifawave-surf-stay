@@ -1,5 +1,6 @@
 import { Container } from "@/components/primitives/container";
 import { DEFAULT_LOCALE, i18n, localizedPath, type Locale } from "@/lib/i18n";
+import { propertyToday } from "@/lib/booking/schema";
 
 export function FinalCta({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
   const copy = i18n[locale].home.finalCta;
@@ -17,7 +18,23 @@ export function FinalCta({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
         >
           <label className="final-cta-field">
             <small>{copy.checkIn}</small>
-            <input aria-label={copy.checkIn} name="checkIn" type="date" />
+            <input
+              aria-label={copy.checkIn}
+              name="checkIn"
+              type="date"
+              min={propertyToday()}
+              required
+            />
+          </label>
+          <label className="final-cta-field">
+            <small>{copy.checkOut}</small>
+            <input
+              aria-label={copy.checkOut}
+              name="checkOut"
+              type="date"
+              min={propertyToday()}
+              required
+            />
           </label>
           <label className="final-cta-field">
             <small>{copy.guests}</small>
@@ -25,6 +42,7 @@ export function FinalCta({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
               aria-label={copy.guests}
               defaultValue="2"
               min="1"
+              max="23"
               name="guests"
               type="number"
             />
@@ -33,6 +51,11 @@ export function FinalCta({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
             {copy.cta}
           </button>
         </form>
+        <p className="hc-final-note">
+          {locale === "fr"
+            ? "Demande en attente · aucun paiement en ligne · disponibilités vérifiées personnellement"
+            : "Pending approval · no online payment · availability checked personally"}
+        </p>
       </Container>
     </section>
   );

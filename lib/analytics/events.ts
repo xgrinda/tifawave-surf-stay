@@ -4,9 +4,15 @@ type AnalyticsEventName =
   | "booking_cta_click"
   | "availability_check"
   | "booking_hold_created"
-  | "pending_booking_created";
+  | "pending_booking_created"
+  | "homepage_cta_click"
+  | "homepage_request_start"
+  | "enquiry_created";
 
 type AnalyticsEventParams = {
+  cta_id?: string;
+  intent?: string;
+  locale?: string;
   availability_status?: "available" | "unavailable" | "error";
   booking_status?: string;
   check_in?: string;

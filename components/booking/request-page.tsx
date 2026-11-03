@@ -5,6 +5,7 @@ import { getActiveRooms } from "@/lib/rooms";
 import { getActiveSurfPackages } from "@/lib/surf-packages";
 import { getWebsiteSettings, getWhatsappHref } from "@/lib/settings";
 import type { Locale } from "@/lib/i18n";
+import { homeRoomName, roomPreferredKind } from "@/lib/homepage";
 export type RequestParams = {
   type?: string;
   roomId?: string;
@@ -57,8 +58,17 @@ export async function RequestPage({
         <RequestForm
           rules={rules}
           locale={locale}
-          initial={params}
-          rooms={rooms}
+          initial={{
+            ...params,
+            preferredKind: roomPreferredKind(
+              rooms.find((r) => r.id === params.roomId)?.slug || "",
+            ),
+          }}
+          rooms={rooms.map((r) => ({
+            id: r.id,
+            name:
+              locale === "fr" ? homeRoomName(r.slug, r.name, locale) : r.name,
+          }))}
           packages={packages.filter((p) => /^[0-9a-f-]{36}$/i.test(p.id))}
           whatsappHref={getWhatsappHref(settings)}
           contactEmail={settings.contactEmail}
