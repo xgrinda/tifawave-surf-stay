@@ -123,8 +123,7 @@ const known: Record<
     capacity: 2,
   },
   "private-double-room-balcony": {
-    description:
-      "Original balcony-room listing. Confirm the physical room mapping before publication.",
+    description: "Private double room with a balcony for up to two guests.",
     capacity: 2,
   },
   "twin-room": {
@@ -158,8 +157,17 @@ const rooms = source.rooms.map(
       name: facts.name || r.name,
       description: facts.description,
       max_guests: facts.capacity,
-      base_price_cents: 0,
-      is_active: r.slug !== "private-double-room-balcony",
+      base_price_cents: (
+        {
+          "4-bed-dorm-room": 1500,
+          "private-double-room": 3500,
+          "twin-room": 3500,
+          "private-double-room-balcony": 4500,
+          "triple-room": 4500,
+          "family-room-4p": 5500,
+        } as Record<string, number>
+      )[r.slug],
+      is_active: true,
     };
   },
 );
@@ -178,7 +186,16 @@ const packages = source.packages.map((p: Record<string, unknown>) => ({
 }));
 await ok(admin.from("packages").insert(packages));
 journal.packageIds = packages.map((r: { id: string }) => r.id);
-await ok(admin.from("settings").update(source.settings).eq("id", true));
+await ok(
+  admin
+    .from("settings")
+    .update({
+      ...source.settings,
+      default_currency: "EUR",
+      breakfast_included: true,
+    })
+    .eq("id", true),
+);
 journal.phase = "complete";
 await save();
 console.log(
@@ -191,7 +208,7 @@ console.log(
     roomPhotos: photos.length,
     gallery: gallery.length,
     unpublishedStarterPackages: packages.length,
-    prices: "Ask us until Owner confirms current rates",
+    prices: "Owner-confirmed EUR nightly rates; breakfast included",
     productionMutations: 0,
   }),
 );
