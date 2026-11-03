@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { Client } from "pg";
 import { randomUUID, createHash } from "node:crypto";
-import { readFile, readdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { readFile, readdir, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 import { readFileSync, writeFileSync } from "node:fs";
@@ -20,6 +20,7 @@ restoredUrl.pathname = "/" + name + "_restored";
 const admin = new Client({ connectionString: base.toString() });
 const db = new Client({ connectionString: url.toString() });
 const restored = new Client({ connectionString: restoredUrl.toString() });
+await mkdir(new URL("../work/", import.meta.url), { recursive: true });
 const folder = await mkdtemp(new URL("../work/clean-start-", import.meta.url));
 const results = [];
 const pass = (name) => { results.push({ name, passed: true }); console.log("PASS:", name); };
