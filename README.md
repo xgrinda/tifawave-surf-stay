@@ -7,10 +7,16 @@ staging is provisioned. Use an explicit Preview deployment after verifying all
 branch-scoped environment overrides. This prevents an initial branch push from
 inheriting production credentials before the branch-specific settings exist.
 
-The current milestone implements a manual reservation system. There are no online
+The development release includes the Operations Desk, calendar, operational
+modules, bilingual public enquiries, CMS, media, staff management and Owner
+reports. It preserves the original architecture. There are no online
 payments. Public requests always start pending; only an active Owner account
 with MFA may confirm or decline, after recording manual Booking.com/Airbnb checks
 and allocating sufficient physical inventory.
+
+Daily use: `docs/operations-guide.md`. Production approval, hosting, backup,
+configuration, migrations and rollback: `docs/release-runbook.md`. Approved room
+rates/facts: `docs/verified-property-facts.md`. Production remains unchanged.
 
 ## Development safety
 
@@ -61,6 +67,13 @@ historical migrations remain intact. New migrations:
 5. `20261102134701_reliable_email_retry_scheduler.sql` — freezes provider
    messages, records provider outcomes, stops unsafe retries, and adds private
    scheduler authentication and delivery-health telemetry.
+6. `20261102173432_operations_workspace.sql` — operational KPIs and calendar.
+7. `20261102173930_operational_modules.sql` — guests, enquiries, tasks, readiness, rates, package media and quotes.
+8. `20261102180706_publishing_reports_and_settings.sql` — session revocation, CMS, staff, reports/exports and settings.
+9. `20261102200738_scoped_enquiry_dispatch.sql` — scoped immediate enquiry mail.
+10. `20261102202111_property_breakfast_setting.sql` — verified breakfast setting.
+11. `20261102202633_verified_room_listing_links.sql` — missing logical listing links, without reallocating stays.
+12. `20261103011751_actionable_conflict_responses.sql` — HTTP 409 for deliberate stale-version/lease refusals.
 
 Existing booking IDs, guest records, statuses, payment-history columns, and
 historical SQL are preserved. No historical reservation is assigned a physical
@@ -94,15 +107,15 @@ The Owner signs in at `/admin/login`, enrolls an authenticator at `/admin/mfa`,
 and verifies a code. Owner authority is enforced with `aal2` in database
 policies/functions, not only through UI controls. Disabled staff lose access on
 their next protected operation. Keep Auth recovery and MFA-recovery procedures
-in the trusted Supabase administration process until staff/security settings are
-completed in later milestones.
+in the trusted Supabase administration process. Staff invitation, password setup,
+recovery, role management and revocation are now available in the workspace.
 
 Reception can prepare manual requests and pending contact details, view
 reservations/blocks/alerts, and add internal notes. It cannot confirm/decline,
 change a confirmed reservation, edit staff permissions, or reset email failures.
-Housekeeping's operational UI arrives in Milestone C; its account has no guest
-contact access. Content editors can manage the existing room/package/gallery
-content tools; settings and official review sync remain Owner-only.
+Housekeeping manages permitted room tasks/readiness without guest contacts.
+Content Editors manage room/package/gallery and CMS tools; management settings,
+staff, exports and official review sync remain Owner-only.
 
 ## Inventory and requests
 
@@ -116,11 +129,16 @@ unit-level date-range exclusion constraint. Dates use arrival-inclusive,
 departure-exclusive ranges; same-day turnover is allowed. Commands lock/version
 records and roll back failed changes entirely.
 
-Public intake: `POST /api/booking`. Request validation, HMAC IP rate limits,
+Public intake: `POST /api/booking` and `POST /api/enquiry`. Request validation, HMAC IP rate limits,
 idempotent submission, same-origin checks, and bounded JSON protect the server.
 Manual OTA/direct/walk-in entries remain pending until Owner finalization. Missing
 manual-entry contacts are not fabricated; a missing guest email is clearly shown
 and requires communication through the original channel.
+
+`TIFAWAVE_PUBLIC_INTAKE_DISABLED=true` pauses both public APIs before data access
+or email creation. Redeploy after changing it. Informational pages and existing
+records remain available. Use this reviewed manual build for incident containment
+rather than restoring historical payment-capable code.
 
 ## Email
 
@@ -209,3 +227,20 @@ fixture IDs, and removes its disposable identities/records in `finally`.
 actual Preview using test staff SSR sessions. Never commit that URL or tokens.
 Re-enable the scheduler and verify a completed run after bulk tests. The personal
 Owner account is never modified by the harness.
+
+`scripts/accept-modules-staging.ts` tests real catalogue/CMS publishing,
+housekeeping, groups, quotes, exports, settings, revocation and invitation/recovery
+password setup against the same fixed staging project and protected Preview.
+Disposable generated links do not send mail to uncontrolled aliases. Actual SMTP
+and scheduled delivery are verified separately in the Owner-controlled inbox.
+
+For a representative public-catalogue upgrade, guarded release-data patch and
+backup restoration rehearsal:
+
+```sh
+rtk proxy node scripts/test-database.mjs --restore-drill --catalogue-release-drill
+```
+
+This remains local and disposable, preserves the historical booking fixture and
+checks all nine listing links without copying real guest records. Real production
+database/Storage backups and an approved isolated restore remain release gates.

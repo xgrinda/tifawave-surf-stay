@@ -1,51 +1,38 @@
-# Staging validation and production release gates
+# Staging verification and production release gates
 
-All mutation checks below run in isolated staging or disposable local tests.
-Never create test reservations, send test mail to guests, or run test migrations
-on production.
+All mutation tests use isolated staging or disposable loopback databases. Production reservations, credentials, environment settings, domain and main branch remain unchanged.
 
-## Milestone A
+## Verified in staging
 
-- [ ] Vercel Git/project/custom-domain mapping verified; development branch is Preview-only.
-- [ ] Separate staging Supabase database, Auth, Storage, secrets and controlled email recipients configured.
-- [ ] Historical starter catalogue data reviewed; no demo bookings, invented rates or fake dashboard figures.
-- [ ] All migrations applied to staging; actual schema/grants compared with the local fixture.
-- [ ] Individual first Owner enrolled and MFA verified through the real Supabase Auth service.
-- [ ] Login, refresh, logout, recovery and disabled-staff behavior verified in actual Preview.
-- [ ] Reception/content-editor/housekeeping permission boundaries exercised with real staging accounts.
-- [ ] Stay, dorm-bed, package, group and manual OTA requests save pending.
-- [ ] Both channel checks and sufficient actual allocations required for Owner confirmation.
-- [ ] No shared-password cookie, public endpoint or online-payment path can confirm.
-- [ ] Concurrent confirmations, date changes, reassignment, maintenance blocks, cancellations, and declines verified.
-- [ ] Dorm beds remain individually bookable and family suite indivisible.
-- [ ] Legacy confirmed stays and blocks mapped by the Owner; no guessed allocations.
-- [ ] Contact edits/history/version guards work and internal notes remain private.
-- [ ] Persisted alerts and per-staff read state work; overview/list refresh safely.
-- [ ] Real Resend sender/domain and receipt/decision emails verified in controlled inboxes.
-- [ ] Queue retries, failures, duplicate delivery protection and worker authorization verified.
-- [ ] Authenticated POST retry scheduler configured; no unattended retry claim until verified.
-- [ ] Payment routes return 404; old payment query parameters cannot display a confirmed state.
-- [ ] Existing OTA calendar consumers identified and secure per-unit export migration approved.
-- [ ] Public website and English/French request pages checked on phone/tablet/desktop.
-- [ ] Lint, standalone types, build, security tests, fresh/upgrade migrations and conflict tests pass.
-- [ ] Working Vercel Preview URL and an explicit scope/incomplete-items report supplied.
+- [x] Original repository/Vercel mapping; development branch uses explicit protected Previews and an isolated Supabase project.
+- [x] Twenty-eight migrations, historical booking/payment preservation, actual RLS, roles and concurrent allocation tests.
+- [x] Nine physical rooms, twelve units, capacity 23; independent dorm beds and indivisible family suite.
+- [x] Owner MFA, both manual OTA checks and sufficient inventory required for confirmation. Public/manual/group intake stays pending. Payments cannot confirm.
+- [x] Operations Desk, search/filter/pagination, notifications and day/week/month calendar connected to real records.
+- [x] Guests/history, inventory, seasonal rates, quotes, tasks, housekeeping, package activities/photos and enquiry CRM.
+- [x] English/French catalogue/enquiry pages, truthful SEO, CMS drafts/revisions/publication, reviews and optimized media.
+- [x] Reports, audited Owner CSV, settings/version guards, staff roles and immediate sensitive-session revocation.
+- [x] Real invite/recovery setup actions and HttpOnly session bootstrap; actual SMTP delivery.
+- [x] Durable email leases, retries, frozen messages, provider duplicate protection and independent Cron delivery.
+- [x] Mobile French booking to pending record, Owner rejection without checks, valid allocation, visible calendar stay and confirmation email.
+- [x] Public enquiry API retry creates one enquiry/two jobs; Cron-only enquiry email shows Delivered in Resend.
+- [x] Video direct upload and Content Editor image form persist real assets; invalid type/size/role requests refused; disposable assets removed.
+- [x] Local restore verifies data, constraints, RLS and grants; guarded catalogue patch preserves bookings/allocations and applies approved facts.
+- [x] Public-intake pause returns 503 before data access while informational pages remain available.
+- [x] Lint, TypeScript, unit/database/HTTP checks, production build, Deno/CI and production dependency audit.
 
-## Later milestones
+## Owner review and production release — still required
 
-- [ ] B: professional app shell, overview metrics, calendar views, reservation drawers and settings.
-- [ ] C: guests, full physical inventory/media/pricing, package activities/photos, group/partner CRM and housekeeping.
-- [ ] D: CMS revisions/publishing, languages, SEO, reports/exports, complete notifications/settings and accessibility/performance polish.
-- [ ] No unfinished action or disconnected module is presented as a completed feature.
+- [ ] Final approval for the exact commit and release window.
+- [ ] Business-eligible Vercel plan approved; the existing team is Hobby. No upgrade purchased.
+- [ ] Fresh encrypted real database/history and Storage-object backups; approved isolated restoration rehearsal and measured recovery time.
+- [ ] Production configuration verified securely; actual Owner Auth/MFA, SMTP and notification recipient provisioned separately.
+- [ ] Twelve new migrations and the guarded catalogue patch applied only after approval; original seeds never rerun.
+- [ ] Actual room labels, future legacy reservations/blocks and existing OTA calendar consumers reconciled by the Owner.
+- [ ] Production Edge Function, independent Vault token/config and one Cron job configured; staging script/keys not reused.
+- [ ] Genuine packages, video, policies, amenities and reviews supplied/approved where publication is desired. Starter offers remain unpublished.
+- [ ] Backup frequency/retention and optional paid backup/leaked-password features approved explicitly.
+- [ ] Intake resumed only after production verification; domain/deployment assignment and first real request checked without fictional production bookings.
+- [ ] Compatible manual-only incident/rollback plan accepted; historical payment-capable deployments are not a fallback.
 
-## Production release
-
-- [ ] Explicit release approval obtained separately from development approval.
-- [ ] Current production branch, project ID, domain, runtime and live schema verified.
-- [ ] Backup/recovery evidence and non-destructive migration/cutover plan reviewed.
-- [ ] Production guest records and reservation associations reconciled; preservation checks pass.
-- [ ] Valid first Owner access/MFA and recovery method ready before retiring old admin access.
-- [ ] Production-only credentials configured by the authorized operator, never copied to Preview.
-- [ ] Old calendar consumer URLs handled; no staging feed connected to real OTA accounts.
-- [ ] Rollback uses a known-safe payment-free build; do not blindly restore payment-capable code.
-- [ ] Environment/feature fail-closed behavior and operational recovery procedure documented.
-- [ ] Approved promotion/migrations performed and verified without creating live test bookings.
+See `release-runbook.md` and `operations-guide.md`. Staging acceptance does not authorize production release.
