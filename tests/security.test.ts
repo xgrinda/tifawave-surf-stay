@@ -7,6 +7,19 @@ import {
 import { assertSameOrigin, boundedJson } from "../lib/security/requests";
 import { bookingRequestSchema, propertyToday } from "../lib/booking/schema";
 import { reservationEmail } from "../lib/email/templates";
+import { publicIntakePaused } from "../lib/security/intake";
+test("release cutover can pause both public intake routes without changing database configuration", () => {
+  assert.equal(publicIntakePaused({}), false);
+  assert.equal(
+    publicIntakePaused({ TIFAWAVE_PUBLIC_INTAKE_DISABLED: "false" }),
+    false,
+  );
+  for (const value of ["true", "1", " TRUE "])
+    assert.equal(
+      publicIntakePaused({ TIFAWAVE_PUBLIC_INTAKE_DISABLED: value }),
+      true,
+    );
+});
 const stage = {
   TIFAWAVE_ENV: "staging",
   VERCEL_ENV: "preview",

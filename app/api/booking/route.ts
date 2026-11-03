@@ -7,6 +7,7 @@ import {
   requestRateKey,
 } from "@/lib/security/requests";
 import { dispatchBookingEmails } from "@/lib/email/outbox";
+import { publicIntakePaused } from "@/lib/security/intake";
 export async function POST(request: Request) {
   try {
     assertSameOrigin(request);
@@ -16,6 +17,17 @@ export async function POST(request: Request) {
       { status: 403 },
     );
   }
+  if (publicIntakePaused())
+    return NextResponse.json(
+      {
+        message:
+          "Online requests are temporarily paused. Please contact Tifawave directly.",
+      },
+      {
+        status: 503,
+        headers: { "cache-control": "no-store", "retry-after": "300" },
+      },
+    );
   let body: unknown;
   try {
     body = await boundedJson(request);
