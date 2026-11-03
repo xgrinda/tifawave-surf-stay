@@ -5,7 +5,7 @@ Use the protected development Preview for review. It contains an isolated stagin
 ## Each morning
 
 1. Open **Operations desk**. Review arrivals, departures, pending requests, upcoming stays and email health. Counts come from recorded reservations; they do not claim live Booking.com or Airbnb availability.
-2. Check **Room & bed calendar**. Day, week and month controls, date navigation and linked stays use the same allocation ledger. Arrival occupies a unit; departure releases it for same-day turnover. Scroll horizontally on small screens.
+2. Check **Room & bed calendar**. Day, week and month controls, date navigation and linked stays use the same allocation ledger. The approved production launch starts with no imported bookings: the Owner manages older reservations separately. Empty dates are not proof of availability. Check that separate list as well as both OTAs before confirming. Arrival occupies a unit; departure releases it for same-day turnover. Scroll horizontally on small screens.
 3. Check **Housekeeping** and **Tasks & follow-ups**. Record actual readiness, maintenance and assigned work. Initial readiness is “unknown” until staff inspect it.
 4. Read **Notifications**, handle new enquiries and check follow-up dates. Search the workspace or use each list’s filters and pagination.
 
@@ -32,7 +32,7 @@ Room-listing management is linked from inventory. Approved base rates are €15 
 
 **Seasonal pricing** records date ranges per unit and currency and refuses overlaps. Rates support quoting; changing a rate never silently changes a saved reservation quote. Review the final amount with the guest before approval.
 
-**Inventory blocks** records genuine maintenance/unavailability against actual units. Release a block when it no longer applies. Never connect staging calendar export URLs to real OTA accounts. Existing legacy stays and old calendar consumers require explicit reconciliation at release.
+**Inventory blocks** records genuine maintenance/unavailability against actual units. Release a block when it no longer applies. Never connect staging calendar export URLs to real OTA accounts. Production unit calendar exports stay disconnected at clean-start launch because the new ledger omits separately managed reservations. No old reservation import/reconciliation is required.
 
 ## Guests, groups and relationships
 

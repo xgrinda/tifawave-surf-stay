@@ -28,7 +28,9 @@ All mutation tests use isolated staging or disposable loopback databases. Produc
 - [ ] Fresh encrypted real database/history and Storage-object backups; approved isolated restoration rehearsal and measured recovery time.
 - [ ] Production configuration verified securely; actual Owner Auth/MFA, SMTP and notification recipient provisioned separately.
 - [ ] Twelve new migrations and the guarded catalogue patch applied only after approval; original seeds never rerun.
-- [ ] Actual room labels, future legacy reservations/blocks and existing OTA calendar consumers reconciled by the Owner.
+- [ ] Owner-approved clean start: verified full encrypted production backup/isolated restore, then guarded pre-upgrade booking/hold cleanup. Old stays remain managed separately; no legacy allocation import/reconciliation required.
+- [ ] Clean-start rehearsal passed; actual room labels verified; unit calendar exports disconnected at launch. Empty dates do not imply availability.
+- [ ] Backed-up/rehearsed production PostgreSQL security maintenance approved; no live upgrade yet.
 - [ ] Production Edge Function, independent Vault token/config and one Cron job configured; staging script/keys not reused.
 - [ ] Genuine packages, video, policies, amenities and reviews supplied/approved where publication is desired. Starter offers remain unpublished.
 - [ ] Backup frequency/retention and optional paid backup/leaked-password features approved explicitly.

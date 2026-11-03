@@ -53,6 +53,11 @@ export default async function Calendar({
         </strong>
         <Link href={href(window.next)}>Next →</Link>
       </nav>
+      <p className="muted">
+        This calendar shows allocations recorded in this system only. Empty
+        dates do not establish availability. Check Booking.com, Airbnb and your
+        separately managed reservations before every confirmation.
+      </p>
       {data.unmapped > 0 && (
         <p className="admin-error" role="alert">
           {data.unmapped} confirmed stays in this window need physical

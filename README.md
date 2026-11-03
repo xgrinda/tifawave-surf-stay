@@ -75,12 +75,17 @@ historical migrations remain intact. New migrations:
 11. `20261102202633_verified_room_listing_links.sql` — missing logical listing links, without reallocating stays.
 12. `20261103011751_actionable_conflict_responses.sql` — HTTP 409 for deliberate stale-version/lease refusals.
 
-Existing booking IDs, guest records, statuses, payment-history columns, and
-historical SQL are preserved. No historical reservation is assigned a physical
-room automatically. The owner must reconcile confirmed legacy stays and blocks
-before overlapping new reservations can be approved. Reconciliation copies a
-legacy room-category reference to `preferred_listing_id`, then uses the new
-unit allocations; the original association and decision history remain recorded.
+The migrations preserve existing booking IDs, guest records, statuses and payment
+history when present. **The Owner now requires a clean production booking start.**
+After a verified encrypted production backup/isolated restore and final release
+approval, run the separately guarded pre-upgrade cleanup described in
+`docs/clean-start-release.md`, then apply these migrations. Old reservations stay
+in the backup and are managed separately; no import/reconciliation is required.
+Unrelated guest/content/media/settings/Auth records are preserved. The empty
+calendar does not establish availability: check the separate reservation list,
+Booking.com and Airbnb manually before every Owner confirmation. Unit calendar
+exports stay disconnected at launch. Existing reconciliation safeguards remain
+in the application, but do not require loading historical stays.
 
 The older room/package seed migrations contain historical starter content.
 Do not reapply those seeds to correct production inventory. For a fresh staging

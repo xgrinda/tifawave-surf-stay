@@ -50,8 +50,8 @@ export async function RequestPage({
           </h1>
           <p>
             {fr
-              ? "Choisissez vos dates et vos préférences. Le propriétaire vérifiera les disponibilités et vous répondra personnellement."
-              : "Choose dates and preferences. The owner will check availability and respond personally."}
+              ? "Choisissez vos dates et vos préférences. Les disponibilités ne sont pas affichées en temps réel. Votre demande reste en attente jusqu’à la vérification manuelle de Booking.com et Airbnb et la confirmation du propriétaire. Aucune chambre ni aucun lit n’est réservé lors de l’envoi."
+              : "Choose dates and preferences. Availability is not shown in real time. Your request stays pending until the owner manually checks Booking.com and Airbnb and confirms it. Submitting a request does not reserve a room or bed."}
           </p>
         </div>
         <RequestForm
