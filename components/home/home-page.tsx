@@ -1,3 +1,5 @@
+import { RoomBathroom } from "@/components/content/room-bathroom";
+import { CmsPhoto } from "@/components/content/cms-photo";
 import Image from "next/image";
 import Link from "next/link";
 import { Container } from "@/components/primitives/container";
@@ -41,13 +43,11 @@ function Photo({
   return (
     <div className={`hc-photo ${className}`}>
       {image ? (
-        <Image
+        <CmsPhoto
+          key={image.imageUrl}
           src={image.imageUrl}
-          alt={label}
-          fill
-          sizes="(max-width: 760px) 100vw, 50vw"
-          quality={75}
-          style={{ objectPosition: focalPositionToCss(image.focalPosition) }}
+          alt={image.altText || label}
+          position={focalPositionToCss(image.focalPosition)}
         />
       ) : (
         <div className="hc-photo-fallback">
@@ -87,18 +87,48 @@ export async function HomePage({ locale }: { locale: Locale }) {
   const roomContent = new Map(
     homeRoomSlugs.map((slug, i) => [slug, roomDocs[i]]),
   );
+  const sectionImage = (
+    key: (typeof import("@/lib/homepage").homeSectionOrder)[number],
+  ) => {
+    const keys = [
+      "experiences",
+      "rooms",
+      "surf",
+      "excursions",
+      "yoga",
+      "breakfast",
+      "meals",
+      "rooftop",
+      "packages",
+      "day",
+      "groups",
+      "location",
+    ];
+    const s = content?.sections[keys.indexOf(key)];
+    return s?.imageUrl
+      ? {
+          imageUrl: s.imageUrl,
+          altText: s.imageAlt || "",
+          focalPosition: s.focalPosition || ("center" as const),
+        }
+      : null;
+  };
   const heroImage =
     getTaggedGalleryHomeImage(gallery, ["view", "sunset"]) ||
     getPrimaryRoomHomeImage(rooms);
-  const breakfast = getTaggedGalleryHomeImage(gallery, ["food", "breakfast"]);
+  const breakfast =
+    sectionImage("breakfast") ||
+    getTaggedGalleryHomeImage(gallery, ["food", "breakfast"]);
   const sunset = gallery.filter((g) => g.category === "view").at(-1);
-  const rooftop = sunset
-    ? {
-        imageUrl: sunset.imageUrl,
-        altText: sunset.altText,
-        focalPosition: sunset.focalPosition,
-      }
-    : heroImage;
+  const rooftop =
+    sectionImage("rooftop") ||
+    (sunset
+      ? {
+          imageUrl: sunset.imageUrl,
+          altText: sunset.altText,
+          focalPosition: sunset.focalPosition,
+        }
+      : heroImage);
   const section = (
     key: Parameters<typeof homeSection>[1],
     enTitle: string,
@@ -483,13 +513,14 @@ export async function HomePage({ locale }: { locale: Locale }) {
                       >
                         {t("View room", "Voir la chambre")} →
                       </Link>
+                      <RoomBathroom type={room.bathroomType} locale={locale} />
                       <Link
                         className="btn btn-primary"
                         href={roomRequestPath(locale, room.id)}
                         data-home-cta="room_request"
                         data-intent="room"
                       >
-                        {t("Request room", "Demander cette chambre")}
+                        {t("Request This Room", "Demander cette chambre")}
                       </Link>
                     </div>
                   </div>
@@ -525,6 +556,12 @@ export async function HomePage({ locale }: { locale: Locale }) {
               <p className="eyebrow">
                 {t("Surfing & activities", "Surf & activités")}
               </p>
+              {sectionImage("surf") && (
+                <Photo
+                  image={sectionImage("surf")}
+                  label={sectionImage("surf")!.altText}
+                />
+              )}
               <h2 id="hc-surf-title">{surf.heading}</h2>
               <p>{surf.body}</p>
               <span className="hc-pill">
@@ -628,6 +665,12 @@ export async function HomePage({ locale }: { locale: Locale }) {
                     "En option · sous réserve de confirmation",
                   )}
                 </span>
+                {sectionImage("meals") && (
+                  <Photo
+                    image={sectionImage("meals")}
+                    label={sectionImage("meals")!.altText}
+                  />
+                )}
                 <h3>{meals.heading}</h3>
                 <p>{meals.body}</p>
               </div>
@@ -673,6 +716,14 @@ export async function HomePage({ locale }: { locale: Locale }) {
                 .slice(0, 3)
                 .map((pkg) => (
                   <article className="hc-offer" key={pkg.id}>
+                    {pkg.cover && (
+                      <CmsPhoto
+                        src={pkg.cover.url}
+                        alt={pkg.cover.alt}
+                        position={pkg.cover.position}
+                        mobilePosition={pkg.cover.mobilePosition}
+                      />
+                    )}
                     <span className="hc-pill">{pkg.unitLabel}</span>
                     <h3>{pkg.name}</h3>
                     <p>{pkg.shortDescription}</p>
@@ -701,7 +752,7 @@ export async function HomePage({ locale }: { locale: Locale }) {
                       data-home-cta="package_request"
                       data-intent="surf"
                     >
-                      {t("Request this package", "Demander ce séjour")}
+                      {t("Request This Package", "Demander ce séjour")}
                     </Link>
                   </article>
                 ))}
@@ -904,6 +955,12 @@ export async function HomePage({ locale }: { locale: Locale }) {
             <p className="eyebrow">
               {t("Groups & retreats", "Groupes & retraites")}
             </p>
+            {sectionImage("groups") && (
+              <Photo
+                image={sectionImage("groups")}
+                label={sectionImage("groups")!.altText}
+              />
+            )}
             <h2 id="hc-groups-title">{groups.heading}</h2>
             <p>{groups.body}</p>
             <p className="hc-group-capacity">
@@ -924,7 +981,7 @@ export async function HomePage({ locale }: { locale: Locale }) {
               data-home-cta="group_quote"
               data-intent="group"
             >
-              {t("Request group quote", "Demander un devis groupe")} →
+              {t("Request Group Quote", "Demander un devis groupe")} →
             </Link>
           </div>
           <div

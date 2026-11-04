@@ -1,3 +1,4 @@
+import { MediaPicker } from "../_components/media-picker";
 import { VideoUpload } from "./video-upload";
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/admin/auth";
@@ -135,19 +136,12 @@ export default async function AdminGalleryPage({
 
         <form className="admin-room-form" action={createGalleryImageAction}>
           <div className="admin-settings-grid">
-            <label className="admin-field admin-field-wide">
-              <span>Image URL</span>
-              <input
-                name="imageUrl"
-                placeholder="https://example.com/gallery.jpg"
-                required
-                type="url"
-              />
-              <small>
-                Use a direct https image URL. Aim for at least 1800 px wide and
-                compressed for fast loading.
-              </small>
-            </label>
+            <MediaPicker
+              name="imageUrl"
+              label="Image"
+              preset="1200 × 900 · 4:3; thumbnails 600 × 600"
+              required
+            />
             <label className="admin-field">
               <span>Alt text</span>
               <input
@@ -341,16 +335,13 @@ export default async function AdminGalleryPage({
                   >
                     <input name="imageId" type="hidden" value={image.id} />
                     <div className="admin-settings-grid">
-                      <label className="admin-field admin-field-wide">
-                        <span>Image URL</span>
-                        <input
-                          defaultValue={image.imageUrl}
-                          name="imageUrl"
-                          required
-                          type="url"
-                        />
-                        <small>Use a permanent direct image URL.</small>
-                      </label>
+                      <MediaPicker
+                        name="imageUrl"
+                        label="Image"
+                        preset="1200 × 900 · 4:3; thumbnails 600 × 600"
+                        required
+                        defaultValue={image.imageUrl}
+                      />
                       <label className="admin-field">
                         <span>Alt text</span>
                         <input

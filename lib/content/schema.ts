@@ -7,6 +7,9 @@ export const contentSchema = z
     seoTitle: z.string().max(180).default(""),
     seoDescription: z.string().max(320).default(""),
     heroImage: z.string().max(2000).default(""),
+    heroMobileImage: z.string().max(2000).default(""),
+    heroFocal: z.enum(["top", "center", "bottom"]).default("center"),
+    heroMobileFocal: z.enum(["top", "center", "bottom"]).default("center"),
     heroAlt: z.string().max(300).default(""),
     heroVideo: z.string().max(2000).default(""),
     ctaLabel: z.string().max(80).default(""),
@@ -14,7 +17,13 @@ export const contentSchema = z
     sections: z
       .array(
         z
-          .object({ heading: z.string().max(180), body: z.string().max(5000) })
+          .object({
+            heading: z.string().max(180),
+            body: z.string().max(5000),
+            imageUrl: z.string().max(2000).optional(),
+            imageAlt: z.string().max(300).optional(),
+            focalPosition: z.enum(["top", "center", "bottom"]).optional(),
+          })
           .strict(),
       )
       .max(12)

@@ -39,14 +39,11 @@ export const enquirySchema = z
         path: ["checkOut"],
         message: "Choose an arrival and a later departure.",
       });
-    if (
-      ["group", "retreat"].includes(v.kind) &&
-      (!v.groupSize || !v.checkIn || !v.checkOut)
-    )
+    if (["group", "retreat"].includes(v.kind) && !v.groupSize)
       c.addIssue({
         code: "custom",
         path: ["groupSize"],
-        message: "Add group size and dates.",
+        message: "Add your group size.",
       });
   });
 export const enquirySubmission = z

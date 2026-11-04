@@ -34,19 +34,24 @@ const nextConfig = {
           ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
           : "unconfigured.supabase.co",
         protocol: "https",
+        port: "",
+        pathname: "/storage/v1/object/public/tifawave-media/**",
       },
       {
         hostname: "tuzefzcosvvhzffbxhpm.supabase.co",
         protocol: "https",
         pathname: "/storage/v1/object/public/tifawave-media/**",
+        port: "",
       },
       {
         hostname: "images.unsplash.com",
         protocol: "https",
+        port: "",
       },
       {
         hostname: "images.pexels.com",
         protocol: "https",
+        port: "",
       },
     ],
   },

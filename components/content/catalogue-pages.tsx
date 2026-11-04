@@ -1,3 +1,4 @@
+import { RoomBathroom } from "@/components/content/room-bathroom";
 import { z } from "zod";
 import Image from "next/image";
 import Link from "next/link";
@@ -153,6 +154,7 @@ export async function RoomList({ locale }: { locale: Locale }) {
                 <div className="stay-room-card-body">
                   <h2>{room.name}</h2>
                   {room.description && <p>{room.description}</p>}
+                  <RoomBathroom type={room.bathroomType} locale={locale} />
                   {settings.breakfastIncluded && (
                     <p>{fr ? "Petit-déjeuner inclus" : "Breakfast included"}</p>
                   )}
@@ -270,6 +272,7 @@ export async function RoomDetail({
             <p className="eyebrow">Tifawave · Tamraght</p>
             <h1>{c?.title || room.name}</h1>
             <p>{c?.summary || room.description}</p>
+            <RoomBathroom type={room.bathroomType} locale={locale} />
             {settings.breakfastIncluded && (
               <p>{fr ? "Petit-déjeuner inclus" : "Breakfast included"}</p>
             )}
@@ -300,7 +303,7 @@ export async function RoomDetail({
                 className="btn btn-primary"
                 href={localizedPath(locale, "/book") + "?roomId=" + room.id}
               >
-                {fr ? "Demander cette chambre" : "Request this room"}
+                {fr ? "Demander cette chambre" : "Request This Room"}
               </Link>
               <Link
                 className="btn btn-secondary"
@@ -340,7 +343,13 @@ export async function RoomDetail({
                 {r.amenities.length > 0 && (
                   <ul>
                     {r.amenities.map((a) => (
-                      <li key={a}>{a}</li>
+                      <li key={a}>
+                        {fr && a === "Private bathroom"
+                          ? "Salle de bains privative"
+                          : fr && a === "Bathroom shared with dorm occupants"
+                            ? "Salle de bains partagée entre les occupants du dortoir"
+                            : a}
+                      </li>
                     ))}
                   </ul>
                 )}

@@ -1,3 +1,4 @@
+import { MediaPicker } from "../_components/media-picker";
 import { getWebsiteSettings } from "@/lib/settings";
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/admin/auth";
@@ -313,19 +314,12 @@ export default async function AdminRoomsPage({
                     action={createRoomImageAction}
                   >
                     <input name="roomId" type="hidden" value={room.id} />
-                    <label className="admin-field admin-field-wide">
-                      <span>Image URL</span>
-                      <input
-                        name="imageUrl"
-                        placeholder="https://example.com/room.jpg"
-                        required
-                        type="url"
-                      />
-                      <small>
-                        Use a direct https image URL, ideally 2400 x 1600 px for
-                        a primary room photo.
-                      </small>
-                    </label>
+                    <MediaPicker
+                      name="imageUrl"
+                      label="Image"
+                      preset="1600 × 1200 · 4:3"
+                      required
+                    />
                     <label className="admin-field">
                       <span>Alt text</span>
                       <input
@@ -462,18 +456,13 @@ export default async function AdminRoomsPage({
                               type="hidden"
                               value={room.id}
                             />
-                            <label className="admin-field admin-field-wide">
-                              <span>Image URL</span>
-                              <input
-                                defaultValue={image.imageUrl}
-                                name="imageUrl"
-                                required
-                                type="url"
-                              />
-                              <small>
-                                Keep this as a permanent direct image URL.
-                              </small>
-                            </label>
+                            <MediaPicker
+                              name="imageUrl"
+                              label="Image"
+                              preset="1600 × 1200 · 4:3"
+                              required
+                              defaultValue={image.imageUrl}
+                            />
                             <label className="admin-field">
                               <span>Alt text</span>
                               <input

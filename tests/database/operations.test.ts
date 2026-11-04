@@ -1965,6 +1965,7 @@ async function packageFixture(overrides: Record<string, unknown> = {}) {
     )
   ).rows[0].id;
   const catalogue = {
+    chargesIncluded: true,
     nameFr: "Séjour de test isolé",
     shortFr: "Une description française réservée aux tests.",
     descriptionFr:
@@ -2013,6 +2014,10 @@ async function packageFixture(overrides: Record<string, unknown> = {}) {
   const { rows } = await root.query(
     "insert into public.packages(slug,name,short_description,full_description,inclusions,publication_status,catalogue) values($1,'Isolated test package','Description only for a disposable test','Full description only for disposable catalogue tests',array['Breakfast'],'draft',$2) returning *",
     ["fixture-" + randomUUID(), catalogue],
+  );
+  await root.query(
+    "insert into public.package_photos(package_id,image_url,alt_text) values($1,'https://images.unsplash.com/test-fixture','Isolated photo fixture')",
+    [rows[0].id],
   );
   return { row: rows[0], catalogue };
 }
@@ -2386,7 +2391,24 @@ test("Reception can record a pending manual package selection with a frozen veri
 });
 
 test("package per-party base is counted once while per-person extras scale by guests", async () => {
-  const { row } = await packageFixture({ pricingBasis: "booking" });
+  const { row } = await packageFixture({
+    pricingBasis: "booking",
+    variants: [
+      {
+        id: "double",
+        roomId: (
+          await root.query(
+            "select id from public.rooms where slug='private-double-room'",
+          )
+        ).rows[0].id,
+        label: "Two rooms",
+        labelFr: "Deux chambres",
+        priceCents: 10000,
+        roomCount: 2,
+        maxGuests: 4,
+      },
+    ],
+  });
   await publishFixture(row.id);
   const id = await submit(surfRequest(row.id, { guests: 3 }));
   const b = (
@@ -2396,4 +2418,246 @@ test("package per-party base is counted once while per-person extras scale by gu
     )
   ).rows[0];
   assert.equal(b.package_selection.totalCents, 21000);
+});
+
+test("single-room and individual dorm requests enforce occupancy and accept optional WhatsApp", async () => {
+  const double = (
+    await root.query(
+      "select id from public.rooms where slug='private-double-room'",
+    )
+  ).rows[0].id;
+  const id = await submit(request({ roomId: double, guestPhone: "" }));
+  const b = (
+    await root.query(
+      "select status,guest_phone from public.bookings where id=$1",
+      [id],
+    )
+  ).rows[0];
+  assert.equal(b.status, "pending");
+  assert.equal(b.guest_phone, "");
+  await rejectsCode(submit(request({ roomId: double, guests: 3 })), "22023");
+  const dorm = (
+    await root.query(
+      "insert into public.rooms(slug,name,max_guests,base_price_cents) values('4-bed-dorm-room','Local dorm fixture',1,1000) on conflict(slug) do update set name=excluded.name returning id",
+    )
+  ).rows[0].id;
+  await rejectsCode(submit(request({ roomId: dorm, guests: 5 })), "22023");
+});
+test("server estimate and immutable enquiry snapshot share per-room seasonal pricing", async () => {
+  const room = (
+    await root.query(
+      "select id from public.rooms where slug='private-double-room'",
+    )
+  ).rows[0].id;
+  const { row } = await packageFixture({
+    pricingBasis: "room",
+    variants: [
+      {
+        id: "double",
+        roomId: room,
+        label: "Two doubles",
+        labelFr: "Deux doubles",
+        priceCents: 10000,
+        roomCount: 2,
+        minGuests: 2,
+        maxGuests: 4,
+      },
+    ],
+  });
+  await publishFixture(row.id);
+  const req = surfRequest(row.id, { guests: 4 });
+  const input = {
+    packageId: row.id,
+    packageVariant: "double",
+    packageExtras: ["extra-test"],
+    checkIn: req.checkIn,
+    checkOut: req.checkOut,
+    guests: 4,
+    surfLevel: "beginner",
+    locale: "en",
+  };
+  const estimate = (
+    await as("service", (c) =>
+      c.query("select public.estimate_package_request($1) q", [input]),
+    )
+  ).rows[0].q;
+  assert.equal(estimate.totalCents, 38000);
+  assert.equal(estimate.roomCount, 2);
+  const id = await submit(req);
+  const saved = (
+    await root.query(
+      "select package_selection from public.bookings where id=$1",
+      [id],
+    )
+  ).rows[0].package_selection;
+  assert.equal(saved.totalCents, estimate.totalCents);
+  for (const role of [
+    "anon",
+    "owner",
+    "reception",
+    "content_editor",
+    "housekeeping",
+  ] as const)
+    await rejectsCode(
+      as(role, (c) =>
+        c.query("select public.estimate_package_request($1)", [input]),
+      ),
+      "42501",
+    );
+  await rejectsCode(
+    as("service", (c) =>
+      c.query("select public.estimate_package_request($1)", [
+        { ...input, totalCents: 1 },
+      ]),
+    ),
+    "22023",
+  );
+  await rejectsCode(submit(surfRequest(row.id, { guests: 5 })), "22023");
+});
+test("unverified mandatory charges yield quote-only snapshots and cannot advertise free packages", async () => {
+  const { row } = await packageFixture({ chargesIncluded: false });
+  await publishFixture(row.id);
+  const id = await submit(surfRequest(row.id));
+  const s = (
+    await root.query(
+      "select package_selection from public.bookings where id=$1",
+      [id],
+    )
+  ).rows[0].package_selection;
+  assert.equal(s.totalCents, null);
+  assert.equal(s.basePriceCents, null);
+  const room = (
+    await root.query(
+      "select id from public.rooms where slug='private-double-room'",
+    )
+  ).rows[0].id;
+  await rejectsCode(
+    packageFixture({
+      variants: [
+        {
+          id: "free",
+          roomId: room,
+          label: "Unknown",
+          labelFr: "À vérifier",
+          priceCents: 0,
+        },
+      ],
+    }),
+    "22023",
+  );
+});
+test("publication requires an attached cover, while draft photo edits retain metadata", async () => {
+  const { row } = await packageFixture();
+  await root.query("delete from public.package_photos where package_id=$1", [
+    row.id,
+  ]);
+  await rejectsCode(publishFixture(row.id), "23514");
+  const id = (
+    await as("content_editor", (c) =>
+      c.query(
+        "select public.save_workspace_record('package_photos',null,0,$1) id",
+        [
+          {
+            package_id: row.id,
+            image_url: "https://images.unsplash.com/test-fixture",
+            alt_text: "Isolated fixture",
+            caption: "Test caption",
+            focal_position: "top",
+            mobile_focal_position: "bottom",
+            sort_order: 0,
+            archived: false,
+          },
+        ],
+      ),
+    )
+  ).rows[0].id;
+  const photo = (
+    await root.query("select * from public.package_photos where id=$1", [id])
+  ).rows[0];
+  assert.equal(photo.caption, "Test caption");
+  assert.equal(photo.mobile_focal_position, "bottom");
+});
+test("flexible group quote requests remain unallocated and concurrent duplicates send once", async () => {
+  const input = {
+    kind: "group",
+    contactName: "Isolated organizer",
+    email: "fixture@example.invalid",
+    phone: "",
+    organization: "Test club",
+    message: "Flexible dates; request a personal group quote.",
+    groupSize: 12,
+    locale: "fr",
+  };
+  const key = randomUUID(),
+    rate = createHash("sha256").update(randomUUID()).digest("hex");
+  const send = () =>
+    as("service", (c) =>
+      c.query("select public.submit_enquiry($1,$2,$3) id", [input, key, rate]),
+    );
+  const [a, b] = await Promise.all([send(), send()]);
+  assert.equal(a.rows[0].id, b.rows[0].id);
+  const e = (
+    await root.query("select * from public.enquiries where id=$1", [
+      a.rows[0].id,
+    ])
+  ).rows[0];
+  assert.equal(e.check_in, null);
+  assert.equal(e.booking_id, null);
+  assert.equal(e.stage, "new");
+  assert.equal(
+    (
+      await root.query(
+        "select count(*)::int n from public.email_outbox where enquiry_id=$1",
+        [e.id],
+      )
+    ).rows[0].n,
+    2,
+  );
+});
+test("CMS drafts accept approved mobile/section imagery and preserve explicit publication", async () => {
+  const doc = {
+    title: "Image preview fixture",
+    heroImage: "https://images.unsplash.com/test-fixture",
+    heroMobileImage: "https://images.pexels.com/test-fixture",
+    heroFocal: "top",
+    heroMobileFocal: "bottom",
+    sections: [
+      {
+        heading: "Breakfast",
+        body: "Included",
+        imageUrl: "https://images.unsplash.com/section-fixture",
+        imageAlt: "Food fixture",
+        focalPosition: "center",
+      },
+    ],
+  };
+  const id = (
+    await as("owner", (c) =>
+      c.query(
+        "select public.save_content_document(null,0,'page',$1,'fr',$2,'draft') id",
+        ["partners", doc],
+      ),
+    )
+  ).rows[0].id;
+  assert.equal(
+    (
+      await root.query(
+        "select published from public.content_documents where id=$1",
+        [id],
+      )
+    ).rows[0].published,
+    null,
+  );
+  await rejectsCode(
+    as("owner", (c) =>
+      c.query(
+        "select public.save_content_document(null,0,'page',$1,'en',$2,'draft')",
+        [
+          "collaborate",
+          { ...doc, heroMobileImage: "https://127.0.0.1/private" },
+        ],
+      ),
+    ),
+    "22023",
+  );
 });

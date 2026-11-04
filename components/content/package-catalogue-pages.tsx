@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { CmsPhoto } from "./cms-photo";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Container } from "@/components/primitives/container";
@@ -8,7 +8,13 @@ import {
 } from "@/lib/surf-packages";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { localizedPath, type Locale } from "@/lib/i18n";
-import { localized, money, pricingBasis } from "@/lib/packages/catalogue";
+import {
+  localized,
+  money,
+  pricingBasis,
+  packageStartingPrice,
+} from "@/lib/packages/catalogue";
+import { propertyToday } from "@/lib/booking/schema";
 import { isPublicImageUrl } from "@/lib/image-url";
 import "./surf-catalogue.css";
 export async function PackageList({ locale }: { locale: Locale }) {
@@ -37,6 +43,14 @@ export async function PackageList({ locale }: { locale: Locale }) {
           <div className="surf-packages-grid">
             {packages.map((p) => (
               <article className="surf-package-panel" key={p.id}>
+                {p.cover && (
+                  <CmsPhoto
+                    src={p.cover.url}
+                    alt={p.cover.alt}
+                    position={p.cover.position}
+                    mobilePosition={p.cover.mobilePosition}
+                  />
+                )}
                 <p className="eyebrow">
                   {p.unitLabel} · {p.surfLevel}
                 </p>
@@ -59,7 +73,7 @@ export async function PackageList({ locale }: { locale: Locale }) {
                     {fr ? "Découvrir ce séjour" : "Discover this stay"}
                   </Link>
                   <Link href={path("/book") + "?packageId=" + p.id}>
-                    {fr ? "Demander ce séjour" : "Request this stay"} →
+                    {fr ? "Demander ce séjour" : "Request This Package"} →
                   </Link>
                 </div>
               </article>
@@ -106,7 +120,9 @@ export async function PackageDetail({
   const db = createSupabaseServerClient();
   const photos = await db
     .from("package_photos")
-    .select("id,image_url,alt_text")
+    .select(
+      "id,image_url,alt_text,caption,focal_position,mobile_focal_position",
+    )
     .eq("package_id", p.id)
     .order("sort_order");
   const images = (photos.data || []).filter((i) =>
@@ -126,7 +142,7 @@ export async function PackageDetail({
                 className="btn btn-primary"
                 href={path("/book") + "?packageId=" + p.id}
               >
-                {t("Request this package", "Demander ce séjour")}
+                {t("Request This Package", "Demander ce séjour")}
               </Link>
               <Link href={path("/surf/packages")}>
                 {t("All packages", "Tous les séjours")} →
@@ -155,12 +171,11 @@ export async function PackageDetail({
       {images[0] && (
         <Container>
           <div className="sp-hero-photo">
-            <Image
+            <CmsPhoto
               src={images[0].image_url}
               alt={fr ? p.name : images[0].alt_text}
-              fill
-              priority
-              sizes="100vw"
+              position={images[0].focal_position}
+              mobilePosition={images[0].mobile_focal_position}
             />
           </div>
         </Container>
@@ -208,7 +223,18 @@ export async function PackageDetail({
               {c.variants.map((v) => (
                 <article key={v.id}>
                   <h3>{localized(v.label, v.labelFr, locale)}</h3>
-                  <p>{money(v.priceCents, c.currency, locale)}</p>
+                  <p>
+                    {(() => {
+                      const rate = packageStartingPrice(
+                        { ...c, variants: [v] },
+                        propertyToday(),
+                      );
+                      return rate
+                        ? (fr ? "À partir de " : "From ") +
+                            money(rate.priceCents, c.currency, locale)
+                        : money(null, c.currency, locale);
+                    })()}
+                  </p>
                   <small>{p.pricingLabel}</small>
                   <Link
                     className="btn btn-secondary"
@@ -273,7 +299,13 @@ export async function PackageDetail({
                           )
                         : t("All room options", "Toutes les variantes")}
                     </h3>
-                    <p>{money(s.priceCents, c.currency, locale)}</p>
+                    <p>
+                      {money(
+                        c.chargesIncluded ? s.priceCents : null,
+                        c.currency,
+                        locale,
+                      )}
+                    </p>
                     <small>{p.pricingLabel}</small>
                   </article>
                 ))}
@@ -284,11 +316,11 @@ export async function PackageDetail({
             <div className="room-detail-gallery-grid">
               {images.slice(1).map((i) => (
                 <div className="room-detail-gallery-image" key={i.id}>
-                  <Image
+                  <CmsPhoto
                     src={i.image_url}
                     alt={fr ? p.name : i.alt_text}
-                    fill
-                    sizes="(max-width:880px) 100vw,33vw"
+                    position={i.focal_position}
+                    mobilePosition={i.mobile_focal_position}
                   />
                 </div>
               ))}
@@ -311,7 +343,7 @@ export async function PackageDetail({
               className="btn btn-primary"
               href={path("/book") + "?packageId=" + p.id}
             >
-              {t("Request this package", "Demander ce séjour")}
+              {t("Request This Package", "Demander ce séjour")}
             </Link>
           </section>
         </Container>

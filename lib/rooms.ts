@@ -20,6 +20,7 @@ export type PublicRoomDetail = {
   id: string;
   slug: string;
   name: string;
+  bathroomType?: "unknown" | "private" | "shared_dorm";
   description: string | null;
   maxGuests: number;
   basePriceCents: number;
@@ -29,7 +30,13 @@ export type PublicRoomDetail = {
 function rowToRoom(
   room: Pick<
     Row<"rooms">,
-    "id" | "slug" | "name" | "description" | "max_guests" | "base_price_cents"
+    | "id"
+    | "slug"
+    | "name"
+    | "description"
+    | "max_guests"
+    | "base_price_cents"
+    | "bathroom_type"
   >,
   images: PublicRoomImage[],
 ): PublicRoomDetail {
@@ -37,6 +44,7 @@ function rowToRoom(
     id: room.id,
     slug: room.slug,
     name: room.name,
+    bathroomType: room.bathroom_type,
     description: room.description,
     maxGuests: room.max_guests,
     basePriceCents: room.base_price_cents,
@@ -96,7 +104,9 @@ export async function getActiveRooms(): Promise<PublicRoomDetail[]> {
     const supabase = createSupabaseServerClient();
     const { data: rooms, error } = await supabase
       .from("rooms")
-      .select("id, slug, name, description, max_guests, base_price_cents")
+      .select(
+        "id, slug, name, description, max_guests, base_price_cents, bathroom_type",
+      )
       .eq("is_active", true)
       .order("base_price_cents", { ascending: true })
       .order("name", { ascending: true });
@@ -129,7 +139,9 @@ export async function getActiveRoomBySlug(
   const supabase = createSupabaseServerClient();
   const { data: room, error } = await supabase
     .from("rooms")
-    .select("id, slug, name, description, max_guests, base_price_cents")
+    .select(
+      "id, slug, name, description, max_guests, base_price_cents, bathroom_type",
+    )
     .eq("slug", normalizedSlug)
     .eq("is_active", true)
     .maybeSingle();

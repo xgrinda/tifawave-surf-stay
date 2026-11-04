@@ -13,6 +13,7 @@ type LegacyDatabase = {
         Row: {
           id: string;
           slug: string;
+          bathroom_type: "unknown" | "private" | "shared_dorm";
           name: string;
           description: string | null;
           max_guests: number;
@@ -542,6 +543,9 @@ export type Database = {
           };
         };
       };
-    Functions: OperationFunctions & ModuleFunctions;
+    Functions: OperationFunctions &
+      ModuleFunctions & {
+        estimate_package_request: { Args: { p_input: Json }; Returns: Json };
+      };
   };
 };

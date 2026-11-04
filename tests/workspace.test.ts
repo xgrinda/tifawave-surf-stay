@@ -29,7 +29,7 @@ test("calendar spans clip arrivals and use exclusive departures", () => {
 });
 
 import { csvCell, recordsCsv } from "../lib/admin/reports.ts";
-import { enquirySubmission } from "../lib/enquiries/schema.ts";
+import { enquirySubmission, enquirySchema } from "../lib/enquiries/schema.ts";
 import { isPublicImageUrl } from "../lib/image-url.ts";
 import { randomUUID } from "node:crypto";
 test("Owner CSV exports neutralize spreadsheet formulas while preserving quoted text", () => {
@@ -47,7 +47,7 @@ test("Owner CSV exports neutralize spreadsheet formulas while preserving quoted 
     ),
   );
 });
-test("public group enquiries require real dates, bounded party size and an untampered payload", () => {
+test("public group enquiries accept flexible dates with bounded party size and an untampered payload", () => {
   const request = {
     kind: "group",
     contactName: "Organizer",
@@ -102,4 +102,22 @@ test("currency forms store exact cents and reject fractional cents or scientific
   assert.equal(amountToMinorString("0"), "0");
   for (const invalid of ["1e3", "35.001", "-1", "NaN", "", "35,00"])
     assert.equal(amountToMinorString(invalid), "NaN");
+});
+
+test("group enquiries accept flexible dates without inventing a reservation", () => {
+  const value = {
+    kind: "group",
+    contactName: "Fixture organizer",
+    email: "fixture@example.invalid",
+    phone: "",
+    organization: "",
+    message: "Flexible group plans",
+    groupSize: 12,
+    locale: "fr",
+  };
+  assert.equal(enquirySchema.safeParse(value).success, true);
+  assert.equal(
+    enquirySchema.safeParse({ ...value, checkIn: "2031-06-10" }).success,
+    false,
+  );
 });

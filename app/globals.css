@@ -6909,3 +6909,16 @@ select {
     font-size: 0.85rem;
   }
 }
+
+/* Focused request forms and existing media selectors. */
+.room-bathroom{display:flex;align-items:center;gap:.45rem;font-size:.9rem}.room-bathroom svg{flex-shrink:0}
+.media-picker{min-width:0;grid-column:1/-1;border:1px solid #d6dfdd;border-radius:12px;padding:1rem}.media-picker-preview{max-width:440px;margin:.75rem 0}.media-picker-preview img{max-width:100%;height:160px;object-fit:contain;border-radius:8px}.media-picker-panel{margin-top:1rem;max-height:600px;overflow:auto;padding:.5rem}.media-picker-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.65rem}.media-picker-grid button{padding:0;border:1px solid #d6dfdd;border-radius:8px;overflow:hidden;text-align:left;background:transparent}.media-picker-grid img{width:100%;height:100px;object-fit:cover}.media-picker-grid span{display:block;font-size:.78rem;padding:.45rem}.media-picker input{max-width:100%}
+.cms-photo,.hc-package-cover,.request-package-photo{position:relative;aspect-ratio:4/3;overflow:hidden;border-radius:12px}.cms-photo img,.hc-package-cover img,.request-package-photo img{object-fit:cover}.cms-photo-fallback{display:flex;flex-direction:column;align-items:center;justify-content:center;background:#253b41;color:#fff;gap:1rem}.hc-photo>.cms-photo{height:100%;width:100%;border-radius:inherit;aspect-ratio:auto}.hc-package-cover{margin-bottom:1.2rem}.request-package-photo{max-width:400px}.request-estimate{border:1px solid #bfcfc8;border-radius:12px;padding:1.2rem;background:#f0f5f1;color:#17342f}.package-extra{display:flex;gap:.6rem;align-items:center;margin:.7rem 0}.package-extra input{width:auto!important}.request-fields{min-width:0}.hero-mobile-image{display:none!important}
+@media(max-width:767px){.hero-desktop-image{display:none!important}.hero-mobile-image{display:block!important}.hero-property-media>img:not(.hero-mobile-image){object-position:var(--hero-mobile-position,center)!important}.media-picker-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.request-estimate{padding:.9rem}.booking-mode-tabs button{white-space:normal}.media-picker{padding:.75rem}.request-grid{grid-template-columns:1fr}}
+
+.hero-property-media picture img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.desk-form-grid>div{display:flex;flex-direction:column;gap:.45rem}
+@media(max-width:767px){.hero-property-media picture img{object-position:var(--hero-mobile-position,center)!important}}
+
+.sp-hero-photo>.cms-photo,.room-detail-gallery-image>.cms-photo{width:100%;height:100%;aspect-ratio:auto}.surf-package-panel>.cms-photo{margin-bottom:1.2rem}@media(max-width:767px){.cms-photo img{object-position:var(--photo-mobile-position,center)!important}}
+
+.media-preview-pair{display:grid;grid-template-columns:2fr 1fr;gap:1rem;align-items:start}.media-preview-desktop{aspect-ratio:16/9}.media-preview-mobile{aspect-ratio:4/5}@media(max-width:767px){.media-preview-pair{grid-template-columns:1fr}}

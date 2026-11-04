@@ -29,7 +29,8 @@ export const catalogueSchema = z
     proposed: lines.default([]),
     proposedFr: lines.default([]),
     currency: z.enum(["EUR", "GBP", "USD", "MAD"]).default("EUR"),
-    pricingBasis: z.enum(["person", "booking"]).default("person"),
+    pricingBasis: z.enum(["person", "room", "booking"]).default("person"),
+    chargesIncluded: z.boolean().default(false),
     featured: z.boolean().default(false),
     arrangementsVerified: z.boolean().default(false),
     variants: z
@@ -40,6 +41,9 @@ export const catalogueSchema = z
           label: text.min(1),
           labelFr: text,
           priceCents: cents,
+          minGuests: z.number().int().min(1).max(23).optional(),
+          maxGuests: z.number().int().min(1).max(23).optional(),
+          roomCount: z.number().int().min(1).max(8).optional(),
         }),
       )
       .max(12)
@@ -61,6 +65,7 @@ export const catalogueSchema = z
         z.object({
           id: code,
           label: text.min(1),
+          labelFr: text.optional(),
           start: z.iso.date(),
           end: z.iso.date(),
           variantId: code.or(z.literal("")),
@@ -79,7 +84,25 @@ export const catalogueSchema = z
           path: [key],
           message: "Use unique option codes.",
         });
+    for (const [i, v] of d.variants.entries()) {
+      if (
+        v.priceCents === 0 ||
+        (v.maxGuests !== undefined && (v.minGuests || 1) > v.maxGuests)
+      )
+        ctx.addIssue({
+          code: "custom",
+          path: ["variants", i],
+          message:
+            "Use a positive verified rate or leave blank for a quote; check occupancy.",
+        });
+    }
     for (const [i, s] of d.seasons.entries()) {
+      if (s.priceCents === 0)
+        ctx.addIssue({
+          code: "custom",
+          path: ["seasons", i],
+          message: "Leave unknown seasonal prices blank.",
+        });
       if (
         s.start >= s.end ||
         (s.variantId && !d.variants.some((v) => v.id === s.variantId))
@@ -117,7 +140,7 @@ export function money(cents: number | null, currency: string, locale: Locale) {
   return cents === null
     ? locale === "fr"
       ? "Sur devis"
-      : "Personal quote"
+      : "Price on request"
     : new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-GB", {
         style: "currency",
         currency,
@@ -128,9 +151,13 @@ export function pricingBasis(basis: string, locale: Locale) {
     ? locale === "fr"
       ? "par personne, séjour complet"
       : "per person, whole stay"
-    : locale === "fr"
-      ? "pour le groupe, séjour complet"
-      : "per party, whole stay";
+    : basis === "room"
+      ? locale === "fr"
+        ? "par chambre, séjour complet"
+        : "per room, whole stay"
+      : locale === "fr"
+        ? "pour le groupe, séjour complet"
+        : "per party, whole stay";
 }
 // Arrival-date pricing applies to the whole package. Departure may cross a season boundary.
 export function packageEstimate(
@@ -141,7 +168,16 @@ export function packageEstimate(
   extraIds: string[] = [],
 ) {
   const v = c.variants.find((v) => v.id === variantId);
-  if (!v) return null;
+  if (
+    !v ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(arrival) ||
+    !Number.isInteger(guests) ||
+    guests < (v.minGuests || 1) ||
+    guests > (v.maxGuests || 23) ||
+    new Set(extraIds).size !== extraIds.length ||
+    extraIds.some((id) => !c.extras.some((e) => e.id === id))
+  )
+    return null;
   const season = c.seasons.find(
     (s) =>
       (!s.variantId || s.variantId === v.id) &&
@@ -151,12 +187,65 @@ export function packageEstimate(
   const base = season ? season.priceCents : v.priceCents;
   const extras = c.extras.filter((e) => extraIds.includes(e.id));
   const total =
-    base === null || extras.some((e) => e.priceCents === null)
+    !c.chargesIncluded ||
+    base === null ||
+    base <= 0 ||
+    extras.some((e) => e.priceCents === null)
       ? null
-      : base * (c.pricingBasis === "person" ? guests : 1) +
+      : base *
+          (c.pricingBasis === "person"
+            ? guests
+            : c.pricingBasis === "room"
+              ? v.roomCount || 1
+              : 1) +
         extras.reduce(
           (sum, e) => sum + e.priceCents! * (e.basis === "person" ? guests : 1),
           0,
         );
   return { base, total, season: season?.label || null };
+}
+
+/** A starting rate always has a selectable future arrival and occupancy witness.
+ * Expired seasons and base rates masked by quote-only seasons cannot advertise a price.
+ * This is not a statement of live room availability. */
+export function packageStartingPrice(
+  c: PackageCatalogue,
+  today: string,
+  noticeDays = 0,
+) {
+  if (!c.chargesIncluded) return null;
+  const add = (d: string, n: number) =>
+    new Date(Date.parse(d) + n * 86400000).toISOString().slice(0, 10);
+  const first = add(today, noticeDays),
+    last = add(first, 365);
+  const candidates = [
+    ...new Set([first, ...c.seasons.flatMap((s) => [s.start, s.end])]),
+  ]
+    .filter((d) => d >= first && d <= last)
+    .sort();
+  const offers = c.variants.flatMap((v) =>
+    candidates.flatMap((arrival) => {
+      const guests = v.minGuests || 1;
+      const estimate = packageEstimate(c, v.id, arrival, guests);
+      return estimate?.base && estimate.base > 0
+        ? [
+            {
+              priceCents: estimate.base,
+              variantId: v.id,
+              arrival,
+              guests,
+              roomCount: v.roomCount || 1,
+              label: v.label,
+              labelFr: v.labelFr,
+            },
+          ]
+        : [];
+    }),
+  );
+  return (
+    offers.sort(
+      (a, b) =>
+        a.priceCents - b.priceCents || a.arrival.localeCompare(b.arrival),
+    )[0] || null
+  );
 }

@@ -64,6 +64,9 @@ const definitions: Record<WorkspaceEntity, string[]> = {
     "package_id",
     "image_url",
     "alt_text",
+    "caption",
+    "focal_position",
+    "mobile_focal_position",
     "sort_order",
     "archived",
   ],
@@ -108,7 +111,10 @@ const labels: Record<string, string> = {
   duration_minutes: "Duration in minutes",
   sort_order: "Display order",
   image_url: "Authentic photograph URL",
-  alt_text: "Photograph description",
+  alt_text: "Image alt text",
+  caption: "Photograph caption",
+  focal_position: "Desktop crop focal point",
+  mobile_focal_position: "Mobile crop focal point",
 };
 const textareas = new Set([
   "notes",
@@ -141,6 +147,8 @@ export function entityFields(
 ): EntityField[] {
   const v = record as Record<string, unknown>;
   const selects: Record<string, string[]> = {
+    focal_position: ["center", "top", "bottom"],
+    mobile_focal_position: ["center", "top", "bottom"],
     locale: ["en", "fr"],
     stage: ["new", "contacted", "proposal", "won", "closed"],
     priority: ["normal", "high", "low"],

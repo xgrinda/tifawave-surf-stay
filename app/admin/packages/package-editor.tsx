@@ -6,8 +6,12 @@ import {
   catalogueSchema,
   emptyCatalogue,
   levelNames,
+  packageStartingPrice,
+  money,
+  pricingBasis,
   type PackageCatalogue,
 } from "@/lib/packages/catalogue";
+import { propertyToday } from "@/lib/booking/schema";
 import { savePackageAction } from "./actions";
 type Room = { id: string; name: string };
 function SavePackageButton() {
@@ -32,6 +36,20 @@ export function PackageEditor({
   const [variants, setVariants] = useState(c.variants),
     [extras, setExtras] = useState(c.extras),
     [seasons, setSeasons] = useState(c.seasons);
+  const [basis, setBasis] = useState(c.pricingBasis),
+    [charges, setCharges] = useState(c.chargesIncluded),
+    [currency, setCurrency] = useState(c.currency);
+  const starting = packageStartingPrice(
+    {
+      ...c,
+      variants,
+      extras,
+      seasons,
+      pricingBasis: basis,
+      chargesIncluded: charges,
+    },
+    propertyToday(),
+  );
   const locked = !!pkg && pkg.publication_status === "published" && !owner;
   const price = (v: string) => (v === "" ? null : Math.round(Number(v) * 100));
   function list(name: string, label: string, values: string[]) {
@@ -207,7 +225,11 @@ export function PackageEditor({
         <div className="admin-settings-grid">
           <label className="admin-field">
             Currency
-            <select name="currency" defaultValue={c.currency}>
+            <select
+              name="currency"
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value as typeof currency)}
+            >
               {["EUR", "GBP", "USD", "MAD"].map((x) => (
                 <option key={x}>{x}</option>
               ))}
@@ -215,9 +237,14 @@ export function PackageEditor({
           </label>
           <label className="admin-field">
             Whole-package price basis
-            <select name="pricingBasis" defaultValue={c.pricingBasis}>
+            <select
+              name="pricingBasis"
+              value={basis}
+              onChange={(e) => setBasis(e.target.value as typeof basis)}
+            >
               <option value="person">Per person</option>
-              <option value="booking">Per party / booking</option>
+              <option value="room">Per room</option>
+              <option value="booking">Complete package / booking</option>
             </select>
           </label>
         </div>
@@ -254,6 +281,33 @@ export function PackageEditor({
                   ))}
                 </select>
               </label>
+              {(["minGuests", "maxGuests", "roomCount"] as const).map((k) => (
+                <label className="admin-field" key={k}>
+                  {k === "minGuests"
+                    ? "Minimum guests for this rate"
+                    : k === "maxGuests"
+                      ? "Maximum guests for this arrangement"
+                      : "Number of private rooms in this option"}
+                  <input
+                    type="number"
+                    min={1}
+                    max={k === "roomCount" ? 8 : 23}
+                    value={v[k] ?? (k === "maxGuests" ? "" : 1)}
+                    onChange={(e) =>
+                      variant(i, {
+                        [k]: e.target.value
+                          ? Number(e.target.value)
+                          : undefined,
+                      })
+                    }
+                  />
+                  <small>
+                    Occupancy must fit the linked room(s). Leave maximum blank
+                    to use actual room capacity. For dorms, request individual
+                    beds; maximum four.
+                  </small>
+                </label>
+              ))}
               <label className="admin-field">
                 Whole-package amount · blank = quote
                 <input
@@ -403,12 +457,12 @@ export function PackageEditor({
         {seasons.map((s, i) => (
           <div className="desk-panel" key={s.id}>
             <div className="admin-settings-grid">
-              {(["label", "start", "end"] as const).map((k) => (
+              {(["label", "labelFr", "start", "end"] as const).map((k) => (
                 <label className="admin-field" key={k}>
                   {k}
                   <input
-                    type={k === "label" ? "text" : "date"}
-                    value={s[k]}
+                    type={k === "label" || k === "labelFr" ? "text" : "date"}
+                    value={s[k] || ""}
                     required
                     onChange={(e) =>
                       setSeasons(
@@ -489,6 +543,37 @@ export function PackageEditor({
         >
           Add season
         </button>
+        <label className="admin-field">
+          <span>
+            <input
+              type="checkbox"
+              name="chargesIncluded"
+              checked={charges}
+              onChange={(e) => setCharges(e.target.checked)}
+              disabled={!owner}
+            />{" "}
+            Owner verified: these package rates include accommodation, breakfast
+            and ALL mandatory charges. Optional extras alone are added. Until
+            checked, show Price on request.
+          </span>
+        </label>
+        <section className="request-estimate">
+          <h3>Guest starting-price preview</h3>
+          <p>
+            {starting
+              ? "From " +
+                money(starting.priceCents, currency, "en") +
+                " · " +
+                pricingBasis(basis, "en") +
+                " · " +
+                starting.label
+              : "Price on request"}
+          </p>
+          <small>
+            A starting rate needs a selectable future configuration and verified
+            mandatory charges. No live availability is promised.
+          </small>
+        </section>
         <h2>Owner publication review</h2>
         <p>
           Keep the three main packages featured; Surf Guiding can remain

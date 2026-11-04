@@ -1,5 +1,5 @@
 "use client";
-import Image from "next/image";
+import { getImageProps } from "next/image";
 import { useEffect, useRef, useState } from "react";
 import type { Locale } from "@/lib/i18n";
 import { focalPositionToCss, type FocalPosition } from "@/lib/image-position";
@@ -9,12 +9,16 @@ export function HeroMedia({
   video,
   locale,
   position = "center",
+  mobileImage = "",
+  mobilePosition = "center",
 }: {
   image: string;
   alt: string;
   video: string;
   locale: Locale;
   position?: FocalPosition;
+  mobileImage?: string;
+  mobilePosition?: FocalPosition;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
   const [loaded, setLoaded] = useState(false);
@@ -72,15 +76,46 @@ export function HeroMedia({
   return (
     <>
       <div className="hero-property-media">
-        <Image
-          src={image}
-          alt={alt}
-          fill
-          priority
-          sizes="100vw"
-          quality={80}
-          style={{ objectPosition: focalPositionToCss(position) }}
-        />
+        <picture>
+          {mobileImage && (
+            <source
+              media="(max-width:767px)"
+              srcSet={
+                getImageProps({
+                  src: mobileImage,
+                  alt,
+                  width: 1080,
+                  height: 1350,
+                  sizes: "100vw",
+                  quality: 80,
+                }).props.srcSet
+              }
+            />
+          )}
+          {/* Next generates optimized responsive URLs for both picture sources. */}
+          <img
+            {...getImageProps({
+              src: image,
+              alt,
+              width: 2400,
+              height: 1350,
+              sizes: "100vw",
+              quality: 80,
+              loading: "eager",
+              fetchPriority: "high",
+            }).props}
+            alt={alt}
+            style={
+              {
+                objectPosition: focalPositionToCss(position),
+                "--hero-mobile-position": focalPositionToCss(mobilePosition),
+              } as import("react").CSSProperties
+            }
+            onError={(e) => {
+              e.currentTarget.style.visibility = "hidden";
+            }}
+          />
+        </picture>
         {video && (
           <video
             ref={ref}

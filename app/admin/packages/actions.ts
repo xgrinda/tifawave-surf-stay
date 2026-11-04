@@ -37,6 +37,7 @@ export async function savePackageAction(form: FormData) {
         proposedFr: lines("proposedFr"),
         currency: text("currency"),
         pricingBasis: text("pricingBasis"),
+        chargesIncluded: form.has("chargesIncluded"),
         featured: form.has("featured"),
         arrangementsVerified: form.has("verified"),
       },

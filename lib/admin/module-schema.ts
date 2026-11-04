@@ -113,6 +113,9 @@ export const moduleSchemas = {
     .strict(),
   package_photos: z
     .object({
+      caption: text(300),
+      focal_position: z.enum(["top", "center", "bottom"]),
+      mobile_focal_position: z.enum(["top", "center", "bottom"]),
       package_id: z.uuid(),
       image_url: z
         .url()

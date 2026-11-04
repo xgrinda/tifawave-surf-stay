@@ -1,4 +1,5 @@
 "use client";
+import { MediaPicker } from "./media-picker";
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { saveWorkspaceAction } from "../workspace-actions";
@@ -93,16 +94,24 @@ export function EntityForm({
               value={String(field.value ?? "")}
             />
           ) : (
-            <label
+            <div
               key={field.name}
               className={field.type === "textarea" ? "desk-form-wide" : ""}
             >
-              <span>
+              <label htmlFor={entity + "-" + (id || "new") + "-" + field.name}>
                 {field.label}
                 {field.required ? " *" : ""}
-              </span>
-              {field.type === "textarea" ? (
+              </label>
+              {field.name === "image_url" ? (
+                <MediaPicker
+                  name={field.name}
+                  label="Photograph"
+                  defaultValue={String(field.value ?? "")}
+                  required={field.required}
+                />
+              ) : field.type === "textarea" ? (
                 <textarea
+                  id={entity + "-" + (id || "new") + "-" + field.name}
                   name={field.name}
                   defaultValue={String(field.value ?? "")}
                   rows={4}
@@ -111,6 +120,7 @@ export function EntityForm({
                 />
               ) : field.type === "select" ? (
                 <select
+                  id={entity + "-" + (id || "new") + "-" + field.name}
                   name={field.name}
                   defaultValue={String(field.value ?? "")}
                   required={field.required}
@@ -124,12 +134,14 @@ export function EntityForm({
               ) : field.type === "checkbox" ? (
                 <input
                   type="checkbox"
+                  id={entity + "-" + (id || "new") + "-" + field.name}
                   name={field.name}
                   defaultChecked={Boolean(field.value)}
                 />
               ) : (
                 <input
                   type={field.type || "text"}
+                  id={entity + "-" + (id || "new") + "-" + field.name}
                   name={field.name}
                   defaultValue={String(field.value ?? "")}
                   step={field.name.endsWith("_cents") ? "0.01" : undefined}
@@ -140,7 +152,7 @@ export function EntityForm({
                 />
               )}{" "}
               {field.help && <small>{field.help}</small>}
-            </label>
+            </div>
           ),
         )}
       </div>

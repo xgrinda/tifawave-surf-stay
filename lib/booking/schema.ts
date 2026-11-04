@@ -49,7 +49,9 @@ const requestFields = z
     guestPhone: z
       .string()
       .trim()
-      .regex(/^[+()\-\s\d]{6,40}$/),
+      .regex(/^[+()\-\s\d]{6,40}$/)
+      .or(z.literal(""))
+      .default(""),
     message: z.string().trim().max(1600).default(""),
     roomPreference: z.string().trim().max(160).default(""),
     surfLevel: z.string().trim().max(160).default(""),

@@ -84,52 +84,18 @@ async function processImageForCards(
     limitInputPixels: 48_000_000,
   }).rotate();
 
-  await sourceImage.metadata();
+  const metadata = await sourceImage.metadata();
+  if (!["jpeg", "png", "webp", "avif", "heif"].includes(metadata.format || ""))
+    throw Error("Unsupported image contents.");
 
-  const background = await sharp(source, {
-    failOn: "none",
-    limitInputPixels: 48_000_000,
-  })
-    .rotate()
-    .resize(target.width, target.height, {
-      fit: "cover",
-      position: "center",
-    })
-    .blur(24)
-    .modulate({
-      brightness: 0.92,
-      saturation: 0.88,
-    })
-    .toBuffer();
-
-  const foreground = await sharp(source, {
-    failOn: "none",
-    limitInputPixels: 48_000_000,
-  })
-    .rotate()
-    .resize(target.width, target.height, {
-      background: {
-        alpha: 0,
-        b: 0,
-        g: 0,
-        r: 0,
-      },
+  const buffer = await sourceImage
+    .resize({
+      width: 2400,
+      height: 2400,
       fit: "inside",
-      withoutEnlargement: false,
+      withoutEnlargement: true,
     })
-    .toBuffer();
-
-  const buffer = await sharp(background)
-    .composite([
-      {
-        gravity: "center",
-        input: foreground,
-      },
-    ])
-    .webp({
-      effort: 5,
-      quality: target.quality,
-    })
+    .webp({ effort: 5, quality: target.quality })
     .toBuffer();
 
   return {

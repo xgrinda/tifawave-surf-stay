@@ -31,7 +31,11 @@ export async function HeroSection({
           }
           video={content?.heroVideo || ""}
           locale={locale}
-          position={image?.focalPosition}
+          position={
+            content?.heroImage ? content.heroFocal : image?.focalPosition
+          }
+          mobileImage={content?.heroMobileImage}
+          mobilePosition={content?.heroMobileFocal}
         />
       )}
       <div className="home-hero-wave" />
@@ -75,7 +79,7 @@ export async function HeroSection({
             data-home-cta="hero_rooms"
             data-intent="room"
           >
-            {locale === "fr" ? "Trouver ma chambre" : "Find Your Room"}
+            {locale === "fr" ? "Trouver ma chambre" : "Explore Rooms"}
           </Link>
         </div>
         <Link

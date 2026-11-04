@@ -3,7 +3,7 @@
 import { useEffect, useId, useState } from "react";
 import { useFormStatus } from "react-dom";
 
-async function optimizedFile(file: File): Promise<File> {
+export async function optimizedFile(file: File): Promise<File> {
   if (
     !["image/jpeg", "image/png", "image/webp", "image/avif"].includes(
       file.type,
@@ -15,7 +15,7 @@ async function optimizedFile(file: File): Promise<File> {
   try {
     if (bitmap.width * bitmap.height > 48000000)
       throw Error("Choose images smaller than 48 megapixels.");
-    const scale = Math.min(1, 1800 / Math.max(bitmap.width, bitmap.height));
+    const scale = Math.min(1, 2400 / Math.max(bitmap.width, bitmap.height));
     const canvas = document.createElement("canvas");
     canvas.width = Math.max(1, Math.round(bitmap.width * scale));
     canvas.height = Math.max(1, Math.round(bitmap.height * scale));

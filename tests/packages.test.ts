@@ -5,6 +5,7 @@ import {
   catalogueSchema,
   emptyCatalogue,
   packageEstimate,
+  packageStartingPrice,
   localized,
   levelLabel,
   pricingBasis,
@@ -14,6 +15,7 @@ import { reservationEmail } from "../lib/email/templates";
 const catalogue = {
   ...emptyCatalogue(),
   nights: 7,
+  chargesIncluded: true,
   variants: [
     {
       id: "double",
@@ -205,4 +207,57 @@ test("language switching retains package/variant/dates without copying contact o
     requestContextQuery("?variantId=unsafe/value&checkIn=2031-02-30&guests=24"),
     "",
   );
+});
+
+// Test prices are synthetic fixtures and never applied to a hosted catalogue.
+test("starting rate excludes expired seasons and base prices hidden by quote seasons", () => {
+  const c = {
+    ...catalogue,
+    seasons: [
+      {
+        ...catalogue.seasons[0],
+        start: "2020-01-01",
+        end: "2020-02-01",
+        priceCents: 100,
+      },
+    ],
+  };
+  assert.equal(packageStartingPrice(c, "2031-05-01")?.priceCents, 10000);
+  assert.equal(
+    packageStartingPrice(
+      {
+        ...c,
+        seasons: [
+          {
+            ...c.seasons[0],
+            start: "2031-01-01",
+            end: "2033-01-01",
+            priceCents: null,
+          },
+        ],
+      },
+      "2031-05-01",
+    ),
+    null,
+  );
+  assert.equal(
+    packageStartingPrice({ ...c, chargesIncluded: false }, "2031-05-01"),
+    null,
+  );
+});
+test("per-room rates count the configured rooms once and reject invalid occupancy or extras", () => {
+  const c = {
+    ...catalogue,
+    pricingBasis: "room" as const,
+    variants: [
+      { ...catalogue.variants[0], roomCount: 2, minGuests: 2, maxGuests: 4 },
+    ],
+  };
+  assert.equal(
+    packageEstimate(c, "double", "2031-08-01", 4, ["yoga"])?.total,
+    28000,
+  );
+  assert.equal(packageEstimate(c, "double", "2031-08-01", 1), null);
+  assert.equal(packageEstimate(c, "double", "2031-08-01", 5), null);
+  assert.equal(packageEstimate(c, "double", "2031-08-01", 2, ["forged"]), null);
 });

@@ -1,7 +1,8 @@
+import { isPublicImageUrl } from "@/lib/image-url";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { NextResponse } from "next/server";
-import { currentStaff } from "@/lib/admin/auth";
+import { currentStaff, hasPermission } from "@/lib/admin/auth";
 import { createSupabaseStaffClient } from "@/lib/supabase/staff";
 import { assertSameOrigin, boundedJson } from "@/lib/security/requests";
 const schema = z
@@ -60,4 +61,53 @@ export async function POST(request: Request) {
       { status: 503 },
     );
   }
+}
+
+export async function GET() {
+  const staff = await currentStaff();
+  if (!staff || !hasPermission(staff.role, "content"))
+    return NextResponse.json(
+      { message: "Content access required" },
+      { status: 403 },
+    );
+  const db = await createSupabaseStaffClient();
+  if (staff.role === "owner") {
+    const { data, error } = await db.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (error || data.currentLevel !== "aal2")
+      return NextResponse.json({ message: "MFA required" }, { status: 403 });
+  }
+  const results = await Promise.all([
+    db
+      .from("gallery_images")
+      .select("image_url,alt_text,category")
+      .order("created_at", { ascending: false })
+      .limit(500),
+    db
+      .from("room_images")
+      .select("image_url,alt_text")
+      .order("created_at", { ascending: false })
+      .limit(500),
+    db
+      .from("package_photos")
+      .select("image_url,alt_text")
+      .order("created_at", { ascending: false })
+      .limit(500),
+  ]);
+  if (results.some((r) => r.error))
+    return NextResponse.json(
+      { message: "Library unavailable" },
+      { status: 503 },
+    );
+  const images = [
+    ...new Map(
+      results
+        .flatMap((r) => r.data || [])
+        .filter((r) => isPublicImageUrl(r.image_url))
+        .map((r) => [r.image_url, { url: r.image_url, alt: r.alt_text }]),
+    ).values(),
+  ];
+  return NextResponse.json(
+    { images },
+    { headers: { "cache-control": "private, no-store" } },
+  );
 }

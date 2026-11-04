@@ -7,13 +7,17 @@ export function EnquiryForm({
   area,
   locale,
   initialMessage = "",
+  initialDates,
 }: {
   area: string;
   locale: Locale;
   initialMessage?: string;
+  initialDates?: { checkIn: string; checkOut: string; guests: number };
 }) {
   const fr = locale === "fr";
   const group = area === "groups";
+  const [flexible, setFlexible] = useState(!initialDates?.checkIn);
+  const sending = useRef(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
@@ -62,6 +66,7 @@ export function EnquiryForm({
       className="public-enquiry-form"
       onSubmit={async (e) => {
         e.preventDefault();
+        if (sending.current) return;
         setError("");
         const form = new FormData(e.currentTarget);
         const value = {
@@ -70,7 +75,22 @@ export function EnquiryForm({
           email: String(form.get("email")),
           phone: String(form.get("phone")),
           organization: String(form.get("organization")),
-          message: String(form.get("message")),
+          message: [
+            String(form.get("message")),
+            ...(group
+              ? [
+                  (fr
+                    ? "Hébergement souhaité : "
+                    : "Accommodation preference: ") +
+                    String(form.get("accommodation") || ""),
+                  (fr ? "Activités demandées : " : "Requested activities: ") +
+                    form.getAll("activities").map(String).join(", "),
+                  flexible ? (fr ? "Dates flexibles" : "Flexible dates") : "",
+                ]
+              : []),
+          ]
+            .filter(Boolean)
+            .join("\n"),
           locale,
           ...(form.get("checkIn")
             ? { checkIn: String(form.get("checkIn")) }
@@ -96,6 +116,7 @@ export function EnquiryForm({
           key.current = crypto.randomUUID();
           fingerprint.current = current;
         }
+        sending.current = true;
         setPending(true);
         try {
           const response = await fetch("/api/enquiry", {
@@ -110,7 +131,7 @@ export function EnquiryForm({
           const result = await response.json();
           if (!response.ok) throw Error(result.message || "Please try again.");
           setSent(true);
-          if (["contact","groups","partners","collaborate"].includes(area))
+          if (["contact", "groups", "partners", "collaborate"].includes(area))
             trackEvent("enquiry_created", { event_source: area, locale });
         } catch (err) {
           setError(
@@ -121,6 +142,7 @@ export function EnquiryForm({
                 : "Please try again.",
           );
         } finally {
+          sending.current = false;
           setPending(false);
         }
       }}
@@ -177,29 +199,91 @@ export function EnquiryForm({
         {group && (
           <>
             <label className="admin-field">
+              <span>
+                {fr ? "Mes dates sont flexibles" : "My dates are flexible"}
+              </span>
+              <input
+                type="checkbox"
+                checked={flexible}
+                onChange={(e) => setFlexible(e.target.checked)}
+              />
+            </label>
+            <label className="admin-field">
+              <span>
+                {fr ? "Hébergement souhaité" : "Accommodation preference"}
+              </span>
+              <select name="accommodation">
+                <option>
+                  {fr ? "Flexible / chambres mixtes" : "Flexible / mixed rooms"}
+                </option>
+                <option>{fr ? "Chambres privées" : "Private rooms"}</option>
+                <option>{fr ? "Lits en dortoir" : "Dorm beds"}</option>
+              </select>
+            </label>
+            <fieldset>
+              <legend>
+                {fr
+                  ? "Activités souhaitées · facultatif"
+                  : "Requested activities · optional"}
+              </legend>
+              {["Surf", "Yoga", "Excursions"].map((a) => (
+                <label className="package-extra" key={a}>
+                  <input name="activities" type="checkbox" value={a} />
+                  {a}
+                </label>
+              ))}
+            </fieldset>
+            <label className="admin-field">
               <span>{fr ? "Voyageurs (23 maximum)" : "Guests (up to 23)"}</span>
-              <input name="groupSize" type="number" min={1} max={23} required />
+              <input
+                name="groupSize"
+                type="number"
+                min={1}
+                max={23}
+                defaultValue={initialDates?.guests}
+                required
+              />
             </label>
             <label className="admin-field">
               <span>{fr ? "Arrivée souhaitée" : "Preferred arrival"}</span>
-              <input name="checkIn" type="date" required />
+              <input
+                name="checkIn"
+                type="date"
+                disabled={flexible}
+                required={!flexible}
+                defaultValue={initialDates?.checkIn}
+              />
             </label>
             <label className="admin-field">
               <span>{fr ? "Départ souhaité" : "Preferred departure"}</span>
-              <input name="checkOut" type="date" required />
+              <input
+                name="checkOut"
+                type="date"
+                disabled={flexible}
+                required={!flexible}
+                defaultValue={initialDates?.checkOut}
+              />
             </label>
           </>
         )}
       </div>
       <label className="admin-field">
-        <span>{fr ? "Votre projet" : "Your plans"}</span>
+        <span>
+          {group
+            ? fr
+              ? "Besoins supplémentaires · facultatif"
+              : "Additional requirements · optional"
+            : fr
+              ? "Votre projet"
+              : "Your plans"}
+        </span>
         <textarea
           name="message"
           defaultValue={initialMessage}
           rows={6}
-          minLength={10}
+          minLength={group ? undefined : 10}
           maxLength={3000}
-          required
+          required={!group}
         />
       </label>
       <div className="form-honeypot" aria-hidden="true">
@@ -220,8 +304,12 @@ export function EnquiryForm({
             ? "Envoi…"
             : "Sending…"
           : fr
-            ? "Envoyer la demande"
-            : "Send enquiry"}
+            ? group
+              ? "Demander un devis groupe"
+              : "Envoyer la demande"
+            : group
+              ? "Request Group Quote"
+              : "Send enquiry"}
       </button>
     </form>
   );

@@ -180,9 +180,13 @@ export function reservationEmail(
         ? fr
           ? "par personne, séjour complet"
           : "per person, whole stay"
-        : fr
-          ? "pour le groupe, séjour complet"
-          : "per party, whole stay";
+        : v === "room"
+          ? fr
+            ? "par chambre, séjour complet"
+            : "per room, whole stay"
+          : fr
+            ? "pour le groupe, séjour complet"
+            : "per party, whole stay";
     const levels: Record<string, string[]> = {
       beginner: ["Beginner", "Débutant"],
       improver: ["Improver", "En progression"],

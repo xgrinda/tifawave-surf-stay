@@ -1,4 +1,8 @@
 "use client";
+import { MediaPicker } from "../_components/media-picker";
+import { CmsPhoto } from "@/components/content/cms-photo";
+import { ContentBody } from "@/components/content/content-body";
+import { homeSectionOrder } from "@/lib/homepage";
 import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveContent } from "./actions";
@@ -126,7 +130,33 @@ export function ContentEditor({
               Use a property media URL from the media library. Video requires an
               image fallback. Leave blank when original media is unavailable.
             </p>
-            {field("heroImage", "Static image URL")}
+            <MediaPicker
+              label="Desktop hero image"
+              value={draft.heroImage}
+              onChange={(v) => setDraft({ ...draft, heroImage: v })}
+              preset="2400 × 1350 · 16:9"
+            />
+            <MediaPicker
+              label="Mobile hero image · optional"
+              value={draft.heroMobileImage}
+              onChange={(v) => setDraft({ ...draft, heroMobileImage: v })}
+              preset="1080 × 1350 · 4:5"
+            />
+            {(["heroFocal", "heroMobileFocal"] as const).map((k) => (
+              <label className="admin-field" key={k}>
+                {k === "heroFocal"
+                  ? "Desktop focal point"
+                  : "Mobile focal point"}
+                <select
+                  value={draft[k]}
+                  onChange={(e) => setDraft({ ...draft, [k]: e.target.value })}
+                >
+                  {["top", "center", "bottom"].map((v) => (
+                    <option key={v}>{v}</option>
+                  ))}
+                </select>
+              </label>
+            ))}
             {field("heroAlt", "Image description")}
             {field("heroVideo", "Video URL (MP4 or WebM)")}
             {field("ctaLabel", "Link label")}
@@ -134,8 +164,82 @@ export function ContentEditor({
           </details>
           <fieldset>
             <legend>Page sections</legend>
+            {document?.slug === "home" && (
+              <button
+                type="button"
+                onClick={() =>
+                  setDraft({
+                    ...draft,
+                    sections: homeSectionOrder.map(
+                      (key, i) =>
+                        draft.sections[i] || { heading: "", body: "" },
+                    ),
+                  })
+                }
+              >
+                Show all homepage section image controls
+              </button>
+            )}
             {draft.sections.map((s, i) => (
               <div key={i} className="desk-panel">
+                <p>
+                  {document?.slug === "home"
+                    ? homeSectionOrder[i]
+                    : "Section " + (i + 1)}
+                </p>
+                <MediaPicker
+                  label="Section photograph · optional"
+                  value={s.imageUrl || ""}
+                  onChange={(v) =>
+                    setDraft({
+                      ...draft,
+                      sections: draft.sections.map((x, n) =>
+                        n === i ? { ...x, imageUrl: v } : x,
+                      ),
+                    })
+                  }
+                />
+                <label className="admin-field">
+                  Image alt text / caption
+                  <input
+                    value={s.imageAlt || ""}
+                    maxLength={300}
+                    onChange={(e) =>
+                      setDraft({
+                        ...draft,
+                        sections: draft.sections.map((x, n) =>
+                          n === i ? { ...x, imageAlt: e.target.value } : x,
+                        ),
+                      })
+                    }
+                  />
+                </label>
+                <label className="admin-field">
+                  Crop focal point
+                  <select
+                    value={s.focalPosition || "center"}
+                    onChange={(e) =>
+                      setDraft({
+                        ...draft,
+                        sections: draft.sections.map((x, n) =>
+                          n === i
+                            ? {
+                                ...x,
+                                focalPosition: e.target.value as
+                                  | "top"
+                                  | "center"
+                                  | "bottom",
+                              }
+                            : x,
+                        ),
+                      })
+                    }
+                  >
+                    {["top", "center", "bottom"].map((v) => (
+                      <option key={v}>{v}</option>
+                    ))}
+                  </select>
+                </label>
                 <label className="admin-field">
                   <span>Heading</span>
                   <input
@@ -251,6 +355,36 @@ export function ContentEditor({
             </button>
           </fieldset>
         </>
+      )}
+      {kind !== "email" && (
+        <details className="desk-panel">
+          <summary>Preview unsaved content and image choices</summary>
+          <div className="media-preview-pair">
+            {draft.heroImage && (
+              <figure>
+                <figcaption>Desktop hero · 16:9</figcaption>
+                <CmsPhoto
+                  src={draft.heroImage}
+                  alt={draft.heroAlt}
+                  position={draft.heroFocal}
+                  className="media-preview-desktop"
+                />
+              </figure>
+            )}
+            {(draft.heroMobileImage || draft.heroImage) && (
+              <figure>
+                <figcaption>Mobile hero · 4:5</figcaption>
+                <CmsPhoto
+                  src={draft.heroMobileImage || draft.heroImage}
+                  alt={draft.heroAlt}
+                  position={draft.heroMobileFocal}
+                  className="media-preview-mobile"
+                />
+              </figure>
+            )}
+          </div>
+          <ContentBody content={draft} />
+        </details>
       )}
       {state.error && <p role="alert">{state.error}</p>}
       <div className="desk-actions">

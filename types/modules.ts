@@ -76,6 +76,9 @@ export type PackageActivity = Row & {
   sort_order: number;
 };
 export type PackagePhoto = Row & {
+  caption: string;
+  focal_position: string;
+  mobile_focal_position: string;
   package_id: string;
   image_url: string;
   alt_text: string;
