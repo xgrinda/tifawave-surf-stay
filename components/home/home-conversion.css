@@ -1206,6 +1206,7 @@ body:has(.conversion-home) .site-header .btn-primary {
   margin: 0;
 }
 .conversion-home .hc-google-panel h2 {
+  scroll-margin-top: 180px;
   font-size: clamp(2rem, 3.8vw, 3.4rem);
 }
 .conversion-home .hc-google-link-card {
