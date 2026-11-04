@@ -2661,3 +2661,16 @@ test("CMS drafts accept approved mobile/section imagery and preserve explicit pu
     "22023",
   );
 });
+
+test("anonymous room listing reads include the verified bathroom fact but never private OTA URLs", async () => {
+  const r = await as("anon", (c) =>
+    c.query(
+      "select id,slug,name,description,max_guests,base_price_cents,bathroom_type from public.rooms where is_active",
+    ),
+  );
+  assert.ok(r.rows.length > 0);
+  await rejectsCode(
+    as("anon", (c) => c.query("select external_ical_urls from public.rooms")),
+    "42501",
+  );
+});

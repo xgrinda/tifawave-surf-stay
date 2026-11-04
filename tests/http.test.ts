@@ -37,7 +37,9 @@ test("legacy payment-success URLs show request intake, never a confirmed receipt
     assert.ok(!html.includes("Votre demande de réservation est confirmée."));
     assert.ok(
       html.includes(
-        path === "/book" ? "Send booking request" : "Envoyer la demande",
+        path === "/book"
+          ? "Send Booking Request"
+          : "Envoyer la demande de réservation",
       ),
     );
   }
@@ -168,4 +170,31 @@ test("public group, partnership, collaboration and policy pages are available in
   const image = await get("/opengraph-image");
   assert.equal(image.status, 200);
   assert.match(image.headers.get("content-type") || "", /image\/png/);
+});
+
+test("media library and pricing endpoints fail closed without authentication or valid selections", async () => {
+  assert.equal((await get("/api/admin/media")).status, 403);
+  assert.equal(
+    (
+      await get("/api/booking/package-estimate", {
+        method: "POST",
+        headers: { "content-type": "application/json", origin: base.origin },
+        body: "{}",
+      })
+    ).status,
+    400,
+  );
+  assert.equal(
+    (
+      await get("/api/booking/package-estimate", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: "https://untrusted.invalid",
+        },
+        body: "{}",
+      })
+    ).status,
+    403,
+  );
 });
