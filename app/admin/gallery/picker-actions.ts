@@ -7,7 +7,7 @@ export async function uploadPickerImage(form: FormData) {
   const f = form.get("file");
   if (!(f instanceof File)) return { error: "Choose a photograph." };
   const alt = String(form.get("alt") || "").trim();
-  if (alt.length < 2 || alt.length > 300)
+  if (alt.length < 2 || alt.length > 180)
     return { error: "Add an image description before uploading." };
   const upload = await uploadAdminImage({ file: f, folder: "gallery" });
   if (!upload.ok) return { error: upload.message };

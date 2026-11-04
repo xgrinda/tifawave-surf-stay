@@ -105,28 +105,12 @@ export function MediaPicker({
             not change published content. Uploads here are unassigned and hidden
             from the public gallery.
           </p>
-          <div className="media-picker-grid">
-            {images
-              .filter((i) => i.alt.toLowerCase().includes(query.toLowerCase()))
-              .map((i) => (
-                <button
-                  type="button"
-                  key={i.url}
-                  onClick={() => {
-                    choose(i.url);
-                    setOpen(false);
-                  }}
-                >
-                  <img src={i.url} alt={i.alt} loading="lazy" />
-                  <span>{i.alt}</span>
-                </button>
-              ))}
-          </div>
+          <h4>Upload a photograph</h4>
           <label className="admin-field">
             New photograph description
             <input
               value={alt}
-              maxLength={300}
+              maxLength={180}
               onChange={(e) => setAlt(e.target.value)}
             />
           </label>
@@ -165,6 +149,24 @@ export function MediaPicker({
             />
           </label>
           {busy && <p role="status">Optimizing and uploading…</p>}
+          <h4>Choose an existing photograph</h4>
+          <div className="media-picker-grid">
+            {images
+              .filter((i) => i.alt.toLowerCase().includes(query.toLowerCase()))
+              .map((i) => (
+                <button
+                  type="button"
+                  key={i.url}
+                  onClick={() => {
+                    choose(i.url);
+                    setOpen(false);
+                  }}
+                >
+                  <img src={i.url} alt={i.alt} loading="lazy" />
+                  <span>{i.alt}</span>
+                </button>
+              ))}
+          </div>
         </section>
       )}
       {error && <p role="alert">{error}</p>}

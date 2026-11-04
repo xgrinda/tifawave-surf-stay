@@ -2674,3 +2674,26 @@ test("anonymous room listing reads include the verified bathroom fact but never 
     "42501",
   );
 });
+
+test("package publication cannot invent additional physical rooms", async () => {
+  const room = (
+    await root.query(
+      "select id from public.rooms where slug='private-double-room'",
+    )
+  ).rows[0].id;
+  const { row } = await packageFixture({
+    seasons: [],
+    variants: [
+      {
+        id: "impossible",
+        roomId: room,
+        label: "Impossible eight-room option",
+        labelFr: "Option impossible de huit chambres",
+        priceCents: 10000,
+        roomCount: 8,
+        maxGuests: 16,
+      },
+    ],
+  });
+  await rejectsCode(publishFixture(row.id), "23514");
+});
