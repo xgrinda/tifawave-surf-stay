@@ -9,6 +9,7 @@ export function CmsPhoto({
   mobilePosition,
   sizes = "(max-width:760px) 100vw,50vw",
   className = "",
+  priority = false,
 }: {
   src: string;
   alt: string;
@@ -16,6 +17,7 @@ export function CmsPhoto({
   mobilePosition?: string;
   sizes?: string;
   className?: string;
+  priority?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
   if (!isPublicImageUrl(src) || failed)
@@ -31,6 +33,7 @@ export function CmsPhoto({
         src={src}
         alt={alt}
         fill
+        priority={priority}
         sizes={sizes}
         style={
           {

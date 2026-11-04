@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import Image from "next/image";
+import { CmsPhoto } from "@/components/content/cms-photo";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { EnquiryForm } from "@/components/enquiries/enquiry-form";
 import type { PublicSurfPackage } from "@/lib/surf-packages";
@@ -385,11 +385,11 @@ export function RequestForm({
               <section className="request-package-summary">
                 {p.cover && (
                   <div className="request-package-photo">
-                    <Image
+                    <CmsPhoto
                       src={p.cover.url}
                       alt={p.cover.alt}
-                      fill
-                      sizes="(max-width:760px) 100vw,400px"
+                      position={p.cover.position}
+                      mobilePosition={p.cover.mobilePosition}
                     />
                   </div>
                 )}

@@ -1,6 +1,5 @@
 import { RoomBathroom } from "@/components/content/room-bathroom";
 import { CmsPhoto } from "@/components/content/cms-photo";
-import Image from "next/image";
 import Link from "next/link";
 import { Container } from "@/components/primitives/container";
 import { getActiveRooms } from "@/lib/rooms";
@@ -399,18 +398,23 @@ export async function HomePage({ locale }: { locale: Locale }) {
                 >
                   <div className="hc-room-photo">
                     {img ? (
-                      <Image
+                      <CmsPhoto
                         src={doc?.heroImage || img.imageUrl}
                         alt={
                           doc?.heroAlt ||
+                          img.altText ||
                           homeRoomName(room.slug, room.name, locale)
                         }
-                        fill
-                        sizes="(max-width: 760px) 100vw, (max-width: 1100px) 50vw, 40vw"
-                        quality={75}
-                        style={{
-                          objectPosition: focalPositionToCss(img.focalPosition),
-                        }}
+                        position={
+                          doc?.heroImage
+                            ? doc.heroFocal
+                            : focalPositionToCss(img.focalPosition)
+                        }
+                        mobilePosition={
+                          doc?.heroImage
+                            ? doc.heroMobileFocal
+                            : focalPositionToCss(img.focalPosition)
+                        }
                       />
                     ) : (
                       <span>

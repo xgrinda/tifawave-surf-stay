@@ -6922,3 +6922,7 @@ select {
 .sp-hero-photo>.cms-photo,.room-detail-gallery-image>.cms-photo{width:100%;height:100%;aspect-ratio:auto}.surf-package-panel>.cms-photo{margin-bottom:1.2rem}@media(max-width:767px){.cms-photo img{object-position:var(--photo-mobile-position,center)!important}}
 
 .media-preview-pair{display:grid;grid-template-columns:2fr 1fr;gap:1rem;align-items:start}.media-preview-desktop{aspect-ratio:16/9}.media-preview-mobile{aspect-ratio:4/5}@media(max-width:767px){.media-preview-pair{grid-template-columns:1fr}}
+
+.stay-room-card-media>.cms-photo,.room-detail-primary-image>.cms-photo,.request-package-photo>.cms-photo,.hc-room-photo>.cms-photo{width:100%;height:100%;aspect-ratio:auto;border-radius:inherit}
+
+.hc-photo>.cms-photo,.stay-room-card-media>.cms-photo,.room-detail-primary-image>.cms-photo,.room-detail-gallery-image>.cms-photo,.sp-hero-photo>.cms-photo,.request-package-photo>.cms-photo,.hc-room-photo>.cms-photo{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto;border-radius:inherit}

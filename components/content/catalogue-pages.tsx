@@ -1,6 +1,7 @@
 import { RoomBathroom } from "@/components/content/room-bathroom";
 import { z } from "zod";
-import Image from "next/image";
+import { CmsPhoto } from "./cms-photo";
+import { focalPositionToCss } from "@/lib/image-position";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -141,13 +142,13 @@ export async function RoomList({ locale }: { locale: Locale }) {
               <article className="stay-room-card" key={room.id}>
                 {room.images[0] && (
                   <div className="stay-room-card-media">
-                    <Image
+                    <CmsPhoto
                       src={room.images[0].imageUrl}
-                      alt={room.images[0].altText || room.name}
-                      fill
-                      sizes="(max-width:880px) 100vw,33vw"
-                      quality={82}
+                      alt={fr ? room.name : room.images[0].altText || room.name}
                       priority={index === 0}
+                      position={focalPositionToCss(
+                        room.images[0].focalPosition,
+                      )}
                     />
                   </div>
                 )}
@@ -320,13 +321,11 @@ export async function RoomDetail({
           </div>
           {room.images[0] && (
             <div className="room-detail-primary-image">
-              <Image
+              <CmsPhoto
                 src={room.images[0].imageUrl}
-                alt={room.images[0].altText || room.name}
-                fill
+                alt={fr ? room.name : room.images[0].altText || room.name}
                 priority
-                quality={84}
-                sizes="(max-width:880px) 100vw,50vw"
+                position={focalPositionToCss(room.images[0].focalPosition)}
               />
             </div>
           )}
@@ -358,12 +357,10 @@ export async function RoomDetail({
           <div className="room-detail-gallery-grid">
             {room.images.slice(1).map((image) => (
               <div className="room-detail-gallery-image" key={image.id}>
-                <Image
+                <CmsPhoto
                   src={image.imageUrl}
-                  alt={image.altText || room.name}
-                  fill
-                  quality={82}
-                  sizes="(max-width:880px) 100vw,33vw"
+                  alt={fr ? room.name : image.altText || room.name}
+                  position={focalPositionToCss(image.focalPosition)}
                 />
               </div>
             ))}
