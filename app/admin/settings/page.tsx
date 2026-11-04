@@ -211,6 +211,34 @@ export default async function AdminSettingsPage({
                   Profile. Leave blank if unavailable.
                 </small>
               </label>
+              <label className="admin-field">
+                <span>Reviews fallback text · English</span>
+                <textarea
+                  name="googleReviewsFallbackEn"
+                  defaultValue={settings.googleReviewsFallbackEn}
+                  maxLength={700}
+                  rows={4}
+                />
+                <small>
+                  Optional editorial text beside the Google link. Leave blank
+                  for the standard English copy. Do not paste Google reviews,
+                  names, scores or counts here. Changes appear after Save
+                  settings.
+                </small>
+              </label>
+              <label className="admin-field">
+                <span>Texte de présentation des avis · Français</span>
+                <textarea
+                  name="googleReviewsFallbackFr"
+                  defaultValue={settings.googleReviewsFallbackFr}
+                  maxLength={700}
+                  rows={4}
+                />
+                <small>
+                  Texte de présentation uniquement, sans copier d’avis ni de
+                  notes. Laissez vide pour utiliser le texte français standard.
+                </small>
+              </label>
               <div className="desk-actions">
                 <Link href="/#hc-trust-title" target="_blank">
                   View homepage section

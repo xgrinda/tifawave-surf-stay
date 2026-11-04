@@ -2713,7 +2713,7 @@ test("homepage Google link settings retain Owner MFA access without broadening p
   ] as const) {
     const result = await as(role, (c) =>
       c.query(
-        "update public.settings set google_place_id='forged-link-settings' where id",
+        "update public.settings set google_place_id='forged-link-settings',google_reviews_fallback_en='Unauthorized text' where id",
       ),
     );
     assert.equal(result.rowCount, 0, role);
@@ -2748,5 +2748,39 @@ test("homepage Google link settings retain Owner MFA access without broadening p
       original.google_place_id,
       original.google_write_review_url,
     ],
+  );
+});
+
+test("Owner reviews editorial copy persists bilingually and rejects oversized database writes", async () => {
+  const original = (
+    await root.query(
+      "select google_reviews_fallback_en,google_reviews_fallback_fr from public.settings where id",
+    )
+  ).rows[0];
+  const row = await as("owner", (c) =>
+    c.query(
+      "update public.settings set google_reviews_fallback_en='Approved editorial copy',google_reviews_fallback_fr='Présentation approuvée' where id returning google_reviews_fallback_en,google_reviews_fallback_fr",
+    ),
+  );
+  assert.equal(
+    row.rows[0].google_reviews_fallback_en,
+    "Approved editorial copy",
+  );
+  assert.equal(
+    row.rows[0].google_reviews_fallback_fr,
+    "Présentation approuvée",
+  );
+  await rejectsCode(
+    as("owner", (c) =>
+      c.query(
+        "update public.settings set google_reviews_fallback_en=$1 where id",
+        ["x".repeat(701)],
+      ),
+    ),
+    "23514",
+  );
+  await root.query(
+    "update public.settings set google_reviews_fallback_en=$1,google_reviews_fallback_fr=$2 where id",
+    [original.google_reviews_fallback_en, original.google_reviews_fallback_fr],
   );
 });

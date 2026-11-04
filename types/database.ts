@@ -443,6 +443,8 @@ type LegacyDatabase = {
           google_reviews_enabled: boolean;
           google_place_id: string;
           google_write_review_url: string;
+          google_reviews_fallback_en: string;
+          google_reviews_fallback_fr: string;
           instagram_url: string;
           default_currency: string;
           stripe_deposit_amount_display: string;
@@ -466,6 +468,8 @@ type LegacyDatabase = {
           google_reviews_enabled?: boolean;
           google_place_id?: string;
           google_write_review_url?: string;
+          google_reviews_fallback_en?: string;
+          google_reviews_fallback_fr?: string;
           instagram_url?: string;
           default_currency?: string;
           stripe_deposit_amount_display?: string;
@@ -489,6 +493,8 @@ type LegacyDatabase = {
           google_reviews_enabled?: boolean;
           google_place_id?: string;
           google_write_review_url?: string;
+          google_reviews_fallback_en?: string;
+          google_reviews_fallback_fr?: string;
           instagram_url?: string;
           default_currency?: string;
           stripe_deposit_amount_display?: string;

@@ -22,6 +22,8 @@ export type WebsiteSettings = {
   googleReviewsEnabled: boolean;
   googlePlaceId: string;
   googleWriteReviewUrl: string;
+  googleReviewsFallbackEn: string;
+  googleReviewsFallbackFr: string;
   instagramUrl: string;
   defaultCurrency: string;
   supportPhone: string;
@@ -57,6 +59,8 @@ export const DEFAULT_WEBSITE_SETTINGS: WebsiteSettings = {
   googleReviewsEnabled: true,
   googlePlaceId: "",
   googleWriteReviewUrl: "",
+  googleReviewsFallbackEn: "",
+  googleReviewsFallbackFr: "",
   instagramUrl: "",
   defaultCurrency: "EUR",
   supportPhone: "",
@@ -114,6 +118,8 @@ function rowToSettings(row: SettingsRow): WebsiteSettings {
     googleReviewsEnabled: row.google_reviews_enabled ?? true,
     googlePlaceId: row.google_place_id ?? "",
     googleWriteReviewUrl: row.google_write_review_url ?? "",
+    googleReviewsFallbackEn: row.google_reviews_fallback_en ?? "",
+    googleReviewsFallbackFr: row.google_reviews_fallback_fr ?? "",
     instagramUrl: row.instagram_url,
     defaultCurrency: row.default_currency,
     supportPhone: row.support_phone,
@@ -143,6 +149,8 @@ function normalizeSettings(input: UpdateWebsiteSettingsInput): WebsiteSettings {
     googleReviewsEnabled: input.googleReviewsEnabled === true,
     googlePlaceId: optionalText(input.googlePlaceId),
     googleWriteReviewUrl: googleUrl(input.googleWriteReviewUrl),
+    googleReviewsFallbackEn: input.googleReviewsFallbackEn.trim(),
+    googleReviewsFallbackFr: input.googleReviewsFallbackFr.trim(),
     instagramUrl: optionalUrl(input.instagramUrl),
     defaultCurrency: requiredText(
       input.defaultCurrency,
@@ -161,6 +169,14 @@ function normalizeSettings(input: UpdateWebsiteSettingsInput): WebsiteSettings {
   )
     throw new Error(
       "Enter a valid Google Place ID, or leave it blank for link-only reviews.",
+    );
+
+  if (
+    settings.googleReviewsFallbackEn.length > 700 ||
+    settings.googleReviewsFallbackFr.length > 700
+  )
+    throw new Error(
+      "Keep reviews fallback text within 700 characters per language.",
     );
 
   if (!EMAIL_PATTERN.test(settings.contactEmail)) {
@@ -189,6 +205,8 @@ function settingsToRow(settings: WebsiteSettings) {
     google_reviews_enabled: settings.googleReviewsEnabled,
     google_place_id: settings.googlePlaceId,
     google_write_review_url: settings.googleWriteReviewUrl,
+    google_reviews_fallback_en: settings.googleReviewsFallbackEn,
+    google_reviews_fallback_fr: settings.googleReviewsFallbackFr,
     instagram_url: settings.instagramUrl,
     default_currency: settings.defaultCurrency,
     support_phone: settings.supportPhone,

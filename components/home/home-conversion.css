@@ -1191,66 +1191,169 @@ body:has(.conversion-home) .site-header .btn-primary {
   padding: 15px;
 }
 .conversion-home .hc-google-reviews {
-  padding-block: 65px;
+  padding-block: clamp(64px, 7vw, 104px);
+  background: #f4eee3;
+  border-top: 1px solid #e1d8c9;
 }
 .conversion-home .hc-google-panel {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 60px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: clamp(40px, 6vw, 90px);
   align-items: center;
-  padding: 48px;
-  background: #eee7da;
-  border: 1px solid #d9cebb;
 }
-.conversion-home .hc-google-panel .hc-heading {
-  margin: 0;
-}
-.conversion-home .hc-google-panel h2 {
-  scroll-margin-top: 180px;
-  font-size: clamp(2rem, 3.8vw, 3.4rem);
-}
-.conversion-home .hc-google-link-card {
-  display: flex;
-  flex-direction: column;
-  align-items: start;
-  padding: 32px;
-  background: #183d43;
-  color: #faf6ec;
+.conversion-home .hc-google-intro {
   min-width: 0;
 }
-.conversion-home .hc-google-source {
-  font-size: 0.8rem;
-  letter-spacing: normal;
-  color: white;
-  font-weight: 400;
-  white-space: nowrap;
-  border-bottom: 1px solid #78928c;
-  padding-bottom: 12px;
-  align-self: stretch;
+.conversion-home .hc-google-intro h2 {
+  scroll-margin-top: 180px;
+  font-size: clamp(2.65rem, 4.2vw, 4.15rem);
+  line-height: 1.06;
+  letter-spacing: -0.035em;
+  margin: 20px 0 24px;
+  max-width: 560px;
+}
+.conversion-home .hc-google-support {
+  max-width: 430px;
+  color: #53645f;
+  line-height: 1.75;
+  margin: 0 0 28px;
+}
+.conversion-home .hc-google-provider {
   display: flex;
-  justify-content: space-between;
-}
-.conversion-home .hc-google-link-card h3 {
-  font-size: 1.75rem;
-  margin: 24px 0 6px;
-}
-.conversion-home .hc-google-link-card p {
-  color: #d8e0d9;
+  align-items: center;
+  gap: 14px;
+  font-size: 0.83rem;
   margin-bottom: 24px;
+  color: #4a5d56;
 }
-.conversion-home .hc-google-link-card .btn {
+.conversion-home .hc-google-provider [translate="no"],
+.conversion-home .hc-google-profile [translate="no"] {
+  font-family: var(--font-body), Arial, sans-serif;
+  font-weight: 400;
+  letter-spacing: normal;
+  white-space: nowrap;
+  color: #1f1f1f;
+}
+.conversion-home .hc-google-provider-divider {
+  width: 1px;
+  height: 16px;
+  background: #b5bdb0;
+}
+.conversion-home .hc-google-intro .btn {
+  display: inline-flex;
+  gap: 14px;
+  align-items: center;
+  justify-content: center;
   white-space: normal;
   text-align: center;
+  max-width: 100%;
+  line-height: 1.5;
 }
-.conversion-home .hc-google-link-card .hc-text-link {
-  color: #faf6ec;
+.conversion-home .hc-google-intro .btn svg,
+.conversion-home .hc-google-profile svg {
+  flex-shrink: 0;
+}
+.conversion-home .hc-google-write {
+  display: flex;
+  width: fit-content;
+  gap: 10px;
+  align-items: center;
   margin-top: 20px;
 }
-.conversion-home .hc-google-link-card small {
-  color: #d8e0d9;
+.conversion-home .hc-google-source-note {
+  color: #62716a;
+  font-size: 0.76rem;
   line-height: 1.6;
-  margin-top: 20px;
+  max-width: 370px;
+  margin: 18px 0 0;
+}
+.conversion-home .hc-google-perspective {
+  min-width: 0;
+  position: relative;
+  padding: clamp(28px, 3.4vw, 48px);
+  border: 1px solid #c7cebe;
+  border-radius: 4px 30px 4px 4px;
+  background: #e8ece1;
+  box-shadow: 0 14px 32px -24px rgb(27 53 45 / 24%);
+}
+.conversion-home .hc-google-perspective-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  font-size: 0.7rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #57684d;
+}
+.conversion-home .hc-google-perspective-top svg {
+  flex-shrink: 0;
+  color: #7a8e70;
+}
+.conversion-home .hc-google-perspective h3 {
+  font-size: clamp(2.15rem, 3.2vw, 3rem);
+  line-height: 1.12;
+  margin: 26px 0 20px;
+  letter-spacing: -0.02em;
+}
+.conversion-home .hc-google-editorial {
+  font-size: 0.96rem;
+  line-height: 1.8;
+  color: #4c5e52;
+  overflow-wrap: anywhere;
+  margin: 0 0 28px;
+}
+.conversion-home .hc-google-reading-notes {
+  display: grid;
+  gap: 10px;
+  color: #4c5e52;
+  font-size: 0.75rem;
+  margin-bottom: 30px;
+}
+.conversion-home .hc-google-reading-notes span {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.conversion-home .hc-google-reading-notes span::before {
+  content: "";
+  height: 1px;
+  width: 20px;
+  background: #829477;
+}
+.conversion-home .hc-google-profile {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 18px;
+  padding-top: 22px;
+  border-top: 1px solid #bdc9b4;
+}
+.conversion-home .hc-google-profile strong {
+  display: block;
+  font:
+    400 1.12rem/1.4 var(--font-display),
+    Georgia,
+    serif;
+}
+.conversion-home .hc-google-profile div > span {
+  display: block;
   font-size: 0.74rem;
+  color: #53654d;
+  margin-top: 5px;
+}
+.conversion-home .hc-google-profile a {
+  display: inline-flex;
+  gap: 9px;
+  align-items: center;
+  color: #1f1f1f;
+  font-size: 0.78rem;
+  text-underline-offset: 4px;
+}
+.conversion-home .hc-google-reviews a:focus-visible {
+  outline: 3px solid #173c46;
+  outline-offset: 5px;
 }
 @media (min-width: 701px) and (max-width: 1100px) {
   .conversion-home .hc-package-grid {
@@ -1259,8 +1362,10 @@ body:has(.conversion-home) .site-header .btn-primary {
 }
 @media (max-width: 900px) {
   .conversion-home .hc-google-panel {
-    gap: 30px;
-    padding: 30px;
+    gap: 32px;
+  }
+  .conversion-home .hc-google-intro h2 {
+    font-size: 2.8rem;
   }
 }
 @media (max-width: 700px) {
@@ -1273,10 +1378,19 @@ body:has(.conversion-home) .site-header .btn-primary {
   }
   .conversion-home .hc-google-panel {
     grid-template-columns: minmax(0, 1fr);
-    padding: 25px;
-    gap: 28px;
+    gap: 34px;
   }
-  .conversion-home .hc-google-link-card {
-    padding: 24px;
+  .conversion-home .hc-google-intro h2 {
+    font-size: clamp(2.5rem, 9.5vw, 3.2rem);
+    max-width: 480px;
+  }
+  .conversion-home .hc-google-support {
+    font-size: 0.95rem;
+  }
+  .conversion-home .hc-google-perspective {
+    padding: 26px;
+  }
+  .conversion-home .hc-google-perspective h3 {
+    font-size: 2.4rem;
   }
 }

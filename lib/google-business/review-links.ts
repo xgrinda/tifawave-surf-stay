@@ -39,3 +39,21 @@ export function reviewLinkState(settings: {
     mode: profileUrl ? ("link-only" as const) : ("missing-link" as const),
   };
 }
+
+export const reviewFallbackDefaults = {
+  en: "Get a feel for Tifawave through the experiences people share. Read their words, see review dates and ratings, and form your own impression on Google.",
+  fr: "Découvrez Tifawave à travers les expériences partagées. Retrouvez les mots des voyageurs, les dates et les notes, et faites-vous votre propre idée sur Google.",
+};
+export function reviewFallbackText(
+  settings: {
+    googleReviewsFallbackEn?: string;
+    googleReviewsFallbackFr?: string;
+  },
+  locale: "en" | "fr",
+) {
+  const text =
+    locale === "fr"
+      ? settings.googleReviewsFallbackFr
+      : settings.googleReviewsFallbackEn;
+  return text?.trim() || reviewFallbackDefaults[locale];
+}

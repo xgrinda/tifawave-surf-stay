@@ -34,6 +34,8 @@ export async function updateSettingsAction(formData: FormData) {
     googleReviewsEnabled: formData.get("googleReviewsEnabled") === "on",
     googlePlaceId: stringField(formData, "googlePlaceId"),
     googleWriteReviewUrl: stringField(formData, "googleWriteReviewUrl"),
+    googleReviewsFallbackEn: stringField(formData, "googleReviewsFallbackEn"),
+    googleReviewsFallbackFr: stringField(formData, "googleReviewsFallbackFr"),
     instagramUrl: stringField(formData, "instagramUrl"),
     supportPhone: stringField(formData, "supportPhone"),
     whatsappNumber: stringField(formData, "whatsappNumber"),

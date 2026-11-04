@@ -231,3 +231,79 @@ test("homepage package component handles zero to three featured packages with on
   assert.ok(html.includes("Voir le séjour et le demander"));
   assert.ok(!html.includes("layout-1"));
 });
+
+test("review fallback copy stays localized and uses editorial defaults for blank fields", async () => {
+  const { reviewFallbackText, reviewFallbackDefaults } = await import(
+    "../lib/google-business/review-links"
+  );
+  const settings = {
+    googleReviewsFallbackEn: "  Owner-approved English introduction.  ",
+    googleReviewsFallbackFr: "Présentation française approuvée.",
+  };
+  assert.equal(
+    reviewFallbackText(settings, "en"),
+    "Owner-approved English introduction.",
+  );
+  assert.equal(
+    reviewFallbackText(settings, "fr"),
+    "Présentation française approuvée.",
+  );
+  assert.equal(
+    reviewFallbackText({ ...settings, googleReviewsFallbackFr: " " }, "fr"),
+    reviewFallbackDefaults.fr,
+  );
+  assert.equal(reviewFallbackText({}, "en"), reviewFallbackDefaults.en);
+});
+
+test("premium reviews fallback has accessible source links without invented scores, quotes or images", async () => {
+  const { createElement } = await import("react");
+  const { renderToStaticMarkup } = await import("react-dom/server");
+  const { ReviewsPanel } = await import("../components/home/reviews-panel");
+  const settings = {
+    googleReviewsEnabled: true,
+    googleReviewsProfileUrl: "https://maps.app.goo.gl/6jfHrM5LRffLZ2Ut9",
+    googleMapsUrl: "",
+    googleWriteReviewUrl: "",
+    googleReviewsFallbackEn: "Approved <b>editorial</b> invitation.",
+    googleReviewsFallbackFr: "Présentation française approuvée.",
+  };
+  const render = (value: typeof settings, locale: "en" | "fr" = "en") =>
+    renderToStaticMarkup(
+      createElement(ReviewsPanel, { settings: value, locale }),
+    );
+  const en = render(settings);
+  assert.ok(en.includes('aria-labelledby="hc-trust-title"'));
+  assert.ok(en.includes("Guest Reviews"));
+  assert.ok(en.includes("Read all reviews on Google"));
+  assert.ok(en.includes("&lt;b&gt;editorial&lt;/b&gt;"));
+  for (const absent of [
+    "<blockquote",
+    "<img",
+    "ratingValue",
+    "reviewCount",
+    "★",
+    "Leave a review",
+  ])
+    assert.ok(!en.includes(absent), absent);
+  assert.ok(
+    render({
+      ...settings,
+      googleWriteReviewUrl: "https://g.page/r/test-link/review",
+    }).includes("Leave a review"),
+  );
+  assert.ok(
+    !render({
+      ...settings,
+      googleWriteReviewUrl: "https://evil.invalid/review",
+    }).includes("Leave a review"),
+  );
+  const fr = render(settings, "fr");
+  assert.ok(fr.includes("Avis voyageurs"));
+  assert.ok(fr.includes("Présentation française approuvée."));
+  assert.ok(!fr.includes("Approved &lt;b&gt;"));
+  assert.equal(render({ ...settings, googleReviewsEnabled: false }), "");
+  assert.equal(
+    render({ ...settings, googleReviewsProfileUrl: "https://evil.invalid" }),
+    "",
+  );
+});
