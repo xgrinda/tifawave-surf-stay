@@ -1201,6 +1201,9 @@ body:has(.conversion-home) .site-header .btn-primary {
   gap: clamp(40px, 6vw, 90px);
   align-items: center;
 }
+.conversion-home .hc-google-reviews .eyebrow {
+  color: #476d63;
+}
 .conversion-home .hc-google-intro {
   min-width: 0;
 }
@@ -1261,7 +1264,7 @@ body:has(.conversion-home) .site-header .btn-primary {
   margin-top: 20px;
 }
 .conversion-home .hc-google-source-note {
-  color: #62716a;
+  color: #5b6962;
   font-size: 0.76rem;
   line-height: 1.6;
   max-width: 370px;
@@ -1344,6 +1347,7 @@ body:has(.conversion-home) .site-header .btn-primary {
   margin-top: 5px;
 }
 .conversion-home .hc-google-profile a {
+  min-height: 44px;
   display: inline-flex;
   gap: 9px;
   align-items: center;
