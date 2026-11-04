@@ -125,3 +125,109 @@ test("homepage analytics whitelist rejects free text and includes no contact, da
     "locale",
   ]);
 });
+
+test("Google profile links reject deceptive hosts, credentials and arbitrary destinations", async () => {
+  const { approvedGoogleReviewUrl, reviewLinkState } = await import(
+    "../lib/google-business/review-links"
+  );
+  for (const value of [
+    "javascript:alert(1)",
+    "http://maps.google.com/",
+    "https://www.google.com.evil.invalid/maps",
+    "https://www.google.com@evil.invalid/maps",
+    "https://user:secret@www.google.com/maps",
+    "https://www.google.com:444/maps",
+    "https://www.google.com/url?q=https://evil.invalid",
+    "https://example.invalid/reviews",
+    "https://goo.gl/anything",
+  ])
+    assert.equal(approvedGoogleReviewUrl(value), "", value);
+  for (const value of [
+    "https://maps.app.goo.gl/6jfHrM5LRffLZ2Ut9",
+    "https://www.google.com/maps/place/Tifawave",
+    "https://g.page/r/exampleId/review",
+  ])
+    assert.ok(approvedGoogleReviewUrl(value));
+  const settings = {
+    googleReviewsEnabled: true,
+    googleReviewsProfileUrl: "",
+    googleMapsUrl: "https://maps.app.goo.gl/6jfHrM5LRffLZ2Ut9",
+    googleWriteReviewUrl: "",
+  };
+  assert.equal(reviewLinkState(settings).mode, "link-only");
+  assert.equal(reviewLinkState(settings).visible, true);
+  assert.equal(
+    reviewLinkState({ ...settings, googleReviewsEnabled: false }).visible,
+    false,
+  );
+  assert.equal(
+    reviewLinkState({ ...settings, googleMapsUrl: "https://evil.invalid" })
+      .visible,
+    false,
+  );
+  assert.equal(reviewLinkState(settings).writeUrl, "");
+});
+
+test("homepage package component handles zero to three featured packages with one clear localized CTA", async () => {
+  const { createElement } = await import("react");
+  const { renderToStaticMarkup } = await import("react-dom/server");
+  const { FeaturedPackages } = await import(
+    "../components/home/featured-packages"
+  );
+  const { catalogueSchema } = await import("../lib/packages/catalogue");
+  const fixture = (
+    i: number,
+  ): import("../lib/surf-packages").PublicSurfPackage => ({
+    id: `layout-${i}`,
+    slug: `layout-${i}`,
+    name: `Layout fixture ${i}`,
+    cover: null,
+    startingVariant: null,
+    shortDescription: "Synthetic layout test only",
+    fullDescription: "",
+    priceLabel: "Price on request",
+    pricingLabel: "per person · shared accommodation",
+    unitLabel: "7 nights",
+    surfLevel: "Beginner",
+    inclusions: [
+      "Breakfast",
+      "Test inclusion two",
+      "Test inclusion three",
+      "Test fourth",
+    ],
+    featured: true,
+    tone: "ocean",
+    catalogue: catalogueSchema.parse({}),
+  });
+  assert.equal(
+    renderToStaticMarkup(
+      createElement(FeaturedPackages, { packages: [], locale: "en" }),
+    ),
+    "",
+  );
+  for (const count of [1, 2, 3]) {
+    const html = renderToStaticMarkup(
+      createElement(FeaturedPackages, {
+        packages: Array.from({ length: count }, (_, i) => fixture(i)),
+        locale: "en",
+      }),
+    );
+    assert.ok(html.includes(`data-count="${count}"`));
+    assert.equal((html.match(/class="hc-package-card"/g) || []).length, count);
+    assert.equal(
+      (html.match(/View Package &amp; Request/g) || []).length,
+      count,
+    );
+    assert.ok(!html.includes("Test fourth"));
+    assert.ok(!html.includes("€0"));
+  }
+  const html = renderToStaticMarkup(
+    createElement(FeaturedPackages, {
+      packages: [fixture(0), { ...fixture(1), featured: false }],
+      locale: "fr",
+    }),
+  );
+  assert.ok(html.includes("/fr/surf/packages/layout-0"));
+  assert.ok(html.includes("Voir le séjour et le demander"));
+  assert.ok(!html.includes("layout-1"));
+});

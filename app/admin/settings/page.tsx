@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { reviewLinkState } from "@/lib/google-business/review-links";
 import { OperationalSettings } from "./operations";
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/admin/auth";
@@ -47,6 +49,7 @@ export default async function AdminSettingsPage({
     getWebsiteSettings(),
   ]);
   const message = getMessage(params);
+  const reviews = reviewLinkState(settings);
 
   return (
     <AdminShell
@@ -160,6 +163,64 @@ export default async function AdminSettingsPage({
                 Optional. Used only on About and FAQ for the lazy-loaded map.
               </small>
             </label>
+            <div className="admin-field-wide desk-panel" id="google-reviews">
+              <h2>Homepage Google reviews</h2>
+              <p role="status">
+                {!settings.googleReviewsEnabled
+                  ? "Homepage section disabled."
+                  : reviews.visible
+                    ? "Link-only display ready. No API requests or charges."
+                    : "Missing an approved Google profile link. Section hidden."}
+              </p>
+              <p>
+                Rating and review cards are unavailable: no authorized display
+                provider is configured. We do not calculate scores from stored
+                reviews or copy Google reviews into this website. Place ID alone
+                does not enable an API.
+              </p>
+              <label className="admin-checkbox-field">
+                <input
+                  type="checkbox"
+                  name="googleReviewsEnabled"
+                  defaultChecked={settings.googleReviewsEnabled}
+                />
+                <span>Show homepage Google reviews section</span>
+              </label>
+              <label className="admin-field">
+                <span>Google Place ID (optional)</span>
+                <input
+                  name="googlePlaceId"
+                  defaultValue={settings.googlePlaceId}
+                  maxLength={255}
+                />
+                <small>
+                  For the Tifawave Surf Stay listing in Tamraght. Leave blank
+                  until confirmed; Business Profile location IDs are different.
+                </small>
+              </label>
+              <label className="admin-field">
+                <span>Leave a review URL (optional)</span>
+                <input
+                  name="googleWriteReviewUrl"
+                  type="url"
+                  defaultValue={settings.googleWriteReviewUrl}
+                  maxLength={2048}
+                />
+                <small>
+                  Paste the genuine link supplied by your Google Business
+                  Profile. Leave blank if unavailable.
+                </small>
+              </label>
+              <div className="desk-actions">
+                <Link href="/#hc-trust-title" target="_blank">
+                  View homepage section
+                </Link>
+                <Link href="/fr#hc-trust-title" target="_blank">
+                  View French section
+                </Link>
+                <Link href="/admin/reviews">Review integration status</Link>
+              </div>
+            </div>
             <label className="admin-field">
               <span>Google account ID</span>
               <input
@@ -168,7 +229,10 @@ export default async function AdminSettingsPage({
                 placeholder="123456789"
                 type="text"
               />
-              <small>Used server-side for official Google review sync.</small>
+              <small>
+                Reserved for an Owner-approved official integration; importing
+                is paused.
+              </small>
             </label>
             <label className="admin-field">
               <span>Google location ID</span>
@@ -189,8 +253,9 @@ export default async function AdminSettingsPage({
                 type="url"
               />
               <small>
-                Public link used on the homepage reviews section and synced
-                rows.
+                Approved HTTPS Google link used on the homepage. Leave blank to
+                use the Google Maps URL above. Confirm the listing is Tifawave
+                Surf Stay in Tamraght.
               </small>
             </label>
             <label className="admin-field admin-field-wide">

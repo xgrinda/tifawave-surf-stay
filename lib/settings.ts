@@ -4,6 +4,8 @@ import { createSupabaseStaffClient } from "@/lib/supabase/staff";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { Row } from "@/lib/supabase/types";
 
+import { approvedGoogleReviewUrl } from "@/lib/google-business/review-links";
+
 type SettingsRow = Row<"settings">;
 
 export type WebsiteSettings = {
@@ -17,6 +19,9 @@ export type WebsiteSettings = {
   googleBusinessAccountId: string;
   googleBusinessLocationId: string;
   googleReviewsProfileUrl: string;
+  googleReviewsEnabled: boolean;
+  googlePlaceId: string;
+  googleWriteReviewUrl: string;
   instagramUrl: string;
   defaultCurrency: string;
   supportPhone: string;
@@ -49,6 +54,9 @@ export const DEFAULT_WEBSITE_SETTINGS: WebsiteSettings = {
   googleBusinessAccountId: "",
   googleBusinessLocationId: "",
   googleReviewsProfileUrl: "",
+  googleReviewsEnabled: true,
+  googlePlaceId: "",
+  googleWriteReviewUrl: "",
   instagramUrl: "",
   defaultCurrency: "EUR",
   supportPhone: "",
@@ -81,6 +89,16 @@ function optionalUrl(value: string): string {
   return url.toString();
 }
 
+function googleUrl(value: string): string {
+  if (!value.trim()) return "";
+  const url = approvedGoogleReviewUrl(value);
+  if (!url)
+    throw new Error(
+      "Use an approved HTTPS Google Maps or Business Profile link.",
+    );
+  return url;
+}
+
 function rowToSettings(row: SettingsRow): WebsiteSettings {
   return {
     breakfastIncluded: Boolean(row.breakfast_included),
@@ -93,6 +111,9 @@ function rowToSettings(row: SettingsRow): WebsiteSettings {
     googleBusinessAccountId: row.google_business_account_id ?? "",
     googleBusinessLocationId: row.google_business_location_id ?? "",
     googleReviewsProfileUrl: row.google_reviews_profile_url ?? "",
+    googleReviewsEnabled: row.google_reviews_enabled ?? true,
+    googlePlaceId: row.google_place_id ?? "",
+    googleWriteReviewUrl: row.google_write_review_url ?? "",
     instagramUrl: row.instagram_url,
     defaultCurrency: row.default_currency,
     supportPhone: row.support_phone,
@@ -118,7 +139,10 @@ function normalizeSettings(input: UpdateWebsiteSettingsInput): WebsiteSettings {
     googleMapsEmbedUrl: optionalUrl(input.googleMapsEmbedUrl),
     googleBusinessAccountId: optionalText(input.googleBusinessAccountId),
     googleBusinessLocationId: optionalText(input.googleBusinessLocationId),
-    googleReviewsProfileUrl: optionalUrl(input.googleReviewsProfileUrl),
+    googleReviewsProfileUrl: googleUrl(input.googleReviewsProfileUrl),
+    googleReviewsEnabled: input.googleReviewsEnabled === true,
+    googlePlaceId: optionalText(input.googlePlaceId),
+    googleWriteReviewUrl: googleUrl(input.googleWriteReviewUrl),
     instagramUrl: optionalUrl(input.instagramUrl),
     defaultCurrency: requiredText(
       input.defaultCurrency,
@@ -130,6 +154,14 @@ function normalizeSettings(input: UpdateWebsiteSettingsInput): WebsiteSettings {
       DEFAULT_WEBSITE_SETTINGS.bookingNoticeText,
     ),
   };
+
+  if (
+    settings.googlePlaceId &&
+    !/^[A-Za-z0-9_-]{5,255}$/.test(settings.googlePlaceId)
+  )
+    throw new Error(
+      "Enter a valid Google Place ID, or leave it blank for link-only reviews.",
+    );
 
   if (!EMAIL_PATTERN.test(settings.contactEmail)) {
     throw new Error("Contact email must be a valid email address.");
@@ -154,6 +186,9 @@ function settingsToRow(settings: WebsiteSettings) {
     google_business_account_id: settings.googleBusinessAccountId,
     google_business_location_id: settings.googleBusinessLocationId,
     google_reviews_profile_url: settings.googleReviewsProfileUrl,
+    google_reviews_enabled: settings.googleReviewsEnabled,
+    google_place_id: settings.googlePlaceId,
+    google_write_review_url: settings.googleWriteReviewUrl,
     instagram_url: settings.instagramUrl,
     default_currency: settings.defaultCurrency,
     support_phone: settings.supportPhone,

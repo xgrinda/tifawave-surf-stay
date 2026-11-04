@@ -2697,3 +2697,56 @@ test("package publication cannot invent additional physical rooms", async () => 
   });
   await rejectsCode(publishFixture(row.id), "23514");
 });
+
+test("homepage Google link settings retain Owner MFA access without broadening public or staff writes", async () => {
+  const original = (
+    await root.query(
+      "select google_reviews_enabled,google_place_id,google_write_review_url from public.settings where id",
+    )
+  ).rows[0];
+  assert.equal(typeof original.google_reviews_enabled, "boolean");
+  for (const role of [
+    "reception",
+    "housekeeping",
+    "content_editor",
+    "stranger",
+  ] as const) {
+    const result = await as(role, (c) =>
+      c.query(
+        "update public.settings set google_place_id='forged-link-settings' where id",
+      ),
+    );
+    assert.equal(result.rowCount, 0, role);
+  }
+  const weak = await as(
+    "owner",
+    (c) =>
+      c.query(
+        "update public.settings set google_reviews_enabled=false where id",
+      ),
+    "aal1",
+  );
+  assert.equal(weak.rowCount, 0);
+  const publicRead = await as("anon", (c) =>
+    c.query("select google_place_id from public.settings"),
+  );
+  assert.equal(publicRead.rowCount, 0);
+  const publicWrite = await as("anon", (c) =>
+    c.query("update public.settings set google_reviews_enabled=false where id"),
+  );
+  assert.equal(publicWrite.rowCount, 0);
+  const saved = await as("owner", (c) =>
+    c.query(
+      "update public.settings set google_reviews_enabled=false,google_place_id='test-place-id' where id returning google_place_id",
+    ),
+  );
+  assert.equal(saved.rows[0].google_place_id, "test-place-id");
+  await root.query(
+    "update public.settings set google_reviews_enabled=$1,google_place_id=$2,google_write_review_url=$3 where id",
+    [
+      original.google_reviews_enabled,
+      original.google_place_id,
+      original.google_write_review_url,
+    ],
+  );
+});

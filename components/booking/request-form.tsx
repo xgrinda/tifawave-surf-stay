@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { RoomBathroom } from "@/components/content/room-bathroom";
 import { CmsPhoto } from "@/components/content/cms-photo";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { EnquiryForm } from "@/components/enquiries/enquiry-form";
@@ -18,6 +19,7 @@ export type RequestOption = {
   name: string;
   maxGuests: number;
   kind: string;
+  bathroomType?: string;
 };
 type Initial = {
   preferredKind?: string;
@@ -381,6 +383,19 @@ export function RequestForm({
                 </select>
               </label>
             )}
+            {(mode === "stay_only"
+              ? room
+              : rooms.find((r) => r.id === v?.roomId)) && (
+              <RoomBathroom
+                type={
+                  (mode === "stay_only"
+                    ? room
+                    : rooms.find((r) => r.id === v?.roomId)
+                  )?.bathroomType
+                }
+                locale={locale}
+              />
+            )}
             {mode === "surf_package" && p && (
               <section className="request-package-summary">
                 {p.cover && (
@@ -465,6 +480,19 @@ export function RequestForm({
                       `Une chambre privée, pour ${room.maxGuests} voyageurs maximum. Plusieurs chambres ? Choisissez Groupe / retraite.`,
                     )}
               </p>
+            )}
+            {(mode === "stay_only"
+              ? room
+              : rooms.find((r) => r.id === v?.roomId)) && (
+              <RoomBathroom
+                type={
+                  (mode === "stay_only"
+                    ? room
+                    : rooms.find((r) => r.id === v?.roomId)
+                  )?.bathroomType
+                }
+                locale={locale}
+              />
             )}
             {mode === "surf_package" && p && (
               <section className="package-request-options">

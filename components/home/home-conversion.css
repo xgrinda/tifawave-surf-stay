@@ -1097,3 +1097,185 @@ body:has(.conversion-home) .site-header .btn-primary {
     scroll-behavior: auto !important;
   }
 }
+
+/* Published package cards share the room cards' balanced image and type rhythm. */
+.conversion-home .hc-package-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+.conversion-home .hc-package-grid[data-count="1"] {
+  grid-template-columns: minmax(0, 410px);
+  justify-content: center;
+}
+.conversion-home .hc-package-grid[data-count="2"] {
+  grid-template-columns: repeat(2, minmax(0, 410px));
+  justify-content: center;
+}
+.conversion-home .hc-package-card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: #fcfaf4;
+  border: 1px solid #c9d3bf;
+  overflow: hidden;
+  border-radius: 3px;
+}
+.conversion-home .hc-package-image {
+  position: relative;
+  aspect-ratio: 4/3;
+  overflow: hidden;
+}
+.conversion-home .hc-package-image > .cms-photo {
+  position: absolute;
+  inset: 0;
+}
+.conversion-home .hc-package-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 27px;
+}
+.conversion-home .hc-package-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  font-size: 0.73rem;
+  color: #53695e;
+  margin: 0 0 14px;
+}
+.conversion-home .hc-package-card h3 {
+  font-size: 1.85rem;
+  line-height: 1.16;
+  margin: 0 0 14px;
+  overflow-wrap: anywhere;
+}
+.conversion-home .hc-package-intro {
+  font-size: 0.9rem;
+  color: #53665f;
+}
+.conversion-home .hc-package-card ul {
+  list-style: none;
+  padding: 18px 0;
+  margin: 0 0 20px;
+  border-block: 1px solid #dce1d5;
+  font-size: 0.85rem;
+}
+.conversion-home .hc-package-card li {
+  display: flex;
+  gap: 10px;
+  margin: 8px 0;
+}
+.conversion-home .hc-package-card li span {
+  color: #586b49;
+}
+.conversion-home .hc-package-footer {
+  margin-top: auto;
+}
+.conversion-home .hc-package-footer .hc-offer-price {
+  line-height: 1.15;
+  margin: 0 0 22px;
+  font-size: 1.75rem;
+}
+.conversion-home .hc-package-footer small {
+  display: block;
+  line-height: 1.6;
+  margin-top: 9px;
+  color: #53665f;
+}
+.conversion-home .hc-package-footer .btn {
+  width: 100%;
+  white-space: normal;
+  text-align: center;
+  font-size: 0.8rem;
+  padding: 15px;
+}
+.conversion-home .hc-google-reviews {
+  padding-block: 65px;
+}
+.conversion-home .hc-google-panel {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 60px;
+  align-items: center;
+  padding: 48px;
+  background: #eee7da;
+  border: 1px solid #d9cebb;
+}
+.conversion-home .hc-google-panel .hc-heading {
+  margin: 0;
+}
+.conversion-home .hc-google-panel h2 {
+  font-size: clamp(2rem, 3.8vw, 3.4rem);
+}
+.conversion-home .hc-google-link-card {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  padding: 32px;
+  background: #183d43;
+  color: #faf6ec;
+  min-width: 0;
+}
+.conversion-home .hc-google-source {
+  font-size: 0.8rem;
+  letter-spacing: normal;
+  color: white;
+  font-weight: 400;
+  white-space: nowrap;
+  border-bottom: 1px solid #78928c;
+  padding-bottom: 12px;
+  align-self: stretch;
+  display: flex;
+  justify-content: space-between;
+}
+.conversion-home .hc-google-link-card h3 {
+  font-size: 1.75rem;
+  margin: 24px 0 6px;
+}
+.conversion-home .hc-google-link-card p {
+  color: #d8e0d9;
+  margin-bottom: 24px;
+}
+.conversion-home .hc-google-link-card .btn {
+  white-space: normal;
+  text-align: center;
+}
+.conversion-home .hc-google-link-card .hc-text-link {
+  color: #faf6ec;
+  margin-top: 20px;
+}
+.conversion-home .hc-google-link-card small {
+  color: #d8e0d9;
+  line-height: 1.6;
+  margin-top: 20px;
+  font-size: 0.74rem;
+}
+@media (min-width: 701px) and (max-width: 1100px) {
+  .conversion-home .hc-package-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 900px) {
+  .conversion-home .hc-google-panel {
+    gap: 30px;
+    padding: 30px;
+  }
+}
+@media (max-width: 700px) {
+  .conversion-home .hc-package-grid,
+  .conversion-home .hc-package-grid[data-count="2"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .conversion-home .hc-package-body {
+    padding: 24px;
+  }
+  .conversion-home .hc-google-panel {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 25px;
+    gap: 28px;
+  }
+  .conversion-home .hc-google-link-card {
+    padding: 24px;
+  }
+}

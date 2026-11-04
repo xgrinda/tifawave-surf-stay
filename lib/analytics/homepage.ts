@@ -9,6 +9,7 @@ const ctas = new Set([
   "surf_lessons",
   "activity_enquiry",
   "package_request",
+  "package_detail",
   "custom_surf_enquiry",
   "group_quote",
   "whatsapp",

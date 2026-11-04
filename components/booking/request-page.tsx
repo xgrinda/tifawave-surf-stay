@@ -68,6 +68,7 @@ export async function RequestPage({
           rooms={rooms.map((r) => ({
             id: r.id,
             maxGuests: r.maxGuests,
+            bathroomType: r.bathroomType,
             kind: roomPreferredKind(r.slug),
             name:
               locale === "fr" ? homeRoomName(r.slug, r.name, locale) : r.name,

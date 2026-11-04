@@ -440,6 +440,9 @@ type LegacyDatabase = {
           google_business_account_id: string;
           google_business_location_id: string;
           google_reviews_profile_url: string;
+          google_reviews_enabled: boolean;
+          google_place_id: string;
+          google_write_review_url: string;
           instagram_url: string;
           default_currency: string;
           stripe_deposit_amount_display: string;
@@ -460,6 +463,9 @@ type LegacyDatabase = {
           google_business_account_id?: string;
           google_business_location_id?: string;
           google_reviews_profile_url?: string;
+          google_reviews_enabled?: boolean;
+          google_place_id?: string;
+          google_write_review_url?: string;
           instagram_url?: string;
           default_currency?: string;
           stripe_deposit_amount_display?: string;
@@ -480,6 +486,9 @@ type LegacyDatabase = {
           google_business_account_id?: string;
           google_business_location_id?: string;
           google_reviews_profile_url?: string;
+          google_reviews_enabled?: boolean;
+          google_place_id?: string;
+          google_write_review_url?: string;
           instagram_url?: string;
           default_currency?: string;
           stripe_deposit_amount_display?: string;

@@ -7,7 +7,7 @@ import {
   getGoogleReviewsReadiness,
 } from "@/lib/admin/reviews";
 import { AdminShell } from "../_components/admin-shell";
-import { setReviewVisibility, syncGoogleReviewsAction } from "./actions";
+import { setReviewVisibility } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -77,7 +77,7 @@ export default async function AdminReviewsPage({
     <AdminShell
       active="reviews"
       className="admin-reviews-page"
-      description="Sync official Google Business Profile reviews and keep public review display honest."
+      description="Manage review sources and the homepage Google link."
       title="Reviews"
     >
       <section
@@ -86,10 +86,12 @@ export default async function AdminReviewsPage({
       >
         <div className="admin-section-heading">
           <div>
-            <h2 id="review-sync-title">Google reviews sync</h2>
+            <h2 id="review-sync-title">Google reviews connection</h2>
             <p>
-              Uses the official Google Business Profile API with server-only
-              OAuth credentials. No scraping and no browser API keys.
+              The homepage uses a Google profile link without copying review
+              data. No API is called and no Google billing is enabled. Rating
+              and review cards require an authorized provider; credentials are
+              not configured.
             </p>
           </div>
           {message ? (
@@ -123,26 +125,26 @@ export default async function AdminReviewsPage({
         </div>
 
         <div className="admin-review-sync-actions">
-          <form action={syncGoogleReviewsAction}>
-            <button
-              className="btn btn-primary admin-settings-submit"
-              disabled={!readiness.ready}
-              type="submit"
-            >
-              Sync Google reviews
-            </button>
-          </form>
+          <Link
+            className="btn btn-primary"
+            href="/admin/settings#google-reviews"
+          >
+            Configure homepage reviews
+          </Link>
           <p>
-            Configure IDs in Settings and env vars in Vercel before syncing. Add
-            verified original guest reviews below when official sync is
-            unavailable.
+            Historical import is paused. Stored or manually entered reviews are
+            not used as Google rating or review cards. Keep original reviews
+            only with the necessary permission; never copy Google reviews here.
+            A future integration needs identity verification, attribution,
+            retention rules and Owner approval before any billable API is
+            enabled.
           </p>
         </div>
       </section>
 
       {params?.saved && <p role="status">Review saved.</p>}
       <section className="desk-panel">
-        <h2>Add a verified original review</h2>
+        <h2>Original reviews archive</h2>
         <p>
           Never create sample reviews or alter the meaning of a guest’s words.
           New reviews stay hidden unless explicitly published.
@@ -164,7 +166,10 @@ export default async function AdminReviewsPage({
               <button className="btn btn-secondary">Search</button>
               <Link href="/admin/reviews">Clear</Link>
             </form>
-            <p>Active written reviews can appear on the homepage.</p>
+            <p>
+              Stored original-review records are retained. The homepage Google
+              section links directly to Google and does not display these rows.
+            </p>
           </div>
         </div>
 
@@ -243,8 +248,8 @@ export default async function AdminReviewsPage({
           <div className="admin-empty-state">
             <strong>No reviews synced yet.</strong>
             <p>
-              Once Google sync is configured, use the button above to import
-              official reviews into Supabase.
+              Set the genuine Google profile link in Settings to show the
+              compact homepage section. No copied reviews are required.
             </p>
           </div>
         )}
