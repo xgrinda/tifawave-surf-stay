@@ -64,12 +64,7 @@ export async function saveContent(
     revalidatePath("/", "layout");
     return { id: data };
   } catch (e) {
-    return {
-      error:
-        e instanceof Error && !e.message.includes("[{")
-          ? e.message
-          : "Check the document fields and media paths.",
-    };
+    return { error: e instanceof z.ZodError ? e.issues[0]?.message || "Check the document fields." : e instanceof Error ? e.message : "Check the document fields and media paths." };
   }
 }
 export async function restoreContent(form: FormData) {
