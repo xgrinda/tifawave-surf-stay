@@ -1,5 +1,6 @@
 import "server-only";
 import sharp from "sharp";
+import { validateArtworkDimensions } from "./brand-image";
 import { brandingSchema, type Branding } from "./branding-schema";
 export async function brandAsset(url: string) {
   brandingSchema.shape.logo.parse(url);
@@ -43,22 +44,6 @@ export async function verifyBrandingAssets(b: Branding) {
   ] as const) {
     if (!b[key]) continue;
     const image = await brandAsset(b[key]);
-    const minimum =
-      key === "favicon"
-        ? 96
-        : key === "appleIcon"
-          ? 180
-          : key === "socialImage"
-            ? 630
-            : 112;
-    if (Math.min(image.width, image.height) < minimum)
-      throw Error(
-        key + ": upload artwork at least " + minimum + " pixels on each side.",
-      );
-    if (
-      (key === "favicon" || key === "appleIcon") &&
-      image.width !== image.height
-    )
-      throw Error(key + ": select square artwork; we will not crop your logo.");
+    validateArtworkDimensions(key, image.width, image.height);
   }
 }

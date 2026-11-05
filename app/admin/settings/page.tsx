@@ -78,7 +78,7 @@ export default async function AdminSettingsPage({
           { id: "advanced", label: "Advanced / Technical" },
         ]}
       >
-        <SettingsForm>
+        <SettingsForm key={JSON.stringify(settings)}>
           <EditorPanel id="business" title="Business Details">
             <div className="admin-settings-grid">
               <label className="admin-field">

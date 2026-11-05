@@ -15,7 +15,6 @@ export function SettingsForm({ children }: { children: ReactNode }) {
       action={updateSettingsAction}
       className="admin-settings-form"
       onChange={() => setDirty(true)}
-      onSubmit={() => setDirty(false)}
     >
       {dirty && <p role="status">Unsaved website settings</p>}
       {children}

@@ -386,3 +386,33 @@ test("branding accepts genuine property artwork only and bounds bilingual metada
     false,
   );
 });
+
+test("brand artwork processing preserves full artwork and emits the required PNG resolutions", async () => {
+  const sharp = (await import("sharp")).default;
+  const { validateArtworkDimensions, renderBrandIcon } = await import(
+    "../lib/content/brand-image"
+  );
+  assert.throws(() => validateArtworkDimensions("logo", 111, 112));
+  assert.throws(() => validateArtworkDimensions("favicon", 96, 128));
+  assert.throws(() => validateArtworkDimensions("appleIcon", 128, 128));
+  validateArtworkDimensions("logo", 400, 112);
+  validateArtworkDimensions("favicon", 512, 512);
+  const original = await sharp({
+    create: {
+      width: 512,
+      height: 512,
+      channels: 4,
+      background: { r: 23, g: 63, b: 57, alpha: 1 },
+    },
+  })
+    .png()
+    .toBuffer();
+  for (const size of [96, 180, 192, 512]) {
+    const out = await renderBrandIcon(original, size);
+    const meta = await sharp(out).metadata();
+    assert.equal(meta.width, size);
+    assert.equal(meta.height, size);
+    assert.equal(meta.format, "png");
+  }
+  assert.throws(() => renderBrandIcon(original, 48));
+});

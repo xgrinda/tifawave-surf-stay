@@ -306,6 +306,7 @@ export async function HomePage({
     <main className="conversion-home" data-homepage={locale}>
       <HomeTracking />
       <HeroSection
+        contentOverride={content}
         locale={locale}
         image={heroImage}
         breakfastIncluded={settings.breakfastIncluded}

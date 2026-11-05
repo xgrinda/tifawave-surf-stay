@@ -42,7 +42,6 @@ export function PackageEditor({
 }) {
   const [state, action, pending] = useActionState(savePackageState, {});
   const [dirty, setDirty] = useState(false);
-  useUnsavedChanges(dirty);
   const [clientError, setClientError] = useState("");
   const [language, setLanguage] = useState("en");
   const [translationMissing, setTranslationMissing] = useState(false);
@@ -74,6 +73,11 @@ export function PackageEditor({
     },
     propertyToday(),
   );
+  const hasChanges =
+    dirty ||
+    JSON.stringify([variants, extras, seasons]) !==
+      JSON.stringify([c.variants, c.extras, c.seasons]);
+  useUnsavedChanges(hasChanges);
   const locked = !!pkg && pkg.publication_status === "published" && !owner;
   const price = (v: string) => (v === "" ? null : Math.round(Number(v) * 100));
   function list(name: string, label: string, values: string[]) {
@@ -103,7 +107,7 @@ export function PackageEditor({
     >
       <p className="owner-state">
         {pkg?.publication_status || "draft"}
-        {dirty ? " · Unsaved changes" : ""}
+        {hasChanges ? " · Unsaved changes" : ""}
       </p>
       <form
         action={action}
@@ -130,10 +134,6 @@ export function PackageEditor({
             ),
           );
         }}
-        onClick={(e) => {
-          const b = (e.target as HTMLElement).closest('button[type="button"]');
-          if (b) setDirty(true);
-        }}
         onSubmit={(e) => {
           const parsed = catalogueSchema.safeParse({
             ...c,
@@ -153,7 +153,6 @@ export function PackageEditor({
             return;
           }
           setClientError("");
-          setDirty(false);
         }}
       >
         <div className="owner-language-switch" aria-label="Editing language">

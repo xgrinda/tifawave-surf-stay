@@ -52,6 +52,7 @@ export default async function PackageDetails({
       )}
       <section className="desk-panel">
         <PackageEditor
+          key={pkg.data.version}
           pkg={pkg.data}
           rooms={rooms.data || []}
           owner={staff.role === "owner"}

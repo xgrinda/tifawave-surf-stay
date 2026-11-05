@@ -1,3 +1,4 @@
+import type { Content } from "@/lib/content/schema";
 import type { HomeImage } from "@/lib/home-media";
 import { publishedContent } from "@/lib/content/public";
 import { HeroMedia } from "./hero-media";
@@ -9,13 +10,15 @@ export async function HeroSection({
   locale = DEFAULT_LOCALE,
   image,
   breakfastIncluded = false,
+  contentOverride,
 }: {
   locale?: Locale;
   image?: HomeImage | null;
   breakfastIncluded?: boolean;
+  contentOverride?: Content | null;
 }) {
   const copy = i18n[locale].home.hero;
-  const content = await publishedContent("page", "home", locale);
+  const content = contentOverride === undefined ? await publishedContent("page", "home", locale) : contentOverride;
 
   return (
     <section className="home-hero" aria-labelledby="home-hero-title">

@@ -1,4 +1,4 @@
-import sharp from "sharp";
+import { renderBrandIcon } from "@/lib/content/brand-image";
 import { getBranding } from "@/lib/content/branding";
 import { brandAsset } from "@/lib/content/brand-assets";
 export const dynamic = "force-dynamic";
@@ -14,13 +14,7 @@ export async function GET(
   if (!src) return new Response(null, { status: 404 });
   try {
     const { bytes } = await brandAsset(src);
-    const out = await sharp(bytes)
-      .resize(Number(size), Number(size), {
-        fit: "contain",
-        background: { r: 0, g: 0, b: 0, alpha: 0 },
-      })
-      .png()
-      .toBuffer();
+    const out = await renderBrandIcon(bytes, Number(size));
     return new Response(new Uint8Array(out), {
       headers: {
         "content-type": "image/png",

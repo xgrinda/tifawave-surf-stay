@@ -66,7 +66,7 @@ export function BrandingEditor({
         { id: "review", label: "Preview & Publish" },
       ]}
     >
-      <form action={action} onSubmit={() => setDirty(false)}>
+      <form action={action}>
         <input type="hidden" name="id" value={document?.id || ""} />
         <input type="hidden" name="version" value={document?.version || 0} />
         <input type="hidden" name="kind" value="page" />
