@@ -82,14 +82,13 @@ export function useUnsavedChanges(dirty: boolean) {
     };
     const leave = (e: MouseEvent) => {
       const a = (e.target as HTMLElement).closest("a");
-      if (
-        a &&
-        a.target !== "_blank" &&
-        !a.getAttribute("href")?.startsWith("#") &&
-        !confirm("You have unsaved changes. Leave without saving?")
-      ) {
+      if (!a || a.target === "_blank" || a.getAttribute("href")?.startsWith("#") || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+      if (!confirm("You have unsaved changes. Leave without saving?")) {
         e.preventDefault();
         e.stopPropagation();
+      } else {
+        // The explicit discard decision also permits full document navigation.
+        window.removeEventListener("beforeunload", unload);
       }
     };
     window.addEventListener("beforeunload", unload);
