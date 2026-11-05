@@ -87,14 +87,16 @@ export function useUnsavedChanges(dirty: boolean) {
         a.target !== "_blank" &&
         !a.getAttribute("href")?.startsWith("#") &&
         !confirm("You have unsaved changes. Leave without saving?")
-      )
+      ) {
         e.preventDefault();
+        e.stopPropagation();
+      }
     };
     window.addEventListener("beforeunload", unload);
-    document.addEventListener("click", leave);
+    document.addEventListener("click", leave, true);
     return () => {
       window.removeEventListener("beforeunload", unload);
-      document.removeEventListener("click", leave);
+      document.removeEventListener("click", leave, true);
     };
   }, [dirty]);
 }
