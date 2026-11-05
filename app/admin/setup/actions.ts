@@ -6,7 +6,7 @@ import { createSupabaseStaffClient } from "@/lib/supabase/staff";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { requestRateKey } from "@/lib/security/requests";
 import { assertStagingRecipient } from "@/lib/security/environment";
-import { getSiteUrl } from "@/lib/site";
+import { getApplicationUrl } from "@/lib/site";
 export type AccountState = { message?: string; success?: boolean };
 export async function changeOwnPassword(
   _state: AccountState,
@@ -66,12 +66,12 @@ export async function sendRecovery(
     const admin = createSupabaseAdminClient();
     const allowed = await admin.rpc("staff_recovery_allowed", {
       p_email: parsed.data,
-      p_rate_key: requestRateKey(new Request(getSiteUrl(), { headers: h })),
+      p_rate_key: requestRateKey(new Request(getApplicationUrl(), { headers: h })),
     });
     if (allowed.data && !allowed.error) {
       const client = await createSupabaseStaffClient();
       await client.auth.resetPasswordForEmail(parsed.data, {
-        redirectTo: getSiteUrl() + "/admin/setup",
+        redirectTo: getApplicationUrl() + "/admin/setup",
       });
     }
   } catch {

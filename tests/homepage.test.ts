@@ -416,3 +416,8 @@ test("brand artwork processing preserves full artwork and emits the required PNG
   }
   assert.throws(() => renderBrandIcon(original, 48));
 });
+
+test("canonical public identity never follows a staging or untrusted environment hostname",async()=>{
+ const {getSiteUrl}=await import('../lib/site');const original=process.env.NEXT_PUBLIC_SITE_URL;
+ try{process.env.NEXT_PUBLIC_SITE_URL='https://preview.example.invalid';assert.equal(getSiteUrl(),'https://tifawave.com');}finally{if(original===undefined)delete process.env.NEXT_PUBLIC_SITE_URL;else process.env.NEXT_PUBLIC_SITE_URL=original;}
+});

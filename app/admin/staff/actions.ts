@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/admin/auth";
 import { createSupabaseStaffClient } from "@/lib/supabase/staff";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { getSiteUrl } from "@/lib/site";
+import { getApplicationUrl } from "@/lib/site";
 const schema = z.object({
   user: z.uuid(),
   name: z.string().trim().min(1).max(120),
@@ -62,7 +62,7 @@ export async function inviteStaff(form: FormData) {
   const admin = createSupabaseAdminClient();
   const { data, error } = await admin.auth.admin.inviteUserByEmail(
     input.email,
-    { redirectTo: getSiteUrl() + "/admin/setup" },
+    { redirectTo: getApplicationUrl() + "/admin/setup" },
   );
   if (error || !data.user)
     redirect(

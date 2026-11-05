@@ -5,8 +5,12 @@ export const SITE_DESCRIPTION =
 
 export const SITE_OG_IMAGE = "/opengraph-image";
 
+/** Canonical identity is independent of Preview hosts and email callback URLs. */
 export function getSiteUrl(): string {
-  return (
-    process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://tifawave.com"
-  ).replace(/\/+$/, "");
+  return "https://tifawave.com";
+}
+
+/** Application links retain their environment-specific, configured origin. */
+export function getApplicationUrl(): string {
+  return (process.env.NEXT_PUBLIC_SITE_URL?.trim() || getSiteUrl()).replace(/\/+$/, "");
 }

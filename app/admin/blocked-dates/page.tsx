@@ -1,5 +1,5 @@
 import { unitFeedToken } from "@/lib/ical/unit-feed";
-import { getSiteUrl } from "@/lib/site";
+import { getApplicationUrl } from "@/lib/site";
 import { requireAdmin } from "@/lib/admin/auth";
 import { createSupabaseStaffClient } from "@/lib/supabase/staff";
 import { AdminShell } from "../_components/admin-shell";
@@ -136,7 +136,7 @@ export default async function Blocks({
                 <li key={u.id}>
                   <a
                     href={
-                      getSiteUrl() +
+                      getApplicationUrl() +
                       "/api/ical/units/" +
                       u.id +
                       "?token=" +
