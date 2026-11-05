@@ -1,30 +1,49 @@
+import { getBranding } from "@/lib/content/branding";
+import { brandAsset } from "@/lib/content/brand-assets";
+import sharp from "sharp";
 import { ImageResponse } from "next/og";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const alt = "Tifawave Surf Stay · Tamraght, Morocco";
-export default function Image() {
+export default async function Image() {
+  const b = await getBranding();
+  if (b.socialImage)
+    try {
+      const { bytes } = await brandAsset(b.socialImage);
+      const png = await sharp(bytes)
+        .resize(1200, 630, { fit: "contain", background: "#f6f1e7" })
+        .png()
+        .toBuffer();
+      return new Response(new Uint8Array(png), {
+        headers: { "content-type": "image/png" },
+      });
+    } catch {
+      /* Retain the text sharing card if artwork is temporarily unavailable. */
+    }
   return new ImageResponse(
-    <div
-      style={{
-        width: "100%",
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        padding: 90,
-        background: "#173f39",
-        color: "#f6f1e7",
-      }}
-    >
-      <div style={{ fontSize: 26, letterSpacing: 8, marginBottom: 38 }}>
-        TAMRAGHT · MOROCCO
+    (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          padding: 90,
+          background: "#173f39",
+          color: "#f6f1e7",
+        }}
+      >
+        <div style={{ fontSize: 26, letterSpacing: 8, marginBottom: 38 }}>
+          TAMRAGHT · MOROCCO
+        </div>
+        <div style={{ fontSize: 112, fontWeight: 700 }}>Tifawave.</div>
+        <div style={{ fontSize: 38, marginTop: 24 }}>Surf Stay</div>
+        <div style={{ fontSize: 24, marginTop: 55, color: "#dfbc91" }}>
+          Rooms · Surf packages · Group stays
+        </div>
       </div>
-      <div style={{ fontSize: 112, fontWeight: 700 }}>Tifawave.</div>
-      <div style={{ fontSize: 38, marginTop: 24 }}>Surf Stay</div>
-      <div style={{ fontSize: 24, marginTop: 55, color: "#dfbc91" }}>
-        Rooms · Surf packages · Group stays
-      </div>
-    </div>,
+    ),
     size,
   );
 }

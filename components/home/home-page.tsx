@@ -1,3 +1,5 @@
+import type { Content } from "@/lib/content/schema";
+import { roomSlotBySlug, defaultRoomOrder } from "@/lib/content/home-slots";
 import { FeaturedPackages } from "./featured-packages";
 import { RoomBathroom } from "@/components/content/room-bathroom";
 import { CmsPhoto } from "@/components/content/cms-photo";
@@ -47,6 +49,8 @@ function Photo({
           src={image.imageUrl}
           alt={image.altText || label}
           position={focalPositionToCss(image.focalPosition)}
+          mobilePosition={image.mobileFocal || image.focalPosition}
+          mobileSrc={image.mobileImage}
         />
       ) : (
         <div className="hc-photo-fallback">
@@ -58,7 +62,13 @@ function Photo({
   );
 }
 
-export async function HomePage({ locale }: { locale: Locale }) {
+export async function HomePage({
+  locale,
+  contentOverride,
+}: {
+  locale: Locale;
+  contentOverride?: Content;
+}) {
   const fr = locale === "fr";
   const t = (en: string, french: string) => (fr ? french : en);
   const path = (p: string) => localizedPath(locale, p);
@@ -66,7 +76,7 @@ export async function HomePage({ locale }: { locale: Locale }) {
     rooms,
     gallery,
     packages,
-    content,
+    publishedHome,
     settings,
     packageContent,
     faqContent,
@@ -83,6 +93,28 @@ export async function HomePage({ locale }: { locale: Locale }) {
       homeRoomSlugs.map((slug) => publishedContent("room", slug, locale)),
     ),
   ]);
+  const content = contentOverride ?? publishedHome;
+  const chosenImage = (slot: string): HomeImage | null => {
+    const m = content?.homeMedia.find((x) => x.slot === slot);
+    return m?.imageUrl
+      ? {
+          imageUrl: m.imageUrl,
+          altText: m.alt,
+          focalPosition: m.focal,
+          mobileFocal: m.mobileFocal,
+          mobileImage: m.mobileImage,
+        }
+      : null;
+  };
+  const roomOrder = [
+    ...(content?.roomOrder || []),
+    ...defaultRoomOrder.filter(
+      (k) =>
+        !content?.roomOrder.includes(
+          k as NonNullable<typeof content>["roomOrder"][number],
+        ),
+    ),
+  ];
   const roomContent = new Map(
     homeRoomSlugs.map((slug, i) => [slug, roomDocs[i]]),
   );
@@ -103,6 +135,8 @@ export async function HomePage({ locale }: { locale: Locale }) {
       "groups",
       "location",
     ];
+    const chosen = chosenImage(key);
+    if (chosen) return chosen;
     const s = content?.sections[keys.indexOf(key)];
     return s?.imageUrl
       ? {
@@ -312,6 +346,12 @@ export async function HomePage({ locale }: { locale: Locale }) {
             <p>{experience.body}</p>
             {content?.body && <p className="hc-editorial">{content.body}</p>}
           </div>
+          {sectionImage("experiences") && (
+            <Photo
+              image={sectionImage("experiences")}
+              label={experience.heading}
+            />
+          )}
           <div className="hc-experience-grid">
             {[
               [
@@ -385,152 +425,173 @@ export async function HomePage({ locale }: { locale: Locale }) {
               {t("All rooms & details", "Toutes les chambres")} →
             </Link>
           </div>
+          {sectionImage("rooms") && (
+            <Photo image={sectionImage("rooms")} label={stay.heading} />
+          )}
           <div className="hc-room-grid">
-            {homeRoomCategories(rooms).map(({ room, balcony }) => {
-              const doc = roomContent.get(room.slug);
-              const img =
-                room.images.find((i) => i.isPrimary) || room.images[0];
-              const dorm = room.slug === "4-bed-dorm-room";
-              return (
-                <article
-                  className={`hc-room-card${balcony ? " hc-room-wide" : ""}`}
-                  key={room.id}
-                >
-                  <div className="hc-room-photo">
-                    {img ? (
-                      <CmsPhoto
-                        src={doc?.heroImage || img.imageUrl}
-                        alt={
-                          doc?.heroAlt ||
-                          img.altText ||
-                          homeRoomName(room.slug, room.name, locale)
-                        }
-                        position={
-                          doc?.heroImage
-                            ? doc.heroFocal
-                            : focalPositionToCss(img.focalPosition)
-                        }
-                        mobilePosition={
-                          doc?.heroImage
-                            ? doc.heroMobileFocal
-                            : focalPositionToCss(img.focalPosition)
-                        }
-                      />
-                    ) : (
-                      <span>
-                        {t(
-                          "Ask us for room photos",
-                          "Demandez les photos de la chambre",
-                        )}
-                      </span>
-                    )}
-                    <span className="hc-room-capacity">
-                      {dorm
-                        ? t("4-bed shared dorm", "Dortoir partagé de 4 lits")
-                        : t(
-                            `Up to ${room.maxGuests} guests`,
-                            `Jusqu’à ${room.maxGuests} voyageurs`,
-                          )}
-                    </span>
-                  </div>
-                  <div className="hc-room-body">
-                    <div className="hc-room-top">
-                      <h3>
-                        {doc?.title ||
-                          homeRoomName(room.slug, room.name, locale)}
-                      </h3>
-                      <p className="hc-room-price">
-                        {balcony && <small>{t("From ", "Dès ")}</small>}
-                        <strong>
-                          {homePrice(
-                            room.basePriceCents,
-                            settings.defaultCurrency,
-                            locale,
-                          )}
-                        </strong>
-                        <small>
-                          {dorm
-                            ? t("/ person / night", "/ personne / nuit")
-                            : t("/ room / night", "/ chambre / nuit")}
-                        </small>
-                      </p>
-                    </div>
-                    <p>
-                      {doc?.summary ||
-                        (dorm
-                          ? t(
-                              "Your own bed in our four-bed dorm.",
-                              "Votre lit individuel dans notre dortoir de quatre lits.",
-                            )
-                          : room.slug === "family-room-4p"
-                            ? t(
-                                "One double bed + two singles. One whole suite.",
-                                "Un lit double et deux lits simples. Une suite entière.",
-                              )
-                            : room.slug === "twin-room"
-                              ? t(
-                                  "Two single beds. A room to share your way.",
-                                  "Deux lits simples. Une chambre à partager à votre façon.",
-                                )
-                              : room.slug === "triple-room"
-                                ? t(
-                                    "A private room for up to three.",
-                                    "Une chambre privée pour trois personnes maximum.",
-                                  )
-                                : t(
-                                    "Standard doubles, plus two balcony doubles.",
-                                    "Des doubles standard et deux doubles avec balcon.",
-                                  ))}
-                    </p>
-                    <div className="hc-room-tags">
-                      {settings.breakfastIncluded && (
+            {homeRoomCategories(rooms)
+              .sort(
+                (a, b) =>
+                  roomOrder.indexOf(roomSlotBySlug[a.room.slug]) -
+                  roomOrder.indexOf(roomSlotBySlug[b.room.slug]),
+              )
+              .map(({ room, balcony }) => {
+                const doc = roomContent.get(room.slug);
+                const selected = chosenImage(roomSlotBySlug[room.slug]);
+                const img =
+                  room.images.find((i) => i.isPrimary) || room.images[0];
+                const dorm = room.slug === "4-bed-dorm-room";
+                return (
+                  <article
+                    className={`hc-room-card${balcony ? " hc-room-wide" : ""}`}
+                    key={room.id}
+                  >
+                    <div className="hc-room-photo">
+                      {selected || img ? (
+                        <CmsPhoto
+                          src={
+                            selected?.imageUrl ||
+                            doc?.heroImage ||
+                            img!.imageUrl
+                          }
+                          mobileSrc={selected?.mobileImage}
+                          alt={
+                            selected?.altText ||
+                            doc?.heroAlt ||
+                            img?.altText ||
+                            homeRoomName(room.slug, room.name, locale)
+                          }
+                          position={
+                            selected?.focalPosition ||
+                            (doc?.heroImage
+                              ? doc.heroFocal
+                              : focalPositionToCss(img!.focalPosition))
+                          }
+                          mobilePosition={
+                            selected?.mobileFocal ||
+                            (doc?.heroImage
+                              ? doc.heroMobileFocal
+                              : focalPositionToCss(img!.focalPosition))
+                          }
+                        />
+                      ) : (
                         <span>
-                          {t("Breakfast included", "Petit-déjeuner inclus")}
+                          {t(
+                            "Ask us for room photos",
+                            "Demandez les photos de la chambre",
+                          )}
                         </span>
                       )}
-                      <span>
-                        {t("Manual confirmation", "Confirmation manuelle")}
+                      <span className="hc-room-capacity">
+                        {dorm
+                          ? t("4-bed shared dorm", "Dortoir partagé de 4 lits")
+                          : t(
+                              `Up to ${room.maxGuests} guests`,
+                              `Jusqu’à ${room.maxGuests} voyageurs`,
+                            )}
                       </span>
                     </div>
-                    {balcony && (
-                      <Link
-                        className="hc-balcony"
-                        href={roomRequestPath(locale, balcony.id)}
-                        data-home-cta="balcony_request"
-                        data-intent="room"
-                      >
-                        {t("Prefer a balcony?", "Envie d’un balcon ?")}{" "}
-                        {homePrice(
-                          balcony.basePriceCents,
-                          settings.defaultCurrency,
-                          locale,
-                        )}{" "}
-                        {t("/ room / night", "/ chambre / nuit")} →
-                      </Link>
-                    )}
-                    <div className="hc-card-actions">
-                      <Link
-                        className="hc-text-link"
-                        href={path("/stay/" + room.slug)}
-                        data-home-cta="view_room"
-                        data-intent="room"
-                      >
-                        {t("View room", "Voir la chambre")} →
-                      </Link>
-                      <RoomBathroom type={room.bathroomType} locale={locale} />
-                      <Link
-                        className="btn btn-primary"
-                        href={roomRequestPath(locale, room.id)}
-                        data-home-cta="room_request"
-                        data-intent="room"
-                      >
-                        {t("Request This Room", "Demander cette chambre")}
-                      </Link>
+                    <div className="hc-room-body">
+                      <div className="hc-room-top">
+                        <h3>
+                          {doc?.title ||
+                            homeRoomName(room.slug, room.name, locale)}
+                        </h3>
+                        <p className="hc-room-price">
+                          {balcony && <small>{t("From ", "Dès ")}</small>}
+                          <strong>
+                            {homePrice(
+                              room.basePriceCents,
+                              settings.defaultCurrency,
+                              locale,
+                            )}
+                          </strong>
+                          <small>
+                            {dorm
+                              ? t("/ person / night", "/ personne / nuit")
+                              : t("/ room / night", "/ chambre / nuit")}
+                          </small>
+                        </p>
+                      </div>
+                      <p>
+                        {doc?.summary ||
+                          (dorm
+                            ? t(
+                                "Your own bed in our four-bed dorm.",
+                                "Votre lit individuel dans notre dortoir de quatre lits.",
+                              )
+                            : room.slug === "family-room-4p"
+                              ? t(
+                                  "One double bed + two singles. One whole suite.",
+                                  "Un lit double et deux lits simples. Une suite entière.",
+                                )
+                              : room.slug === "twin-room"
+                                ? t(
+                                    "Two single beds. A room to share your way.",
+                                    "Deux lits simples. Une chambre à partager à votre façon.",
+                                  )
+                                : room.slug === "triple-room"
+                                  ? t(
+                                      "A private room for up to three.",
+                                      "Une chambre privée pour trois personnes maximum.",
+                                    )
+                                  : t(
+                                      "Standard doubles, plus two balcony doubles.",
+                                      "Des doubles standard et deux doubles avec balcon.",
+                                    ))}
+                      </p>
+                      <div className="hc-room-tags">
+                        {settings.breakfastIncluded && (
+                          <span>
+                            {t("Breakfast included", "Petit-déjeuner inclus")}
+                          </span>
+                        )}
+                        <span>
+                          {t("Manual confirmation", "Confirmation manuelle")}
+                        </span>
+                      </div>
+                      {balcony && (
+                        <Link
+                          className="hc-balcony"
+                          href={roomRequestPath(locale, balcony.id)}
+                          data-home-cta="balcony_request"
+                          data-intent="room"
+                        >
+                          {t("Prefer a balcony?", "Envie d’un balcon ?")}{" "}
+                          {homePrice(
+                            balcony.basePriceCents,
+                            settings.defaultCurrency,
+                            locale,
+                          )}{" "}
+                          {t("/ room / night", "/ chambre / nuit")} →
+                        </Link>
+                      )}
+                      <div className="hc-card-actions">
+                        <Link
+                          className="hc-text-link"
+                          href={path("/stay/" + room.slug)}
+                          data-home-cta="view_room"
+                          data-intent="room"
+                        >
+                          {t("View room", "Voir la chambre")} →
+                        </Link>
+                        <RoomBathroom
+                          type={room.bathroomType}
+                          locale={locale}
+                        />
+                        <Link
+                          className="btn btn-primary"
+                          href={roomRequestPath(locale, room.id)}
+                          data-home-cta="room_request"
+                          data-intent="room"
+                        >
+                          {t("Request This Room", "Demander cette chambre")}
+                        </Link>
+                      </div>
                     </div>
-                  </div>
-                </article>
-              );
-            })}
+                  </article>
+                );
+              })}
           </div>
           {!rooms.length && (
             <p>
@@ -608,10 +669,16 @@ export async function HomePage({ locale }: { locale: Locale }) {
                 ),
               ],
               [yoga, t("Optional · on request", "En option · sur demande")],
-            ].map(([s, badge]) => {
+            ].map(([s, badge], i) => {
               const c = s as { heading: string; body: string };
               return (
                 <article key={c.heading}>
+                  {sectionImage(i === 0 ? "excursions" : "yoga") && (
+                    <Photo
+                      image={sectionImage(i === 0 ? "excursions" : "yoga")}
+                      label={c.heading}
+                    />
+                  )}
                   <span className="hc-pill">{badge as string}</span>
                   <h3>{c.heading}</h3>
                   <p>{c.body}</p>
@@ -713,6 +780,9 @@ export async function HomePage({ locale }: { locale: Locale }) {
             <h2 id="hc-packages-title">{offers.heading}</h2>
             <p>{offers.body}</p>
           </div>
+          {sectionImage("packages") && (
+            <Photo image={sectionImage("packages")} label={offers.heading} />
+          )}
           {packages.some((p) => p.featured) ? (
             <FeaturedPackages packages={packages} locale={locale} />
           ) : (
@@ -826,6 +896,9 @@ export async function HomePage({ locale }: { locale: Locale }) {
             <h2 id="hc-day-title">{day.heading}</h2>
             <p>{day.body}</p>
           </div>
+          {sectionImage("day") && (
+            <Photo image={sectionImage("day")} label={day.heading} />
+          )}
           <div className="hc-day-grid">
             {[
               [
@@ -866,7 +939,18 @@ export async function HomePage({ locale }: { locale: Locale }) {
             ].map(([time, title, body], i) => (
               <article key={time}>
                 <div className={`hc-day-visual hc-day-visual-${i}`}>
-                  {i === 0 || i === 3 ? (
+                  {chosenImage(
+                    ["day-morning", "day-ocean", "day-rest", "day-evening"][i],
+                  ) ? (
+                    <Photo
+                      image={chosenImage(
+                        ["day-morning", "day-ocean", "day-rest", "day-evening"][
+                          i
+                        ],
+                      )}
+                      label={title}
+                    />
+                  ) : i === 0 || i === 3 ? (
                     <Photo
                       image={i === 0 ? breakfast : rooftop}
                       label={
@@ -979,6 +1063,12 @@ export async function HomePage({ locale }: { locale: Locale }) {
           <div className="hc-location-grid">
             <div>
               <p className="eyebrow">Tamraght · {t("Morocco", "Maroc")}</p>
+              {sectionImage("location") && (
+                <Photo
+                  image={sectionImage("location")}
+                  label={location.heading}
+                />
+              )}
               <h2 id="hc-location-title">{location.heading}</h2>
               <p>{location.body}</p>
               <div className="hc-map-card">

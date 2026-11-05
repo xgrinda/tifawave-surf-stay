@@ -104,8 +104,12 @@ export async function proxy(request: NextRequest) {
       if (!isPublic) response = redirectTo("/admin/login");
     }
     response.headers.set("cache-control", "private, no-store");
+    response.headers.set("x-robots-tag", "noindex, nofollow, noarchive");
   }
-  if (process.env.VERCEL_ENV === "preview")
+  if (
+    process.env.VERCEL_ENV === "preview" ||
+    process.env.TIFAWAVE_ENV === "staging"
+  )
     response.headers.set("x-robots-tag", "noindex, nofollow, noarchive");
   return response;
 }

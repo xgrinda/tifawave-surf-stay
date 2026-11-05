@@ -1,0 +1,37 @@
+export const homeMediaSlots = {
+  experiences: "Choose your experience",
+  rooms: "Rooms section introduction",
+  "room-dorm": "Room highlight · Dorm",
+  "room-double": "Room highlight · Double",
+  "room-twin": "Room highlight · Twin",
+  "room-triple": "Room highlight · Triple",
+  "room-family": "Room highlight · Family Suite",
+  surf: "Surf experiences",
+  excursions: "Local excursions",
+  yoga: "Yoga",
+  breakfast: "Breakfast",
+  meals: "Moroccan food",
+  rooftop: "Rooftop",
+  packages: "Surf packages introduction",
+  day: "Day story introduction",
+  "day-morning": "Day story · Morning",
+  "day-ocean": "Day story · Ocean time",
+  "day-rest": "Day story · Relaxing",
+  "day-evening": "Day story · Evening",
+  groups: "Groups & retreats",
+  location: "Location",
+} as const;
+export const roomSlotBySlug: Record<string, string> = {
+  "4-bed-dorm-room": "room-dorm",
+  "private-double-room": "room-double",
+  "twin-room": "room-twin",
+  "triple-room": "room-triple",
+  "family-room-4p": "room-family",
+};
+export const defaultRoomOrder = [
+  "room-dorm",
+  "room-double",
+  "room-twin",
+  "room-triple",
+  "room-family",
+];

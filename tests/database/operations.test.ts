@@ -2784,3 +2784,198 @@ test("Owner reviews editorial copy persists bilingually and rejects oversized da
     [original.google_reviews_fallback_en, original.google_reviews_fallback_fr],
   );
 });
+
+test("named homepage photos and mobile crops remain private until explicit publication", async () => {
+  const save = (
+    role: Role,
+    id: string | null,
+    version: number,
+    doc: unknown,
+    action = "draft",
+  ) =>
+    as(role, (c) =>
+      c.query(
+        "select public.save_content_document($1,$2,'page','home','fr',$3,$4) id",
+        [id, version, doc, action],
+      ),
+    );
+  const slots = [
+    "experiences",
+    "rooms",
+    "room-dorm",
+    "room-double",
+    "room-twin",
+    "room-triple",
+    "room-family",
+    "surf",
+    "excursions",
+    "yoga",
+    "breakfast",
+    "meals",
+    "rooftop",
+    "packages",
+    "day",
+    "day-morning",
+    "day-ocean",
+    "day-rest",
+    "day-evening",
+    "groups",
+    "location",
+  ];
+  const doc = {
+    title: "Photographies vérifiées",
+    homeMedia: slots.map((slot) => ({
+      slot,
+      imageUrl:
+        "https://local.supabase.co/storage/v1/object/public/tifawave-media/real.webp",
+      mobileImage:
+        "https://local.supabase.co/storage/v1/object/public/tifawave-media/mobile.webp",
+      alt: "Authentic test reference",
+      focal: "top",
+      mobileFocal: "bottom",
+    })),
+    roomOrder: ["room-family", "room-dorm"],
+  };
+  for (const role of [
+    "anon",
+    "reception",
+    "housekeeping",
+    "stranger",
+  ] as Role[])
+    await rejectsCode(save(role, null, 0, doc), "42501");
+  const id = (await save("content_editor", null, 0, doc)).rows[0].id;
+  assert.equal(
+    (
+      await as("anon", (c) =>
+        c.query("select published from public.content_documents where id=$1", [
+          id,
+        ]),
+      )
+    ).rowCount,
+    0,
+  );
+  await save("content_editor", id, 1, doc, "publish");
+  const visible = (
+    await as("anon", (c) =>
+      c.query("select published from public.content_documents where id=$1", [
+        id,
+      ]),
+    )
+  ).rows[0].published;
+  assert.equal(visible.homeMedia.length, 21);
+  assert.equal(visible.homeMedia[0].mobileFocal, "bottom");
+  await save("owner", id, 2, {
+    ...doc,
+    title: "Unpublished replacement",
+    homeMedia: [],
+  });
+  assert.equal(
+    (
+      await as("anon", (c) =>
+        c.query("select published from public.content_documents where id=$1", [
+          id,
+        ]),
+      )
+    ).rows[0].published.title,
+    doc.title,
+  );
+  for (const patch of [
+    { homeMedia: [doc.homeMedia[0], doc.homeMedia[0]] },
+    {
+      homeMedia: [
+        { ...doc.homeMedia[0], mobileImage: "https://evil.invalid/image" },
+      ],
+    },
+    { homeMedia: [{ ...doc.homeMedia[0], slot: "wrong" }] },
+    { roomOrder: ["room-dorm", "room-dorm"] },
+  ])
+    await rejectsCode(save("owner", id, 3, { ...doc, ...patch }), "22023");
+});
+test("branding saves, publication and restore require an active Owner with MFA", async () => {
+  const doc = {
+    title: "Tifawave branding",
+    branding: {
+      logo: "https://local.supabase.co/storage/v1/object/public/tifawave-media/logo.png",
+      titleEn: "Tifawave",
+      titleFr: "Tifawave français",
+    },
+  };
+  const save = (
+    role: Role,
+    id: string | null,
+    version: number,
+    data: unknown,
+    action = "draft",
+    aal = "aal2",
+  ) =>
+    as(
+      role,
+      (c) =>
+        c.query(
+          "select public.save_content_document($1,$2,'page','branding','en',$3,$4) id",
+          [id, version, data, action],
+        ),
+      aal,
+    );
+  for (const role of [
+    "anon",
+    "reception",
+    "housekeeping",
+    "content_editor",
+    "stranger",
+  ] as Role[])
+    await rejectsCode(save(role, null, 0, doc), "42501");
+  await rejectsCode(save("owner", null, 0, doc, "draft", "aal1"), "42501");
+  const id = (await save("owner", null, 0, doc)).rows[0].id;
+  assert.equal(
+    (
+      await as("anon", (c) =>
+        c.query("select published from public.content_documents where id=$1", [
+          id,
+        ]),
+      )
+    ).rowCount,
+    0,
+  );
+  await save("owner", id, 1, doc, "publish");
+  await save("owner", id, 2, {
+    ...doc,
+    branding: { titleEn: "Private draft" },
+  });
+  assert.equal(
+    (
+      await as("anon", (c) =>
+        c.query("select published from public.content_documents where id=$1", [
+          id,
+        ]),
+      )
+    ).rows[0].published.branding.titleEn,
+    "Tifawave",
+  );
+  const revision = (
+    await root.query(
+      "select id from public.content_revisions where document_id=$1 and version=1",
+      [id],
+    )
+  ).rows[0].id;
+  await rejectsCode(
+    as("content_editor", (c) =>
+      c.query("select public.restore_content_revision($1,3)", [revision]),
+    ),
+    "42501",
+  );
+  await as("owner", (c) =>
+    c.query("select public.restore_content_revision($1,3)", [revision]),
+  );
+  await rejectsCode(
+    save("owner", id, 4, {
+      ...doc,
+      branding: { logo: "https://images.unsplash.com/logo" },
+    }),
+    "22023",
+  );
+  await rejectsCode(
+    save("owner", id, 4, { ...doc, branding: { apiKey: "not-allowed" } }),
+    "22023",
+  );
+});

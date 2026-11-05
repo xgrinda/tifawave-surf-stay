@@ -1,18 +1,24 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { Container } from "@/components/primitives/container";
-import { getLocaleFromPathname, i18n, localizedPath, navItems } from "@/lib/i18n";
+import {
+  getLocaleFromPathname,
+  i18n,
+  localizedPath,
+  navItems,
+} from "@/lib/i18n";
 
-export function SiteHeader() {
+export function SiteHeader({ logo = "" }: { logo?: string }) {
   const pathname = usePathname();
   const locale = getLocaleFromPathname(pathname);
   const copy = i18n[locale];
   const links = navItems.map((item) => ({
     href: localizedPath(locale, item.href),
-    label: copy.nav[item.key]
+    label: copy.nav[item.key],
   }));
 
   return (
@@ -23,7 +29,19 @@ export function SiteHeader() {
           href={localizedPath(locale, "/")}
           aria-label={copy.aria.tifawaveHome}
         >
-          Tifawave<span>.</span>
+          {logo ? (
+            <Image
+              src={logo}
+              alt="Tifawave Surf Stay"
+              width={180}
+              height={64}
+              className="site-brand-logo"
+            />
+          ) : (
+            <>
+              Tifawave<span>.</span>
+            </>
+          )}
         </Link>
 
         <nav className="desktop-nav" aria-label={copy.aria.primaryNavigation}>
@@ -36,7 +54,10 @@ export function SiteHeader() {
 
         <div className="site-header-actions">
           <LanguageSwitcher />
-          <a className="btn btn-primary nav-book" href={localizedPath(locale, "/book")}>
+          <a
+            className="btn btn-primary nav-book"
+            href={localizedPath(locale, "/book")}
+          >
             {copy.nav.book}
           </a>
           <details className="mobile-menu">
@@ -45,7 +66,10 @@ export function SiteHeader() {
               <span />
               <span />
             </summary>
-            <nav className="mobile-menu-panel" aria-label={copy.aria.mobileNavigation}>
+            <nav
+              className="mobile-menu-panel"
+              aria-label={copy.aria.mobileNavigation}
+            >
               {links.map((link) => (
                 <a key={link.href} href={link.href}>
                   {link.label}

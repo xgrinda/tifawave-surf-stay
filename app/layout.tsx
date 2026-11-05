@@ -1,3 +1,4 @@
+import { getBranding } from "@/lib/content/branding";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
@@ -16,47 +17,66 @@ import {
 import { fraunces, inter } from "./fonts";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  metadataBase: new URL(getSiteUrl()),
-  title: SITE_NAME,
-  description: SITE_DESCRIPTION,
-  applicationName: SITE_NAME,
-  openGraph: {
-    title: SITE_NAME,
-    description: SITE_DESCRIPTION,
-    images: [
-      {
-        alt: "Tifawave Surf Stay · Tamraght, Morocco",
-        height: 630,
-        url: SITE_OG_IMAGE,
-        width: 1200,
-      },
-    ],
-    locale: "en_US",
-    siteName: SITE_NAME,
-    type: "website",
-    url: getSiteUrl(),
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: SITE_NAME,
-    description: SITE_DESCRIPTION,
-    images: [SITE_OG_IMAGE],
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const [brand, h] = await Promise.all([getBranding(), headers()]);
+  const fr = getLocaleFromPathname(h.get("x-pathname")) === "fr";
+  const title = (fr ? brand.titleFr : brand.titleEn) || SITE_NAME;
+  const description =
+    (fr ? brand.descriptionFr : brand.descriptionEn) || SITE_DESCRIPTION;
+  const privatePage =
+    h.get("x-pathname")?.startsWith("/admin") ||
+    process.env.VERCEL_ENV === "preview" ||
+    process.env.TIFAWAVE_ENV === "staging";
+  return {
+    metadataBase: new URL(getSiteUrl()),
+    title,
+    description,
+    applicationName: SITE_NAME,
+    manifest: "/manifest.webmanifest",
+    icons: {
+      icon: brand.favicon
+        ? [{ url: "/brand/icon/96", sizes: "96x96", type: "image/png" }]
+        : [],
+      apple:
+        brand.appleIcon || brand.favicon
+          ? [{ url: "/brand/icon/180", sizes: "180x180", type: "image/png" }]
+          : [],
+    },
+    openGraph: {
+      title,
+      description,
+      images: [
+        {
+          alt: "Tifawave Surf Stay · Tamraght, Morocco",
+          height: 630,
+          url: SITE_OG_IMAGE,
+          width: 1200,
+        },
+      ],
+      locale: fr ? "fr_FR" : "en_US",
+      siteName: SITE_NAME,
+      type: "website",
+      url: getSiteUrl(),
+    },
+    robots: { index: !privatePage, follow: !privatePage },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [SITE_OG_IMAGE],
+    },
+  };
+}
 
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [settings, requestHeaders] = await Promise.all([
+  const [settings, requestHeaders, brand] = await Promise.all([
     getWebsiteSettings(),
     headers(),
+    getBranding(),
   ]);
   const { gaMeasurementId } = getAnalyticsEnv();
   const whatsappHref = getWhatsappHref(settings);
@@ -77,6 +97,7 @@ export default async function RootLayout({
                 "@type": "LodgingBusiness",
                 name: settings.businessName,
                 url: getSiteUrl(),
+                ...(brand.logo ? { logo: brand.logo } : {}),
                 address: {
                   "@type": "PostalAddress",
                   addressLocality: "Tamraght",
@@ -113,10 +134,14 @@ export default async function RootLayout({
         {!isAdmin && process.env.TIFAWAVE_ENV === "production" && (
           <GoogleAnalytics measurementId={gaMeasurementId} />
         )}
-        {!isAdmin && <SiteHeader />}
+        {!isAdmin && <SiteHeader logo={brand.headerLogo || brand.logo} />}
         {children}
         {!isAdmin && (
-          <SiteFooter settings={settings} whatsappHref={whatsappHref} />
+          <SiteFooter
+            settings={settings}
+            whatsappHref={whatsappHref}
+            logo={brand.footerLogo || brand.logo}
+          />
         )}
         {!isAdmin && <MobileBookingBar whatsappHref={whatsappHref} />}
       </body>

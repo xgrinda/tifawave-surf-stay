@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/admin/auth";
 import { createSupabaseStaffClient } from "@/lib/supabase/staff";
+import { verifyBrandingAssets } from "@/lib/content/brand-assets";
 import { contentSchema } from "@/lib/content/schema";
 export type ContentState = { error?: string; id?: string };
 export async function saveContent(
@@ -14,7 +15,11 @@ export async function saveContent(
     .enum(["page", "room", "package", "email"])
     .safeParse(form.get("kind"));
   if (!kind.success) return { error: "Choose a content type." };
-  await requireAdmin(kind.data === "email" ? "owner" : "content");
+  await requireAdmin(
+    kind.data === "email" || form.get("slug") === "branding"
+      ? "owner"
+      : "content",
+  );
   try {
     const draft = contentSchema.parse(JSON.parse(String(form.get("draft"))));
     const args = z
@@ -37,6 +42,12 @@ export async function saveContent(
         p_locale: form.get("locale"),
         p_action: form.get("action"),
       });
+    if (
+      args.p_slug === "branding" &&
+      args.p_action === "publish" &&
+      draft.branding
+    )
+      await verifyBrandingAssets(draft.branding);
     const client = await createSupabaseStaffClient();
     const { data, error } = await client.rpc("save_content_document", {
       ...args,
@@ -52,8 +63,13 @@ export async function saveContent(
       };
     revalidatePath("/", "layout");
     return { id: data };
-  } catch {
-    return { error: "Check the document fields and media paths." };
+  } catch (e) {
+    return {
+      error:
+        e instanceof Error && !e.message.includes("[{")
+          ? e.message
+          : "Check the document fields and media paths.",
+    };
   }
 }
 export async function restoreContent(form: FormData) {
@@ -64,10 +80,13 @@ export async function restoreContent(form: FormData) {
   const client = await createSupabaseStaffClient();
   const doc = await client
     .from("content_documents")
-    .select("kind")
+    .select("kind,slug")
     .eq("id", id)
     .single();
-  if (doc.data?.kind === "email" && staff.role !== "owner")
+  if (
+    (doc.data?.kind === "email" || doc.data?.slug === "branding") &&
+    staff.role !== "owner"
+  )
     redirect("/admin/access");
   const { error } = await client.rpc("restore_content_revision", {
     p_revision: revision,

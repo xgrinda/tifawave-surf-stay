@@ -38,6 +38,8 @@ export default async function ContentPage({
   if (docs.error || room.error || packages.error || selected.error)
     throw new Error("Content workspace unavailable");
   const document = selected.data;
+  if (document?.slug === "branding" && staff.role !== "owner")
+    throw new Error("Owner access required.");
   const revisions = document
     ? await client
         .from("content_revisions")
@@ -69,6 +71,15 @@ export default async function ContentPage({
       title="Website content"
       description="English and French drafts, explicit publication and recoverable revision history."
     >
+      <div className="owner-entry">
+        <div>
+          <h2>Make the homepage your own</h2>
+          <p>Named photo positions, mobile crops and safe draft previews.</p>
+        </div>
+        <Link className="btn btn-primary" href="/admin/content/home">
+          Open Homepage Editor →
+        </Link>
+      </div>
       <section className="desk-panel">
         <div className="desk-section-title">
           <h2>Documents ({docs.count || 0})</h2>
@@ -85,23 +96,33 @@ export default async function ContentPage({
               </tr>
             </thead>
             <tbody>
-              {docs.data?.map((d) => (
-                <tr key={d.id}>
-                  <td>
-                    <Link href={"/admin/content?id=" + d.id}>
-                      {d.kind} / {d.slug}
-                    </Link>
-                  </td>
-                  <td>{d.locale}</td>
-                  <td>
-                    {d.published
-                      ? "Published v" + d.published_version
-                      : "Unpublished"}{" "}
-                    · draft v{d.version}
-                  </td>
-                  <td>{d.updated_at.slice(0, 10)}</td>
-                </tr>
-              ))}
+              {docs.data
+                ?.filter((d) => staff.role === "owner" || d.slug !== "branding")
+                .map((d) => (
+                  <tr key={d.id}>
+                    <td>
+                      <Link
+                        href={
+                          d.kind === "page" && d.slug === "home"
+                            ? "/admin/content/home?locale=" + d.locale
+                            : d.slug === "branding"
+                              ? "/admin/settings/branding"
+                              : "/admin/content?id=" + d.id
+                        }
+                      >
+                        {d.kind} / {d.slug}
+                      </Link>
+                    </td>
+                    <td>{d.locale}</td>
+                    <td>
+                      {d.published
+                        ? "Published v" + d.published_version
+                        : "Unpublished"}{" "}
+                      · draft v{d.version}
+                    </td>
+                    <td>{d.updated_at.slice(0, 10)}</td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>

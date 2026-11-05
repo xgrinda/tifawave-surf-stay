@@ -43,7 +43,7 @@ export default async function PackageDetails({
     <AdminShell
       active="packages"
       title={pkg.data.name}
-      description="Edit the full bilingual offer below. Activities and genuine photographs use the retained controls; visibility follows Owner-approved publication."
+      description="Work through six clear sections. Existing prices, translations and publication checks are preserved."
     >
       {feedback.saved && (
         <p role="status" className="ops-success">
@@ -55,67 +55,81 @@ export default async function PackageDetails({
           pkg={pkg.data}
           rooms={rooms.data || []}
           owner={staff.role === "owner"}
+          activitiesPanel={
+            <>
+              {" "}
+              <section className="desk-panel">
+                <h2>
+                  Activities ·{" "}
+                  {activities.data.filter((a) => !a.archived).length}
+                </h2>
+                {activities.data.map((a) => (
+                  <details key={a.id}>
+                    <summary>
+                      {a.title}
+                      {a.archived ? " · Archived" : ""}
+                    </summary>
+                    <EntityForm
+                      entity="package_activities"
+                      id={a.id}
+                      version={a.version}
+                      fields={entityFields("package_activities", a)}
+                    />
+                  </details>
+                ))}
+                <details>
+                  <summary>Add a real activity</summary>
+                  <EntityForm
+                    entity="package_activities"
+                    fields={entityFields("package_activities", {
+                      package_id: id,
+                    })}
+                  />
+                </details>
+              </section>
+            </>
+          }
+          photosPanel={
+            <>
+              {" "}
+              <section className="desk-panel">
+                <h2>
+                  Package photographs ·{" "}
+                  {photos.data.filter((p) => !p.archived).length}
+                </h2>
+                {photos.data.map((p) => (
+                  <details key={p.id}>
+                    <summary>
+                      {p.alt_text}
+                      {p.archived ? " · Archived" : ""}
+                    </summary>
+                    <a href={p.image_url} target="_blank" rel="noreferrer">
+                      View photograph ↗
+                    </a>
+                    <EntityForm
+                      entity="package_photos"
+                      id={p.id}
+                      version={p.version}
+                      fields={entityFields("package_photos", p)}
+                    />
+                  </details>
+                ))}
+                <details>
+                  <summary>Add an authentic photograph</summary>
+                  <EntityForm
+                    entity="package_photos"
+                    fields={entityFields("package_photos", { package_id: id })}
+                  />
+                </details>
+              </section>{" "}
+            </>
+          }
         />
       </section>
       <div className="ops-toolbar">
         <Link href={"/admin/packages#" + id}>← Full package catalogue</Link>
         <Link href="/admin/gallery">Upload photographs in Media library →</Link>
       </div>
-      <section className="desk-panel">
-        <h2>
-          Activities · {activities.data.filter((a) => !a.archived).length}
-        </h2>
-        {activities.data.map((a) => (
-          <details key={a.id}>
-            <summary>
-              {a.title}
-              {a.archived ? " · Archived" : ""}
-            </summary>
-            <EntityForm
-              entity="package_activities"
-              id={a.id}
-              version={a.version}
-              fields={entityFields("package_activities", a)}
-            />
-          </details>
-        ))}
-        <details>
-          <summary>Add a real activity</summary>
-          <EntityForm
-            entity="package_activities"
-            fields={entityFields("package_activities", { package_id: id })}
-          />
-        </details>
-      </section>
-      <section className="desk-panel">
-        <h2>
-          Package photographs · {photos.data.filter((p) => !p.archived).length}
-        </h2>
-        {photos.data.map((p) => (
-          <details key={p.id}>
-            <summary>
-              {p.alt_text}
-              {p.archived ? " · Archived" : ""}
-            </summary>
-            <a href={p.image_url} target="_blank" rel="noreferrer">
-              View photograph ↗
-            </a>
-            <EntityForm
-              entity="package_photos"
-              id={p.id}
-              version={p.version}
-              fields={entityFields("package_photos", p)}
-            />
-          </details>
-        ))}
-        <details>
-          <summary>Add an authentic photograph</summary>
-          <EntityForm
-            entity="package_photos"
-            fields={entityFields("package_photos", { package_id: id })}
-          />
-        </details>
-      </section>
     </AdminShell>
   );
 }

@@ -6,6 +6,8 @@ export type HomeImage = {
   altText: string;
   focalPosition: FocalPosition;
   imageUrl: string;
+  mobileFocal?: string;
+  mobileImage?: string;
 };
 
 function imageFromGallery(image: PublicGalleryImage): HomeImage {

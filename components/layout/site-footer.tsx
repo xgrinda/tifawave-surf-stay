@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { Container } from "@/components/primitives/container";
@@ -8,9 +9,11 @@ import { getLocaleFromPathname, i18n, localizedPath } from "@/lib/i18n";
 import type { WebsiteSettings } from "@/lib/settings";
 
 export function SiteFooter({
+  logo = "",
   settings,
   whatsappHref,
 }: {
+  logo?: string;
   settings: WebsiteSettings;
   whatsappHref: string;
 }) {
@@ -65,7 +68,19 @@ export function SiteFooter({
               href={localizedPath(locale, "/")}
               aria-label={copy.aria.tifawaveHome}
             >
-              Tifawave<span>.</span>
+              {logo ? (
+                <Image
+                  src={logo}
+                  alt="Tifawave Surf Stay"
+                  width={180}
+                  height={64}
+                  className="site-brand-logo"
+                />
+              ) : (
+                <>
+                  Tifawave<span>.</span>
+                </>
+              )}
             </Link>
             <p>{copy.footer.brand}</p>
             <LanguageSwitcher />

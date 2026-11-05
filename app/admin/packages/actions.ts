@@ -3,7 +3,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/admin/auth";
 import { saveAdminPackage } from "@/lib/admin/packages";
-export async function savePackageAction(form: FormData) {
+export async function savePackageState(
+  _state: { error?: string },
+  form: FormData,
+): Promise<{ error?: string }> {
   await requireAdmin("content");
   const text = (k: string) => String(form.get(k) || "");
   const lines = (k: string) =>
@@ -22,7 +25,8 @@ export async function savePackageAction(form: FormData) {
       full_description: text("fullDescription"),
       inclusions: lines("inclusions"),
       display_order: Number(text("displayOrder")),
-      publication_status: text("status"),
+      publication_status:
+        text("publicationAction") === "publish" ? "published" : text("status"),
       catalogue: {
         ...JSON.parse(text("options")),
         nameFr: text("nameFr"),
@@ -43,14 +47,10 @@ export async function savePackageAction(form: FormData) {
       },
     };
   } catch {
-    redirect("/admin/packages?error=Check+the+package+options.");
+    return { error: "Check the package options." };
   }
   const result = await saveAdminPackage(input);
-  if (!result.ok)
-    redirect(
-      "/admin/packages?error=" +
-        encodeURIComponent(result.message || "Could not save."),
-    );
+  if (!result.ok) return { error: result.message || "Could not save." };
   for (const path of [
     "/",
     "/fr",
@@ -62,4 +62,10 @@ export async function savePackageAction(form: FormData) {
   ])
     revalidatePath(path);
   redirect("/admin/packages/" + result.id + "?saved=1");
+}
+
+export async function savePackageAction(form: FormData) {
+  const result = await savePackageState({}, form);
+  if (result.error)
+    redirect("/admin/packages?error=" + encodeURIComponent(result.error));
 }

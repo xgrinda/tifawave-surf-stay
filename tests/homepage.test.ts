@@ -307,3 +307,82 @@ test("premium reviews fallback has accessible source links without invented scor
     "",
   );
 });
+
+test("homepage media slots preserve legacy drafts and reject duplicate, unknown and unsafe choices", async () => {
+  const { homeMediaSlots } = await import("../lib/content/home-slots");
+  const legacy = contentSchema.parse({
+    title: "Existing",
+    sections: [
+      {
+        heading: "Old",
+        body: "Copy",
+        imageUrl: "https://images.unsplash.com/existing",
+      },
+    ],
+  });
+  assert.deepEqual(legacy.homeMedia, []);
+  assert.equal(
+    legacy.sections[0].imageUrl,
+    "https://images.unsplash.com/existing",
+  );
+  const choices = Object.keys(homeMediaSlots).map((slot) => ({
+    slot,
+    imageUrl: "https://images.unsplash.com/real",
+    mobileImage: "https://images.pexels.com/real-mobile",
+    focal: "top",
+    mobileFocal: "bottom",
+    alt: "Owner choice",
+  }));
+  assert.equal(
+    contentSchema.parse({ homeMedia: choices }).homeMedia.length,
+    21,
+  );
+  assert.equal(
+    contentSchema.safeParse({ homeMedia: [choices[0], choices[0]] }).success,
+    false,
+  );
+  assert.equal(
+    contentSchema.safeParse({
+      homeMedia: [{ ...choices[0], slot: "not-a-position" }],
+    }).success,
+    false,
+  );
+  assert.equal(
+    contentSchema.safeParse({
+      homeMedia: [{ ...choices[0], imageUrl: "https://evil.invalid/photo" }],
+    }).success,
+    false,
+  );
+  assert.equal(
+    contentSchema.safeParse({ roomOrder: ["room-dorm", "room-dorm"] }).success,
+    false,
+  );
+  assert.deepEqual(
+    contentSchema.parse({ roomOrder: ["room-family", "room-dorm"] }).roomOrder,
+    ["room-family", "room-dorm"],
+  );
+});
+test("branding accepts genuine property artwork only and bounds bilingual metadata", async () => {
+  const { brandingSchema } = await import("../lib/content/branding-schema");
+  assert.equal(
+    brandingSchema.safeParse({
+      logo: "https://tuzefzcosvvhzffbxhpm.supabase.co/storage/v1/object/public/tifawave-media/brand/logo.png",
+    }).success,
+    true,
+  );
+  for (const logo of [
+    "https://images.unsplash.com/logo",
+    "https://evil.invalid/logo",
+    "javascript:alert(1)",
+    "https://tuzefzcosvvhzffbxhpm.supabase.co.evil.invalid/logo",
+  ])
+    assert.equal(brandingSchema.safeParse({ logo }).success, false);
+  assert.equal(
+    brandingSchema.safeParse({ titleFr: "x".repeat(181) }).success,
+    false,
+  );
+  assert.equal(
+    brandingSchema.safeParse({ secret: "never accepted" }).success,
+    false,
+  );
+});
