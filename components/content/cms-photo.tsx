@@ -1,6 +1,7 @@
 "use client";
 import Image, { getImageProps } from "next/image";
 import { useState } from "react";
+import { isOptimizedCloudinaryImage } from "@/lib/cloudinary-image";
 import { isPublicImageUrl } from "@/lib/image-url";
 export function CmsPhoto({
   src,
@@ -36,14 +37,15 @@ export function CmsPhoto({
           <source
             media="(max-width:760px)"
             srcSet={
-              getImageProps({ src: mobileSrc, alt: "", fill: true, sizes })
-                .props.srcSet
+              getImageProps({ src: mobileSrc, alt: "", fill: true, sizes, unoptimized: isOptimizedCloudinaryImage(mobileSrc) })
+                .props.srcSet || mobileSrc
             }
             sizes={sizes}
           />
         )}
         <Image
           src={src}
+          unoptimized={isOptimizedCloudinaryImage(src)}
           alt={alt}
           fill
           priority={priority}

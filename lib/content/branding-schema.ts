@@ -1,12 +1,13 @@
 import { z } from "zod";
 import { isPublicImageUrl } from "@/lib/image-url";
+import { isCloudinaryImageUrl } from "@/lib/cloudinary-image";
 const asset = z
   .string()
   .max(2000)
   .refine(
     (v) =>
       !v ||
-      (isPublicImageUrl(v) && new URL(v).hostname.endsWith(".supabase.co")),
+      (isPublicImageUrl(v) && (new URL(v).hostname.endsWith(".supabase.co") || isCloudinaryImageUrl(v))),
     "Select a genuine brand asset from the property media library.",
   )
   .default("");

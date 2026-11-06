@@ -1,3 +1,4 @@
+import { verifyCloudinaryImage } from "@/lib/verify-cloudinary-image";
 import { isPublicImageUrl } from "@/lib/image-url";
 import { createSupabaseStaffClient } from "@/lib/supabase/staff";
 import {
@@ -136,9 +137,9 @@ function normalizeImageUrl(value: string): string {
   const normalized = value.trim();
   const url = new URL(normalized);
 
-  if (!isPublicImageUrl(url.toString())) {
+  if (!isPublicImageUrl(normalized)) {
     throw new Error(
-      "Use an HTTPS image from the media library or an already supported image host.",
+      "Use an HTTPS image from the media library, Cloudinary account dytykwtc, or an already supported image host.",
     );
   }
 
@@ -376,6 +377,7 @@ export async function createAdminRoomImage(
 
   try {
     normalized = normalizeRoomImageInput(input);
+    await verifyCloudinaryImage(normalized.imageUrl);
   } catch (error) {
     return {
       ok: false,
@@ -424,6 +426,7 @@ export async function updateAdminRoomImage(
 
   try {
     normalized = normalizeRoomImageInput(input);
+    await verifyCloudinaryImage(normalized.imageUrl);
   } catch (error) {
     return {
       ok: false,

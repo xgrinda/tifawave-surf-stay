@@ -64,7 +64,8 @@ export function MediaPicker({
         />
         <small>
           Recommended: {preset}. Preserve aspect ratio. Approved HTTPS hosts:
-          this media library, images.unsplash.com and images.pexels.com. Use
+          this media library, res.cloudinary.com/dytykwtc/image/upload/,
+          images.unsplash.com and images.pexels.com. Use
           only photographs you have permission to use.
         </small>
       </label>

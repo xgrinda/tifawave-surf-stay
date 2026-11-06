@@ -15,7 +15,7 @@ const nextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value: "frame-ancestors 'none'; object-src 'none'; base-uri 'self'",
+            value: "frame-ancestors 'none'; object-src 'none'; base-uri 'self'; img-src 'self' data: blob: https://res.cloudinary.com/dytykwtc/image/upload/ https://tuzefzcosvvhzffbxhpm.supabase.co/storage/v1/object/public/tifawave-media/ https://images.unsplash.com https://images.pexels.com " + (process.env.NEXT_PUBLIC_SUPABASE_URL || "https://unconfigured.supabase.co") + "/storage/v1/object/public/tifawave-media/",
           },
         ],
       },
@@ -28,7 +28,11 @@ const nextConfig = {
   },
   images: {
     qualities: [75, 80, 82, 84, 88],
+    maximumRedirects: 0,
+    dangerouslyAllowLocalIP: false,
     remotePatterns: [
+      { protocol: "https", hostname: "res.cloudinary.com", port: "",
+        pathname: "/dytykwtc/image/upload/**", search: "" },
       {
         hostname: process.env.NEXT_PUBLIC_SUPABASE_URL
           ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname

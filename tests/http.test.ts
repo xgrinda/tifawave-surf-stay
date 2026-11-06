@@ -198,3 +198,16 @@ test("media library and pricing endpoints fail closed without authentication or 
     403,
   );
 });
+
+ test("Cloudinary optimizer rejects other accounts and remote transformation tricks before fetching", async () => {
+  for (const value of [
+    "https://res.cloudinary.com/other/image/upload/test.jpg",
+    "https://res.cloudinary.com/dytykwtc/image/upload/l_fetch:abc/test.jpg",
+    "https://res.cloudinary.com/dytykwtc/image/upload/t_unknown/test.jpg",
+    "https://res.cloudinary.com/dytykwtc/image/fetch/https://127.0.0.1/test.jpg",
+  ]) {
+    const response = await get("/_next/image?url=" + encodeURIComponent(value) + "&w=640&q=75");
+    assert.equal(response.status,400);
+    assert.deepEqual(await response.json(),{message:"Unsupported image URL."});
+  }
+});

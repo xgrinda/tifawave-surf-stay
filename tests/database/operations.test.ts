@@ -2,6 +2,7 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { Client } from "pg";
 import { randomUUID, createHash } from "node:crypto";
+import { approvedImages, rejectedImages } from "../image-fixtures";
 const url = process.env.TIFAWAVE_TEST_DATABASE_URL;
 if (
   !url ||
@@ -193,6 +194,55 @@ test("operations workspace rejects unauthorized roles and returns complete calen
   );
 });
 after(async () => root.end());
+test("Cloudinary database and app policies agree for approved and malicious URL cases", async () => {
+  for (const [urls, expected] of [[approvedImages,true],[rejectedImages,false]] as const) {
+    for (const value of urls) {
+      const row = (await root.query("select ops_private.allowed_cloudinary_image($1) allowed",[value])).rows[0];
+      assert.equal(row.allowed,expected,value);
+    }
+  }
+});
+test("Cloudinary media saves retain role/MFA guards and reject unapproved direct writes", async () => {
+  const image = approvedImages[0];
+  const room = (await root.query("select id from public.rooms limit 1")).rows[0].id;
+  for (const table of ["room_images", "gallery_images"] as const) {
+    const insert = (c: Client, value: string) => table === "room_images"
+      ? c.query("insert into public.room_images(room_id,image_url,alt_text) values($1,$2,'Cloudinary QA') returning id",[room,value])
+      : c.query("insert into public.gallery_images(image_url,alt_text) values($1,'Cloudinary QA') returning id",[value]);
+    for (const role of ["anon","reception","housekeeping","stranger"] as Role[])
+      await rejectsCode(as(role,c=>insert(c,image)),"42501");
+    await rejectsCode(as("owner",c=>insert(c,image),"aal1"),"42501");
+    const id = (await as("owner",c=>insert(c,image))).rows[0].id;
+    for (const value of [rejectedImages[1],"https://127.0.0.1/private.jpg"])
+      await rejectsCode(as("owner",c=>c.query("update public."+table+" set image_url=$1 where id=$2",[value,id])),"23514");
+    assert.equal((await root.query("select image_url from public."+table+" where id=$1",[id])).rows[0].image_url,image);
+    await root.query("delete from public."+table+" where id=$1",[id]);
+  }
+  const packageId = (await root.query("select id from public.packages limit 1")).rows[0].id;
+  const photoId = await saveEntity("package_photos",{package_id:packageId,image_url:image,alt_text:"Cloudinary QA",sort_order:9999,archived:true},"content_editor");
+  await rejectsCode(saveEntity("package_photos",{image_url:rejectedImages[1]},"owner",photoId,1),"23514");
+  await root.query("delete from public.package_photos where id=$1",[photoId]);
+});
+test("owned Cloudinary works in bilingual CMS publication, homepage slots and branding without touching bookings", async () => {
+  const snapshot = async () => (await root.query("select coalesce(jsonb_agg(to_jsonb(b) order by id),'[]')::text data from public.bookings b")).rows[0].data;
+  const before = await snapshot();
+  for (const locale of ["en","fr"]) {
+    const doc = {title:"Cloudinary staging test",heroImage:approvedImages[0],heroMobileImage:approvedImages[1],
+      homeMedia:[{slot:"breakfast",imageUrl:approvedImages[0],mobileImage:approvedImages[1]}],
+      sections:[{heading:"Rooftop",body:"",imageUrl:approvedImages[0]}]};
+    await root.query("select ops_private.validate_document($1,'page',true)",[doc]);
+    const saved = await as("owner",c=>c.query("select public.save_content_document(null,0,'page','home',$1,$2,'publish') id",[locale,doc]));
+    const id=saved.rows[0].id;
+    assert.equal((await as("anon",c=>c.query("select published from public.content_documents where id=$1",[id]))).rows[0].published.heroImage,approvedImages[0]);
+    // The disposable database has no business content; release this unique slot
+    // before the rest of the existing regression suite uses it.
+    await root.query("delete from public.content_revisions where document_id=$1",[id]);
+    await root.query("delete from public.content_documents where id=$1",[id]);
+  }
+  await root.query("select ops_private.validate_document($1,'page',true)",[{title:"Branding",branding:{logo:approvedImages[0]}}]);
+  await rejectsCode(root.query("select ops_private.validate_document($1,'page',true)",[{title:"Branding",branding:{logo:rejectedImages[1]}}]),"22023");
+  assert.equal(await snapshot(),before);
+});
 async function saveEntity(
   entity: string,
   data: Record<string, unknown>,

@@ -6,6 +6,7 @@ import { requireAdmin } from "@/lib/admin/auth";
 import { createSupabaseStaffClient } from "@/lib/supabase/staff";
 import { verifyBrandingAssets } from "@/lib/content/brand-assets";
 import { contentSchema } from "@/lib/content/schema";
+import { verifyContentCloudinaryImages } from "@/lib/verify-cloudinary-image";
 export type ContentState = { error?: string; id?: string };
 export async function saveContent(
   _state: ContentState,
@@ -48,6 +49,7 @@ export async function saveContent(
       draft.branding
     )
       await verifyBrandingAssets(draft.branding);
+    if (args.p_action !== "unpublish") await verifyContentCloudinaryImages(draft);
     const client = await createSupabaseStaffClient();
     const { data, error } = await client.rpc("save_content_document", {
       ...args,

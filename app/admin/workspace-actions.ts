@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireStaff, requireAdmin } from "@/lib/admin/auth";
 import { createSupabaseStaffClient } from "@/lib/supabase/staff";
 import { moduleSchemas, readModuleForm } from "@/lib/admin/module-schema";
+import { verifyCloudinaryImage } from "@/lib/verify-cloudinary-image";
 export type SaveResult = {
   ok: boolean;
   message: string;
@@ -65,6 +66,10 @@ export async function saveWorkspaceAction(
           .join("; "),
       id: id.data,
     };
+  if (entity === "package_photos") {
+    try { await verifyCloudinaryImage(String((parsed.data as { image_url: string }).image_url)); }
+    catch (error) { return { ok: false, message: error instanceof Error ? error.message : "Check the image URL.", id: id.data }; }
+  }
   const client = await createSupabaseStaffClient();
   const { data, error } = await client.rpc("save_workspace_record", {
     p_entity: entity,
