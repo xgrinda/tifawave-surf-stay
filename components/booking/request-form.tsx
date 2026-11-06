@@ -1,5 +1,7 @@
 "use client";
 import Link from "next/link";
+import { RequestSection } from "./request-sections";
+import { PackageHighlights } from "@/components/content/package-highlights";
 import { RoomBathroom } from "@/components/content/room-bathroom";
 import { CmsPhoto } from "@/components/content/cms-photo";
 import { useEffect, useRef, useState, type FormEvent } from "react";
@@ -267,17 +269,40 @@ export function RequestForm({
       </section>
     );
   return (
-    <section className="booking-panel">
+    <section className="booking-panel request-experience" aria-busy={busy}>
+      <div className="request-mode-heading">
+        <span className="eyebrow">
+          {t("Make it your kind of stay", "Un séjour à votre image")}
+        </span>
+        <p>
+          {t(
+            "Start with what brings you here.",
+            "Commencez par ce qui vous amène ici.",
+          )}
+        </p>
+      </div>
       <div
         className="booking-mode-tabs"
         role="group"
         aria-label={t("Request type", "Type de demande")}
       >
         {[
-          ["stay_only", t("Room / Dorm Bed", "Chambre / lit en dortoir")],
-          ["surf_package", t("Surf Package", "Séjour surf")],
-          ["group_request", t("Group / Retreat", "Groupe / retraite")],
-        ].map(([value, label]) => (
+          [
+            "stay_only",
+            t("Room / Dorm Bed", "Chambre / lit en dortoir"),
+            t("A place to unwind", "Votre pied-à-terre"),
+          ],
+          [
+            "surf_package",
+            t("Surf Package", "Séjour surf"),
+            t("Stay close to the waves", "Au rythme des vagues"),
+          ],
+          [
+            "group_request",
+            t("Group / Retreat", "Groupe / retraite"),
+            t("Bring your people", "Venez ensemble"),
+          ],
+        ].map(([value, label, hint], index) => (
           <button
             type="button"
             key={value}
@@ -288,14 +313,24 @@ export function RequestForm({
               setError("");
             }}
           >
-            {label}
+            <span className="request-mode-icon" aria-hidden="true">
+              {["⌂", "≈", "☷"][index]}
+            </span>
+            <span>
+              <strong>{label}</strong>
+              <small>{hint}</small>
+            </span>
+            <span className="request-mode-check" aria-hidden="true">
+              {mode === value ? "✓" : ""}
+            </span>
           </button>
         ))}
       </div>
-      <p className="booking-mode-notice">
+      <p className="request-intro-note">
+        <span aria-hidden="true">✓</span>
         {t(
-          "No payment required to send a request. We confirm availability personally.",
-          "Aucun paiement pour envoyer une demande. Nous confirmons les disponibilités personnellement.",
+          "A request, then a personal reply. No online payment.",
+          "Une demande, puis une réponse personnelle. Aucun paiement en ligne.",
         )}
       </p>
       {mode === "group_request" ? (
@@ -330,192 +365,187 @@ export function RequestForm({
           </Link>
         </div>
       ) : (
-        <form className="booking-form" onSubmit={submit}>
-          <fieldset disabled={busy} className="request-fields">
-            {mode === "stay_only" ? (
-              <label className="admin-field">
-                {t("Your room or dorm bed", "Votre chambre ou lit en dortoir")}
-                <select
-                  name="roomId"
-                  required
-                  value={roomId}
-                  onChange={(e) => setRoomId(e.target.value)}
-                >
-                  <option value="">
-                    {t("Choose accommodation", "Choisir un hébergement")}
-                  </option>
-                  {rooms.map((r) => (
-                    <option value={r.id} key={r.id}>
-                      {r.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : (
-              <label className="admin-field">
-                {t("Your surf package", "Votre séjour surf")}
-                <select
-                  name="packageId"
-                  required
-                  value={packageId}
-                  onChange={(e) => {
-                    setPackageId(e.target.value);
-                    setVariantId("");
-                    setExtras([]);
-                    setLevel("");
-                    setDeparture(
-                      duration(
-                        arrival,
-                        packages.find((p) => p.id === e.target.value)?.catalogue
-                          .nights,
-                      ),
-                    );
-                  }}
-                >
-                  <option value="">
-                    {t("Choose a package", "Choisir un séjour")}
-                  </option>
-                  {packages.map((p) => (
-                    <option value={p.id} key={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
-            {(mode === "stay_only"
-              ? room
-              : rooms.find((r) => r.id === v?.roomId)) && (
-              <RoomBathroom
-                type={
-                  (mode === "stay_only"
-                    ? room
-                    : rooms.find((r) => r.id === v?.roomId)
-                  )?.bathroomType
-                }
-                locale={locale}
-              />
-            )}
-            {mode === "surf_package" && p && (
-              <section className="request-package-summary">
-                {p.cover && (
-                  <div className="request-package-photo">
-                    <CmsPhoto
-                      src={p.cover.url}
-                      alt={p.cover.alt}
-                      position={p.cover.position}
-                      mobilePosition={p.cover.mobilePosition}
-                    />
-                  </div>
-                )}
-                <h2>{p.name}</h2>
-                <p>
-                  {p.unitLabel} · {p.priceLabel}
-                </p>
-                <p>{p.pricingLabel}</p>
-                <ul>
-                  {p.inclusions.map((i) => (
-                    <li key={i}>{i}</li>
-                  ))}
-                </ul>
-              </section>
-            )}
-            <div className="request-grid">
-              <label className="admin-field">
-                {t("Check-in", "Arrivée")}
-                <input
-                  name="checkIn"
-                  type="date"
-                  min={minArrival}
-                  value={arrival}
-                  onChange={(e) => {
-                    setArrival(e.target.value);
-                    if (mode === "surf_package")
-                      setDeparture(
-                        duration(e.target.value, p?.catalogue.nights),
-                      );
-                  }}
-                  required
-                />
-              </label>
-              <label className="admin-field">
-                {t("Check-out", "Départ")}
-                <input
-                  name="checkOut"
-                  type="date"
-                  min={
-                    arrival
-                      ? new Date(Date.parse(arrival) + 86400000)
-                          .toISOString()
-                          .slice(0, 10)
-                      : minArrival
-                  }
-                  value={departure}
-                  onChange={(e) => setDeparture(e.target.value)}
-                  required
-                />
-              </label>
-              <label className="admin-field">
-                {t("Guests", "Voyageurs")}
-                <input
-                  name="guests"
-                  type="number"
-                  min={mode === "surf_package" ? v?.minGuests || 1 : 1}
-                  max={maxGuests}
-                  value={guests}
-                  onChange={(e) => setGuests(Number(e.target.value))}
-                  required
-                />
-              </label>
-            </div>
-            {mode === "stay_only" && room && (
-              <p>
-                {room.kind === "dorm"
-                  ? t(
-                      "Request individual beds in the shared four-bed dorm. Up to four guests.",
-                      "Demandez des lits individuels dans le dortoir partagé de quatre lits. Quatre voyageurs maximum.",
-                    )
-                  : t(
-                      `One private room, for up to ${room.maxGuests} guests. Need several rooms? Use Group / Retreat.`,
-                      `Une chambre privée, pour ${room.maxGuests} voyageurs maximum. Plusieurs chambres ? Choisissez Groupe / retraite.`,
-                    )}
-              </p>
-            )}
-            {(mode === "stay_only"
-              ? room
-              : rooms.find((r) => r.id === v?.roomId)) && (
-              <RoomBathroom
-                type={
-                  (mode === "stay_only"
-                    ? room
-                    : rooms.find((r) => r.id === v?.roomId)
-                  )?.bathroomType
-                }
-                locale={locale}
-              />
-            )}
-            {mode === "surf_package" && p && (
-              <section className="package-request-options">
+        <form
+          className="booking-form"
+          onSubmit={submit}
+          aria-label={t("Booking request", "Demande de réservation")}
+        >
+          <fieldset disabled={busy} className="request-fields request-layout">
+            <legend className="sr-only">
+              {t("Your booking request", "Votre demande de réservation")}
+            </legend>
+            <RequestSection
+              number="01"
+              title={t("Your stay", "Votre séjour")}
+              description={t(
+                "Choose your stay, dates and number of guests.",
+                "Choisissez votre séjour, vos dates et le nombre de voyageurs.",
+              )}
+            >
+              {mode === "stay_only" ? (
                 <label className="admin-field">
-                  {t("Accommodation option", "Hébergement")}
+                  {t(
+                    "Your room or dorm bed",
+                    "Votre chambre ou lit en dortoir",
+                  )}
                   <select
-                    name="packageVariant"
-                    value={v ? variantId : ""}
+                    name="roomId"
                     required
-                    onChange={(e) => setVariantId(e.target.value)}
+                    value={roomId}
+                    onChange={(e) => setRoomId(e.target.value)}
                   >
                     <option value="">
-                      {t("Choose your accommodation", "Choisir un hébergement")}
+                      {t("Choose accommodation", "Choisir un hébergement")}
                     </option>
-                    {p.catalogue.variants.map((v) => (
-                      <option key={v.id} value={v.id}>
-                        {localized(v.label, v.labelFr, locale)} ·{" "}
-                        {v.minGuests || 1}–{v.maxGuests || 23}{" "}
-                        {t("guests", "voyageurs")}
+                    {rooms.map((r) => (
+                      <option value={r.id} key={r.id}>
+                        {r.name}
                       </option>
                     ))}
                   </select>
                 </label>
+              ) : (
+                <label className="admin-field">
+                  {t("Your surf package", "Votre séjour surf")}
+                  <select
+                    name="packageId"
+                    required
+                    value={packageId}
+                    onChange={(e) => {
+                      setPackageId(e.target.value);
+                      setVariantId("");
+                      setExtras([]);
+                      setLevel("");
+                      setDeparture(
+                        duration(
+                          arrival,
+                          packages.find((p) => p.id === e.target.value)
+                            ?.catalogue.nights,
+                        ),
+                      );
+                    }}
+                  >
+                    <option value="">
+                      {t("Choose a package", "Choisir un séjour")}
+                    </option>
+                    {packages.map((p) => (
+                      <option value={p.id} key={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              <div className="request-grid request-date-fields">
+                <label className="admin-field">
+                  {t("Check-in", "Arrivée")}
+                  <input
+                    name="checkIn"
+                    type="date"
+                    min={minArrival}
+                    value={arrival}
+                    onChange={(e) => {
+                      setArrival(e.target.value);
+                      if (mode === "surf_package")
+                        setDeparture(
+                          duration(e.target.value, p?.catalogue.nights),
+                        );
+                    }}
+                    required
+                  />
+                </label>
+                <label className="admin-field">
+                  {t("Check-out", "Départ")}
+                  <input
+                    name="checkOut"
+                    type="date"
+                    min={
+                      arrival
+                        ? new Date(Date.parse(arrival) + 86400000)
+                            .toISOString()
+                            .slice(0, 10)
+                        : minArrival
+                    }
+                    value={departure}
+                    onChange={(e) => setDeparture(e.target.value)}
+                    required
+                  />
+                </label>
+              </div>
+              {mode === "surf_package" && p && (
+                <p className="request-field-hint">
+                  {t(
+                    `A ${p.catalogue.nights}-night stay. Your departure fills in when you choose an arrival.`,
+                    `Séjour de ${p.catalogue.nights} nuits. Le départ se remplit automatiquement après le choix de l’arrivée.`,
+                  )}
+                </p>
+              )}
+              <div className="request-grid">
+                <label className="admin-field">
+                  {t("Guests", "Voyageurs")}
+                  <input
+                    name="guests"
+                    type="number"
+                    min={mode === "surf_package" ? v?.minGuests || 1 : 1}
+                    max={maxGuests}
+                    value={guests}
+                    onChange={(e) => setGuests(Number(e.target.value))}
+                    required
+                  />
+                </label>
+                {mode === "surf_package" && p && (
+                  <label className="admin-field">
+                    {t("Accommodation option", "Hébergement")}
+                    <select
+                      name="packageVariant"
+                      value={v ? variantId : ""}
+                      required
+                      onChange={(e) => setVariantId(e.target.value)}
+                    >
+                      <option value="">
+                        {t(
+                          "Choose your accommodation",
+                          "Choisir un hébergement",
+                        )}
+                      </option>
+                      {p.catalogue.variants.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {localized(v.label, v.labelFr, locale)} ·{" "}
+                          {v.minGuests || 1}–{v.maxGuests || 23}{" "}
+                          {t("guests", "voyageurs")}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+              </div>
+              {mode === "stay_only" && room && (
+                <p className="request-field-hint">
+                  {room.kind === "dorm"
+                    ? t(
+                        "Individual beds in our shared four-bed dorm. Up to four guests.",
+                        "Des lits individuels dans notre dortoir partagé de quatre lits. Quatre voyageurs maximum.",
+                      )
+                    : t(
+                        `One private room, for up to ${room.maxGuests} guests. For several rooms, choose Group / Retreat.`,
+                        `Une chambre privée, pour ${room.maxGuests} voyageurs maximum. Pour plusieurs chambres, choisissez Groupe / retraite.`,
+                      )}
+                </p>
+              )}
+              {(mode === "stay_only"
+                ? room
+                : rooms.find((r) => r.id === v?.roomId)) && (
+                <RoomBathroom
+                  type={
+                    (mode === "stay_only"
+                      ? room
+                      : rooms.find((r) => r.id === v?.roomId)
+                    )?.bathroomType
+                  }
+                  locale={locale}
+                />
+              )}
+              {mode === "surf_package" && p && (
                 <label className="admin-field">
                   {t("Your surf level", "Votre niveau de surf")}
                   <select
@@ -534,138 +564,342 @@ export function RequestForm({
                     ))}
                   </select>
                 </label>
-                {!!p.catalogue.extras.length && (
-                  <fieldset>
-                    <legend>
+              )}
+            </RequestSection>
+            <aside
+              className="request-stay-summary"
+              aria-label={t(
+                "Your stay at a glance",
+                "Votre séjour en un coup d’œil",
+              )}
+            >
+              {mode === "surf_package" && p ? (
+                <>
+                  {p.cover && (
+                    <div className="request-package-photo">
+                      <CmsPhoto
+                        src={p.cover.url}
+                        alt={p.cover.alt}
+                        position={p.cover.position}
+                        mobilePosition={p.cover.mobilePosition}
+                        sizes="(max-width:900px) 100vw,380px"
+                      />
+                    </div>
+                  )}
+                  <div className="request-summary-content">
+                    <span className="request-summary-tag">
+                      {p.unitLabel} · Tamraght
+                    </span>
+                    <h2>{p.name}</h2>
+                    <p className="request-summary-price">
+                      {p.priceLabel}
+                      <small>{p.pricingLabel}</small>
+                    </p>
+                    <details className="request-inclusions">
+                      <summary>
+                        {t("What’s in this stay", "Les prestations du séjour")}
+                        <span aria-hidden="true">+</span>
+                      </summary>
+                      <PackageHighlights
+                        inclusions={p.inclusions}
+                        description={p.fullDescription}
+                        locale={locale}
+                      />
+                      <p className="request-field-hint">
+                        {t(
+                          "“To confirm” items are agreed in your personal quote.",
+                          "Les prestations « À confirmer » sont précisées dans votre devis personnalisé.",
+                        )}
+                      </p>
+                      <Link
+                        href={(fr ? "/fr" : "") + "/surf/packages/" + p.slug}
+                      >
+                        {t(
+                          "Full package details",
+                          "Tous les détails du séjour",
+                        )}{" "}
+                        →
+                      </Link>
+                    </details>
+                    <div
+                      className="request-estimate"
+                      role="status"
+                      aria-live="polite"
+                      aria-atomic="true"
+                    >
+                      <strong>
+                        {canEstimate &&
+                        quote?.key === quoteKey &&
+                        quote.estimate?.totalCents != null
+                          ? t("Estimated total", "Total estimatif") +
+                            " : " +
+                            money(
+                              quote.estimate.totalCents,
+                              quote.estimate.currency,
+                              locale,
+                            )
+                          : canEstimate && quote?.key !== quoteKey
+                            ? t(
+                                "Checking your estimate…",
+                                "Vérification du tarif…",
+                              )
+                            : t(
+                                "Your personal quote",
+                                "Votre devis personnalisé",
+                              )}
+                      </strong>
+                      {v && (
+                        <p>
+                          {localized(v.label, v.labelFr, locale)} · {guests}{" "}
+                          {t("guests", "voyageurs")} · {p.unitLabel}
+                        </p>
+                      )}
+                      <p>
+                        {t(
+                          "Your dates, room and extras shape the quote. We’ll confirm the final price and services personally.",
+                          "Vos dates, votre hébergement et vos options déterminent le devis. Nous confirmerons personnellement le tarif final et les prestations.",
+                        )}
+                      </p>
+                      {canEstimate &&
+                        quote?.key === quoteKey &&
+                        quote.error && (
+                          <p>
+                            {t(
+                              "We can’t estimate this selection. Check your dates and guest count, or request a personal quote.",
+                              "Nous ne pouvons pas estimer ce choix. Vérifiez vos dates et le nombre de voyageurs, ou demandez un devis personnalisé.",
+                            )}
+                          </p>
+                        )}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="request-summary-content">
+                  <span className="request-summary-tag">
+                    Tifawave · Tamraght
+                  </span>
+                  <h2>
+                    {room?.name ||
+                      t(
+                        "Your time by the ocean.",
+                        "Votre parenthèse au bord de l’océan.",
+                      )}
+                  </h2>
+                  <p>
+                    {t(
+                      "Breakfast included with your accommodation.",
+                      "Le petit-déjeuner est inclus avec votre hébergement.",
+                    )}
+                  </p>
+                  <ul className="request-trust-list">
+                    <li>
+                      {t(
+                        "Send your dates and preferences",
+                        "Envoyez vos dates et préférences",
+                      )}
+                    </li>
+                    <li>
+                      {t(
+                        "We check availability personally",
+                        "Nous vérifions les disponibilités",
+                      )}
+                    </li>
+                    <li>
+                      {t(
+                        "The Owner confirms your stay",
+                        "Le propriétaire confirme votre séjour",
+                      )}
+                    </li>
+                  </ul>
+                  <span className="request-pending-badge">
+                    {t("Pending Owner approval", "En attente de validation")}
+                  </span>
+                </div>
+              )}
+              <div className="request-help">
+                <strong>
+                  {t(
+                    "A question before you send?",
+                    "Une question avant l’envoi ?",
+                  )}
+                </strong>
+                {whatsappHref.startsWith("https://wa.me/") && (
+                  <a href={whatsappHref}>
+                    {t("Ask us on WhatsApp", "Écrivez-nous sur WhatsApp")} ↗
+                  </a>
+                )}
+              </div>
+            </aside>
+            {mode === "surf_package" && p && !!p.catalogue.extras.length && (
+              <RequestSection
+                number="02"
+                title={t("Make it your own", "Personnalisez votre séjour")}
+                description={t(
+                  "Optional extras. We’ll confirm arrangements and any extra cost.",
+                  "Des options facultatives. Organisation et éventuels suppléments à confirmer.",
+                )}
+              >
+                <details className="request-extras">
+                  <summary>
+                    <span>
+                      {t("Explore optional extras", "Découvrir les options")}
+                      <small>
+                        {extras.length
+                          ? t(
+                              `${extras.length} selected`,
+                              `${extras.length} sélectionnée(s)`,
+                            )
+                          : t("None selected", "Aucune sélection")}
+                      </small>
+                    </span>
+                    <span aria-hidden="true">+</span>
+                  </summary>
+                  <fieldset className="request-extra-grid">
+                    <legend className="sr-only">
                       {t(
                         "Optional extras · subject to confirmation",
                         "Options facultatives · sous réserve de confirmation",
                       )}
                     </legend>
-                    {p.catalogue.extras.map((e) => (
-                      <label className="package-extra" key={e.id}>
-                        <input
-                          name="packageExtras"
-                          type="checkbox"
-                          value={e.id}
-                          checked={extras.includes(e.id)}
-                          onChange={(a) =>
-                            setExtras(
-                              a.target.checked
-                                ? [...extras, e.id]
-                                : extras.filter((id) => id !== e.id),
-                            )
-                          }
-                        />
-                        {localized(e.label, e.labelFr, locale)} ·{" "}
-                        {money(e.priceCents, p.catalogue.currency, locale)} ·{" "}
-                        {pricingBasis(e.basis, locale)}
-                      </label>
-                    ))}
+                    {p.catalogue.extras.map((e) => {
+                      const [title, ...notes] = localized(
+                        e.label,
+                        e.labelFr,
+                        locale,
+                      ).split(" · ");
+                      return (
+                        <label className="request-extra-card" key={e.id}>
+                          <input
+                            name="packageExtras"
+                            type="checkbox"
+                            value={e.id}
+                            checked={extras.includes(e.id)}
+                            onChange={(a) =>
+                              setExtras(
+                                a.target.checked
+                                  ? [...extras, e.id]
+                                  : extras.filter((id) => id !== e.id),
+                              )
+                            }
+                          />
+                          <span>
+                            <strong>{title}</strong>
+                            {notes.length > 0 && (
+                              <small>{notes.join(" · ")}</small>
+                            )}
+                            <span className="request-extra-price">
+                              {money(
+                                e.priceCents,
+                                p.catalogue.currency,
+                                locale,
+                              )}
+                              <small>{pricingBasis(e.basis, locale)}</small>
+                            </span>
+                          </span>
+                        </label>
+                      );
+                    })}
                   </fieldset>
-                )}
-                <div className="request-estimate" role="status">
-                  <strong>
-                    {canEstimate &&
-                    quote?.key === quoteKey &&
-                    quote.estimate?.totalCents != null
-                      ? t("Estimated total", "Total estimatif") +
-                        " : " +
-                        money(
-                          quote.estimate.totalCents,
-                          quote.estimate.currency,
-                          locale,
-                        )
-                      : canEstimate && quote?.key !== quoteKey
-                        ? t("Checking your estimate…", "Vérification du tarif…")
-                        : t(
-                            "Request a Personal Quote",
-                            "Demander un devis personnalisé",
-                          )}
-                  </strong>
-                  {v && (
-                    <p>
-                      {localized(v.label, v.labelFr, locale)} ·{" "}
-                      {v.roomCount || 1}{" "}
-                      {t("room arrangement(s)", "hébergement(s)")} · {guests}{" "}
-                      {t("guests", "voyageurs")} · {p.unitLabel}
-                    </p>
-                  )}
-                  <p>
-                    {t(
-                      "Accommodation is included once. Required charges are included in verified prices. The arrival date selects the whole-stay seasonal rate; selected extras are added. Services, price and availability need Owner confirmation.",
-                      "L’hébergement est compté une seule fois. Les tarifs vérifiés comprennent les frais obligatoires. La date d’arrivée détermine le tarif du séjour complet ; les options choisies s’ajoutent. Prestations, tarif et disponibilité doivent être confirmés par le propriétaire.",
-                    )}
-                  </p>
-                  {canEstimate && quote?.key === quoteKey && quote.error && (
-                    <p>
-                      {t(
-                        "An estimate is unavailable for these selections. Check dates and guest count or contact us for a personal quote.",
-                        "Le tarif estimatif n’est pas disponible pour ces choix. Vérifiez les dates et le nombre de voyageurs ou demandez un devis.",
-                      )}
-                    </p>
-                  )}
-                </div>
-              </section>
+                </details>
+              </RequestSection>
             )}
-            <label className="admin-field">
-              {t("Full name", "Nom complet")}
-              <input
-                name="guestName"
-                autoComplete="name"
-                minLength={2}
-                maxLength={120}
-                required
-              />
-            </label>
-            <div className="request-grid">
+            <RequestSection
+              number={
+                mode === "surf_package" && p?.catalogue.extras.length
+                  ? "03"
+                  : "02"
+              }
+              title={t("Your details", "Vos coordonnées")}
+              description={t(
+                "Where should we send your personal reply?",
+                "Où pouvons-nous vous répondre ?",
+              )}
+            >
               <label className="admin-field">
-                Email
+                {t("Full name", "Nom complet")}
                 <input
-                  name="guestEmail"
-                  type="email"
-                  autoComplete="email"
-                  maxLength={254}
+                  name="guestName"
+                  autoComplete="name"
+                  minLength={2}
+                  maxLength={120}
                   required
                 />
               </label>
+              <div className="request-grid">
+                <label className="admin-field">
+                  Email
+                  <input
+                    name="guestEmail"
+                    type="email"
+                    autoComplete="email"
+                    maxLength={254}
+                    required
+                  />
+                  <small>
+                    {t(
+                      "We’ll reply to this address.",
+                      "Nous répondrons à cette adresse.",
+                    )}
+                  </small>
+                </label>
+                <label className="admin-field">
+                  {t("WhatsApp · optional", "WhatsApp · facultatif")}
+                  <input
+                    name="guestPhone"
+                    type="tel"
+                    autoComplete="tel"
+                    maxLength={40}
+                  />
+                </label>
+              </div>
               <label className="admin-field">
-                {t("WhatsApp · optional", "WhatsApp · facultatif")}
-                <input
-                  name="guestPhone"
-                  type="tel"
-                  autoComplete="tel"
-                  maxLength={40}
+                {t(
+                  "Special requests · optional",
+                  "Demandes particulières · facultatif",
+                )}
+                <textarea
+                  name="message"
+                  rows={3}
+                  maxLength={1600}
+                  placeholder={t(
+                    "Anything that would help us plan your stay?",
+                    "Une précision pour nous aider à organiser votre séjour ?",
+                  )}
                 />
               </label>
+            </RequestSection>
+            <div className="request-submit-panel">
+              <span className="request-pending-badge">
+                {t("Pending Owner approval", "En attente de validation")}
+              </span>
+              <p>
+                {t(
+                  "Sending a request does not hold a room. The Owner checks Booking.com, Airbnb and existing reservations before confirming personally.",
+                  "L’envoi d’une demande ne bloque aucune chambre. Le propriétaire vérifie Booking.com, Airbnb et les réservations existantes avant de confirmer personnellement.",
+                )}
+              </p>
+              {error && (
+                <p role="alert" className="admin-error">
+                  {error}
+                </p>
+              )}
+              <button className="btn btn-primary" type="submit">
+                {busy
+                  ? t("Sending…", "Envoi…")
+                  : t(
+                      "Send Booking Request",
+                      "Envoyer la demande de réservation",
+                    )}
+                <span aria-hidden="true"> →</span>
+              </button>
+              <small>
+                {t(
+                  "No online payment · Personal confirmation",
+                  "Aucun paiement en ligne · Confirmation personnelle",
+                )}
+              </small>
             </div>
-            <label className="admin-field">
-              {t(
-                "Special requests · optional",
-                "Demandes particulières · facultatif",
-              )}
-              <textarea name="message" rows={3} maxLength={1600} />
-            </label>
-            <p>
-              {t(
-                "Your request does not hold a room or guarantee availability. It stays Pending until the Owner checks Booking.com, Airbnb and existing reservations.",
-                "Votre demande ne bloque aucune chambre et ne garantit pas la disponibilité. Elle reste en attente jusqu’à la vérification de Booking.com, Airbnb et des réservations existantes par le propriétaire.",
-              )}
-            </p>
-            <button className="btn btn-primary" type="submit">
-              {busy
-                ? t("Sending…", "Envoi…")
-                : t(
-                    "Send Booking Request",
-                    "Envoyer la demande de réservation",
-                  )}
-            </button>
           </fieldset>
-          {error && (
-            <p role="alert" className="admin-error">
-              {error}
-            </p>
-          )}
         </form>
       )}
     </section>

@@ -1,5 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
+import { GroupRequestFields } from "./group-request-fields";
 import { enquirySchema } from "@/lib/enquiries/schema";
 import type { Locale } from "@/lib/i18n";
 import { trackEvent } from "@/lib/analytics/events";
@@ -63,7 +64,7 @@ export function EnquiryForm({
   return (
     <form
       id="enquiry"
-      className="public-enquiry-form"
+      className={"public-enquiry-form" + (group ? " group-request" : "")}
       onSubmit={async (e) => {
         e.preventDefault();
         if (sending.current) return;
@@ -147,152 +148,99 @@ export function EnquiryForm({
         }
       }}
     >
-      <div className="admin-settings-grid">
-        <label className="admin-field">
-          <span>{fr ? "Type de demande" : "Enquiry type"}</span>
-          <select name="kind">
-            {choices.map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="admin-field">
-          <span>{fr ? "Votre nom" : "Your name"}</span>
-          <input
-            name="contactName"
-            required
-            autoComplete="name"
-            minLength={2}
-            maxLength={120}
-          />
-        </label>
-        <label className="admin-field">
-          <span>Email</span>
-          <input
-            name="email"
-            type="email"
-            required
-            autoComplete="email"
-            maxLength={254}
-          />
-        </label>
-        <label className="admin-field">
-          <span>
-            {fr
-              ? "Téléphone / WhatsApp (facultatif)"
-              : "Phone / WhatsApp (optional)"}
-          </span>
-          <input name="phone" type="tel" autoComplete="tel" maxLength={40} />
-        </label>
-        <label className="admin-field">
-          <span>
-            {fr ? "Organisation (facultatif)" : "Organization (optional)"}
-          </span>
-          <input
-            name="organization"
-            maxLength={160}
-            autoComplete="organization"
-          />
-        </label>
-        {group && (
-          <>
+      {group ? (
+        <GroupRequestFields
+          locale={locale}
+          flexible={flexible}
+          onFlexibleChange={setFlexible}
+          initialDates={initialDates}
+          pending={pending}
+        />
+      ) : (
+        <>
+          <div className="admin-settings-grid">
             <label className="admin-field">
-              <span>
-                {fr ? "Mes dates sont flexibles" : "My dates are flexible"}
-              </span>
-              <input
-                type="checkbox"
-                checked={flexible}
-                onChange={(e) => setFlexible(e.target.checked)}
-              />
-            </label>
-            <label className="admin-field">
-              <span>
-                {fr ? "Hébergement souhaité" : "Accommodation preference"}
-              </span>
-              <select name="accommodation">
-                <option>
-                  {fr ? "Flexible / chambres mixtes" : "Flexible / mixed rooms"}
-                </option>
-                <option>{fr ? "Chambres privées" : "Private rooms"}</option>
-                <option>{fr ? "Lits en dortoir" : "Dorm beds"}</option>
+              <span>{fr ? "Type de demande" : "Enquiry type"}</span>
+              <select name="kind">
+                {choices.map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
               </select>
             </label>
-            <fieldset>
-              <legend>
-                {fr
-                  ? "Activités souhaitées · facultatif"
-                  : "Requested activities · optional"}
-              </legend>
-              {["Surf", "Yoga", "Excursions"].map((a) => (
-                <label className="package-extra" key={a}>
-                  <input name="activities" type="checkbox" value={a} />
-                  {a}
-                </label>
-              ))}
-            </fieldset>
             <label className="admin-field">
-              <span>{fr ? "Voyageurs (23 maximum)" : "Guests (up to 23)"}</span>
+              <span>{fr ? "Votre nom" : "Your name"}</span>
               <input
-                name="groupSize"
-                type="number"
-                min={1}
-                max={23}
-                defaultValue={initialDates?.guests}
+                name="contactName"
                 required
+                autoComplete="name"
+                minLength={2}
+                maxLength={120}
               />
             </label>
             <label className="admin-field">
-              <span>{fr ? "Arrivée souhaitée" : "Preferred arrival"}</span>
+              <span>Email</span>
               <input
-                name="checkIn"
-                type="date"
-                disabled={flexible}
-                required={!flexible}
-                defaultValue={initialDates?.checkIn}
+                name="email"
+                type="email"
+                required
+                autoComplete="email"
+                maxLength={254}
               />
             </label>
             <label className="admin-field">
-              <span>{fr ? "Départ souhaité" : "Preferred departure"}</span>
+              <span>
+                {fr
+                  ? "Téléphone / WhatsApp (facultatif)"
+                  : "Phone / WhatsApp (optional)"}
+              </span>
               <input
-                name="checkOut"
-                type="date"
-                disabled={flexible}
-                required={!flexible}
-                defaultValue={initialDates?.checkOut}
+                name="phone"
+                type="tel"
+                autoComplete="tel"
+                maxLength={40}
               />
             </label>
-          </>
-        )}
-      </div>
-      <label className="admin-field">
-        <span>
-          {group
-            ? fr
-              ? "Besoins supplémentaires · facultatif"
-              : "Additional requirements · optional"
-            : fr
-              ? "Votre projet"
-              : "Your plans"}
-        </span>
-        <textarea
-          name="message"
-          defaultValue={initialMessage}
-          rows={6}
-          minLength={group ? undefined : 10}
-          maxLength={3000}
-          required={!group}
-        />
-      </label>
+            <label className="admin-field">
+              <span>
+                {fr ? "Organisation (facultatif)" : "Organization (optional)"}
+              </span>
+              <input
+                name="organization"
+                maxLength={160}
+                autoComplete="organization"
+              />
+            </label>
+          </div>
+          <label className="admin-field">
+            <span>
+              {group
+                ? fr
+                  ? "Besoins supplémentaires · facultatif"
+                  : "Additional requirements · optional"
+                : fr
+                  ? "Votre projet"
+                  : "Your plans"}
+            </span>
+            <textarea
+              name="message"
+              defaultValue={initialMessage}
+              rows={6}
+              minLength={group ? undefined : 10}
+              maxLength={3000}
+              required={!group}
+            />
+          </label>
+        </>
+      )}
       <div className="form-honeypot" aria-hidden="true">
         <label>
           Website
           <input name="website" tabIndex={-1} autoComplete="off" />
         </label>
       </div>
-      <p>
+      <p className={group ? "request-enquiry-note" : undefined}>
         {fr
           ? "Nous utilisons ces informations pour répondre à votre demande. Aucun séjour n’est réservé avant confirmation manuelle du propriétaire."
           : "We use these details to reply to your enquiry. A stay is only reserved after the owner manually confirms it."}

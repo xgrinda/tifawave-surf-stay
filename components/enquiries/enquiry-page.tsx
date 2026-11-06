@@ -1,3 +1,4 @@
+import "@/components/booking/request-experience.css";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/primitives/container";
@@ -84,7 +85,13 @@ export async function EnquiryPage({
             </Link>
           </p>
         )}
-        {area !== "policies" && <EnquiryForm area={area} locale={locale} initialMessage={initialMessage} />}
+        {area !== "policies" && (
+          <EnquiryForm
+            area={area}
+            locale={locale}
+            initialMessage={initialMessage}
+          />
+        )}
         {area === "policies" && (
           <Link
             className="btn btn-primary"

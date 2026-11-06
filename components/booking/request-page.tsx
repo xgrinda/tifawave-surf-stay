@@ -1,3 +1,4 @@
+import "./request-experience.css";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { Container } from "@/components/primitives/container";
 import { RequestForm } from "./request-form";
@@ -39,7 +40,7 @@ export async function RequestPage({
   }
   const fr = locale === "fr";
   return (
-    <main className="booking-page">
+    <main className="booking-page booking-request-page">
       <Container>
         <div className="request-page-heading">
           <p className="eyebrow">
