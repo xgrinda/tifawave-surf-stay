@@ -12,6 +12,7 @@ import {
 } from "@/lib/packages/catalogue";
 import { propertyToday } from "@/lib/booking/schema";
 import { isPublicImageUrl } from "@/lib/image-url";
+import { publicPackageInclusions } from "@/lib/packages/card-content";
 export type PublicSurfPackage = {
   cover: {
     url: string;
@@ -65,6 +66,7 @@ export async function getActiveSurfPackages(
       const parsed = catalogueSchema.safeParse(p.catalogue);
       if (!parsed.success || !parsed.data.arrangementsVerified) return [];
       const c = parsed.data;
+      c.inclusionsFr = publicPackageInclusions(c.inclusionsFr);
       c.variants = c.variants.flatMap((v) => {
         const room = roomRows.data?.find((r) => r.id === v.roomId);
         if (!room) return [];
@@ -128,7 +130,10 @@ export async function getActiveSurfPackages(
                   : "")
               : ""),
           surfLevel: c.levels.map((l) => levelLabel(l, locale)).join(" · "),
-          inclusions: locale === "fr" ? c.inclusionsFr : p.inclusions,
+          inclusions:
+            locale === "fr"
+              ? c.inclusionsFr
+              : publicPackageInclusions(p.inclusions),
           featured: c.featured,
           tone: (["ocean", "sunset", "clay"] as const)[i % 3],
           catalogue: c,

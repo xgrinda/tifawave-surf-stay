@@ -2,6 +2,99 @@ import { requestContextQuery } from "../lib/booking/navigation";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  packageHighlights,
+  publicPackageInclusions,
+} from "../lib/packages/card-content";
+
+test("cards promote useful inclusions after the third line without inventing quantities or losing quote conditions", () => {
+  const lines = [
+    "7 nights’ accommodation",
+    "7 breakfasts",
+    "Access to shared hostel spaces",
+    "4 homemade Moroccan dinners: arrangements and cost to confirm",
+    "5 coached surf days",
+    "Surfboard and wetsuit during lessons: availability and cost to confirm",
+    "Surf-spot transport: provider, vehicle and cost to confirm",
+    "Internal planning target only: EUR 399/person. No selling price approved.",
+    "One Paradise Valley or Timlalin excursion: arrangements to confirm",
+  ];
+  const before = JSON.stringify(lines);
+  const rows = packageHighlights(lines, "en");
+  assert.deepEqual(
+    rows.map((x) => x.key),
+    [
+      "accommodation",
+      "breakfast",
+      "dinner",
+      "coaching",
+      "equipment",
+      "transfers",
+      "excursion",
+    ],
+  );
+  assert.equal(rows[2].text, "4 Moroccan dinners");
+  assert.equal(rows[2].status, "quote");
+  assert.equal(rows[3].text, "5 coached surf days");
+  assert.equal(rows[3].status, "included");
+  assert.equal(rows[4].text, "Board & wetsuit for lessons");
+  assert.equal(rows[4].status, "quote");
+  assert.equal(rows[5].status, "quote");
+  assert.ok(!JSON.stringify(rows).includes("399"));
+  assert.equal(
+    JSON.stringify(lines),
+    before,
+    "presentation never rewrites saved business data",
+  );
+});
+
+test("French card highlights preserve quantities, quote status and singular dinner wording", () => {
+  const rows = packageHighlights(
+    [
+      "Hébergement pour 3 nuits",
+      "3 petits-déjeuners",
+      "1 dîners marocains faits maison : organisation et coût à confirmer",
+      "2 cours de surf",
+      "Planche et combinaison pendant les cours : disponibilité et coût à confirmer",
+      "Transport vers les spots : coût à confirmer",
+    ],
+    "fr",
+  );
+  assert.deepEqual(
+    rows.map((x) => x.status),
+    ["included", "included", "quote", "included", "quote", "quote"],
+  );
+  assert.equal(rows[2].text, "1 dîner marocain");
+  assert.equal(rows[3].text, "2 cours de surf");
+  assert.equal(rows[4].text, "Planche et combinaison en cours");
+});
+
+test("missing or excluded services never gain included checkmarks, and airport transfers are not surf transfers", () => {
+  const empty = packageHighlights([], "en");
+  assert.equal(empty.length, 6);
+  assert.ok(empty.every((x) => x.status === "ask"));
+  const rows = packageHighlights(
+    ["Breakfast", "Dinner not included", "Airport transfers included"],
+    "en",
+  );
+  assert.equal(rows.find((x) => x.key === "dinner")?.status, "excluded");
+  assert.equal(rows.find((x) => x.key === "transfers")?.status, "ask");
+});
+
+test("internal pricing instructions are excluded from guest inclusions while legitimate private-room features remain", () => {
+  const result = publicPackageInclusions([
+    "Internal planning target only: EUR 399/person",
+    "Objectif interne uniquement : 399 €/personne",
+    "Private bathroom",
+    "Private surf lesson",
+    "Breakfast",
+  ]);
+  assert.deepEqual(result, [
+    "Private bathroom",
+    "Private surf lesson",
+    "Breakfast",
+  ]);
+});
+import {
   catalogueSchema,
   emptyCatalogue,
   packageEstimate,

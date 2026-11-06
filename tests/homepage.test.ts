@@ -127,9 +127,8 @@ test("homepage analytics whitelist rejects free text and includes no contact, da
 });
 
 test("Google profile links reject deceptive hosts, credentials and arbitrary destinations", async () => {
-  const { approvedGoogleReviewUrl, reviewLinkState } = await import(
-    "../lib/google-business/review-links"
-  );
+  const { approvedGoogleReviewUrl, reviewLinkState } =
+    await import("../lib/google-business/review-links");
   for (const value of [
     "javascript:alert(1)",
     "http://maps.google.com/",
@@ -171,9 +170,8 @@ test("Google profile links reject deceptive hosts, credentials and arbitrary des
 test("homepage package component handles zero to three featured packages with one clear localized CTA", async () => {
   const { createElement } = await import("react");
   const { renderToStaticMarkup } = await import("react-dom/server");
-  const { FeaturedPackages } = await import(
-    "../components/home/featured-packages"
-  );
+  const { FeaturedPackages } =
+    await import("../components/home/featured-packages");
   const { catalogueSchema } = await import("../lib/packages/catalogue");
   const fixture = (
     i: number,
@@ -190,10 +188,14 @@ test("homepage package component handles zero to three featured packages with on
     unitLabel: "7 nights",
     surfLevel: "Beginner",
     inclusions: [
-      "Breakfast",
-      "Test inclusion two",
-      "Test inclusion three",
-      "Test fourth",
+      "7 nights’ accommodation",
+      "7 breakfasts",
+      "Access to shared hostel spaces",
+      "4 homemade Moroccan dinners: cost to confirm",
+      "5 coached surf days",
+      "Surfboard and wetsuit during lessons: cost to confirm",
+      "Surf-spot transport: cost to confirm",
+      "Internal planning target only: EUR 399/person",
     ],
     featured: true,
     tone: "ocean",
@@ -218,7 +220,12 @@ test("homepage package component handles zero to three featured packages with on
       (html.match(/View Package &amp; Request/g) || []).length,
       count,
     );
-    assert.ok(!html.includes("Test fourth"));
+    assert.ok(html.includes("4 Moroccan dinners"));
+    assert.ok(html.includes("5 coached surf days"));
+    assert.ok(html.includes("Board &amp; wetsuit for lessons"));
+    assert.ok(html.includes("To confirm"));
+    assert.ok(!html.includes("399"));
+    assert.ok(!html.includes("Synthetic layout test only"));
     assert.ok(!html.includes("€0"));
   }
   const html = renderToStaticMarkup(
@@ -233,9 +240,8 @@ test("homepage package component handles zero to three featured packages with on
 });
 
 test("review fallback copy stays localized and uses editorial defaults for blank fields", async () => {
-  const { reviewFallbackText, reviewFallbackDefaults } = await import(
-    "../lib/google-business/review-links"
-  );
+  const { reviewFallbackText, reviewFallbackDefaults } =
+    await import("../lib/google-business/review-links");
   const settings = {
     googleReviewsFallbackEn: "  Owner-approved English introduction.  ",
     googleReviewsFallbackFr: "Présentation française approuvée.",
@@ -389,9 +395,8 @@ test("branding accepts genuine property artwork only and bounds bilingual metada
 
 test("brand artwork processing preserves full artwork and emits the required PNG resolutions", async () => {
   const sharp = (await import("sharp")).default;
-  const { validateArtworkDimensions, renderBrandIcon } = await import(
-    "../lib/content/brand-image"
-  );
+  const { validateArtworkDimensions, renderBrandIcon } =
+    await import("../lib/content/brand-image");
   assert.throws(() => validateArtworkDimensions("logo", 111, 112));
   assert.throws(() => validateArtworkDimensions("favicon", 96, 128));
   assert.throws(() => validateArtworkDimensions("appleIcon", 128, 128));
@@ -417,7 +422,14 @@ test("brand artwork processing preserves full artwork and emits the required PNG
   assert.throws(() => renderBrandIcon(original, 48));
 });
 
-test("canonical public identity never follows a staging or untrusted environment hostname",async()=>{
- const {getSiteUrl}=await import('../lib/site');const original=process.env.NEXT_PUBLIC_SITE_URL;
- try{process.env.NEXT_PUBLIC_SITE_URL='https://preview.example.invalid';assert.equal(getSiteUrl(),'https://tifawave.com');}finally{if(original===undefined)delete process.env.NEXT_PUBLIC_SITE_URL;else process.env.NEXT_PUBLIC_SITE_URL=original;}
+test("canonical public identity never follows a staging or untrusted environment hostname", async () => {
+  const { getSiteUrl } = await import("../lib/site");
+  const original = process.env.NEXT_PUBLIC_SITE_URL;
+  try {
+    process.env.NEXT_PUBLIC_SITE_URL = "https://preview.example.invalid";
+    assert.equal(getSiteUrl(), "https://tifawave.com");
+  } finally {
+    if (original === undefined) delete process.env.NEXT_PUBLIC_SITE_URL;
+    else process.env.NEXT_PUBLIC_SITE_URL = original;
+  }
 });

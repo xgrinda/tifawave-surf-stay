@@ -1150,25 +1150,20 @@ body:has(.conversion-home) .site-header .btn-primary {
   margin: 0 0 14px;
   overflow-wrap: anywhere;
 }
-.conversion-home .hc-package-intro {
-  font-size: 0.9rem;
-  color: #53665f;
+.conversion-home .hc-package-duration {
+  position: absolute;
+  z-index: 1;
+  bottom: 15px;
+  left: 17px;
+  padding: 7px 13px;
+  border-radius: 20px;
+  color: #193a3b;
+  background: #fcfaf4;
+  font-size: 0.74rem;
+  font-weight: 600;
+  box-shadow: 0 3px 12px rgb(16 38 40 / 10%);
 }
-.conversion-home .hc-package-card ul {
-  list-style: none;
-  padding: 18px 0;
-  margin: 0 0 20px;
-  border-block: 1px solid #dce1d5;
-  font-size: 0.85rem;
-}
-.conversion-home .hc-package-card li {
-  display: flex;
-  gap: 10px;
-  margin: 8px 0;
-}
-.conversion-home .hc-package-card li span {
-  color: #586b49;
-}
+.conversion-home .hc-package-card h3 { min-height: 2.32em; margin-bottom: 12px; }
 .conversion-home .hc-package-footer {
   margin-top: auto;
 }

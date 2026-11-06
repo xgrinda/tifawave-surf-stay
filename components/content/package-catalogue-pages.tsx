@@ -17,6 +17,7 @@ import {
 import { propertyToday } from "@/lib/booking/schema";
 import { isPublicImageUrl } from "@/lib/image-url";
 import "./surf-catalogue.css";
+import { PackageHighlights, PackageQuoteNote } from "./package-highlights";
 export async function PackageList({ locale }: { locale: Locale }) {
   const fr = locale === "fr",
     path = (p: string) => localizedPath(locale, p);
@@ -55,12 +56,7 @@ export async function PackageList({ locale }: { locale: Locale }) {
                   {p.unitLabel} · {p.surfLevel}
                 </p>
                 <h2>{p.name}</h2>
-                <p>{p.shortDescription}</p>
-                <ul>
-                  {p.inclusions.slice(0, 5).map((x) => (
-                    <li key={x}>{x}</li>
-                  ))}
-                </ul>
+                <PackageHighlights inclusions={p.inclusions} locale={locale} />
                 <p className="sp-price">
                   {p.priceLabel}
                   <small>{p.pricingLabel}</small>
@@ -79,6 +75,7 @@ export async function PackageList({ locale }: { locale: Locale }) {
               </article>
             ))}
           </div>
+          {packages.length > 0 && <PackageQuoteNote locale={locale} />}
           {!packages.length && (
             <div className="public-empty-state">
               <h2>

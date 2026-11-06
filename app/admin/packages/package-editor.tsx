@@ -282,6 +282,13 @@ export function PackageEditor({
             </div>
           </EditorPanel>
           <EditorPanel id="inclusions" title="Inclusions & Activities">
+            <p>
+              Cards highlight accommodation, breakfast, dinners, surf coaching,
+              equipment and surf-spot transfers. Use one clear service per line,
+              with its quantity. Mark anything not yet agreed “to confirm”.
+              Internal planning notes and target prices do not belong in public
+              inclusions.
+            </p>
             <p>Surf levels offered after provider confirmation:</p>
             <div className="ops-toolbar">
               {Object.entries(levelNames).map(([v, label]) => (

@@ -6938,3 +6938,49 @@ select {
 
 
 .site-brand-logo{width:auto;max-width:180px;height:56px;object-fit:contain}.footer-brand .site-brand-logo{max-width:200px;height:72px}
+
+/* Shared package comparison cards: homepage and full catalogue. */
+.conversion-home .package-highlights,
+.sp-catalogue .package-highlights {
+  list-style: none;
+  padding: 14px 0;
+  margin: 0 0 22px;
+  display: grid;
+  gap: 0;
+  border-block: 1px solid #dce1d5;
+}
+.conversion-home .package-highlights .package-highlight,
+.sp-catalogue .package-highlights .package-highlight {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  gap: 9px;
+  align-items: baseline;
+  min-height: 35px;
+  padding: 7px 0;
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #193a3b;
+}
+.package-highlights .package-highlight-icon { color: #47624b; }
+.package-highlights .package-highlight-text { min-width: 0; overflow-wrap: anywhere; }
+.package-highlights .package-highlight-status {
+  color: #765521;
+  background: #f4ecd9;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.package-highlights .is-ask .package-highlight-status,
+.package-highlights .is-excluded .package-highlight-status { background: #eaf0eb; color: #405b50; }
+.conversion-home .package-quote-note,
+.sp-catalogue .package-quote-note {
+  max-width: 720px;
+  margin: 24px auto 0;
+  text-align: center;
+  color: #53665f;
+  font-size: 0.79rem;
+  line-height: 1.65;
+}
