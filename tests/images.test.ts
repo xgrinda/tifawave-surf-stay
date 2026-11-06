@@ -8,6 +8,9 @@ import { contentSchema } from "../lib/content/schema";
 import { moduleSchemas } from "../lib/admin/module-schema";
 import { approvedImages, rejectedImages, imageRoot } from "./image-fixtures";
 import config from "../next.config.mjs";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { HeroMedia } from "../components/home/hero-media";
 
 test("only the Owner's Cloudinary image uploads and safe transforms are allowed", () => {
   for (const url of approvedImages) {
@@ -72,4 +75,15 @@ test("server save probes only approved Cloudinary delivery, without following re
     new Response(null,{status:200,headers:{"content-type":"image/jpeg","content-length":"99999999"}}),
   ]) await assert.rejects(verifyCloudinaryImage(imageRoot+"missing.jpg",async()=>response),/could not be verified/);
   await assert.rejects(verifyCloudinaryImage(approvedImages[0],async()=>{throw Error("Timeout");}),/could not be verified/);
+});
+
+test("actual hero picture sources retain directly optimized mobile and desktop URLs", () => {
+  const desktop = approvedImages[1], mobile = approvedImages[2];
+  for (const html of [
+    renderToStaticMarkup(createElement(HeroMedia,{image:desktop,mobileImage:mobile,alt:"Photo",video:"",locale:"fr"})),
+  ]) {
+    assert.ok(html.includes(desktop));
+    assert.ok(html.includes(mobile),"mobile source must not disappear when srcSet is unoptimized");
+    assert.ok(!html.includes("/_next/image"),"no second encode of already optimized delivery");
+  }
 });
