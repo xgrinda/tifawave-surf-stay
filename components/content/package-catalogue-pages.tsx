@@ -56,7 +56,11 @@ export async function PackageList({ locale }: { locale: Locale }) {
                   {p.unitLabel} · {p.surfLevel}
                 </p>
                 <h2>{p.name}</h2>
-                <PackageHighlights inclusions={p.inclusions} locale={locale} />
+                <PackageHighlights
+                  inclusions={p.inclusions}
+                  description={p.fullDescription}
+                  locale={locale}
+                />
                 <p className="sp-price">
                   {p.priceLabel}
                   <small>{p.pricingLabel}</small>

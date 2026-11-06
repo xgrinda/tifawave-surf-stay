@@ -4,8 +4,10 @@ import type { Locale } from "@/lib/i18n";
 export function PackageHighlights({
   inclusions,
   locale,
+  description,
 }: {
   inclusions: string[];
+  description?: string;
   locale: Locale;
 }) {
   const fr = locale === "fr";
@@ -29,7 +31,7 @@ export function PackageHighlights({
         fr ? "Les prestations en un coup d’œil" : "Your stay at a glance"
       }
     >
-      {packageHighlights(inclusions, locale).map((item) => (
+      {packageHighlights(inclusions, locale, description).map((item) => (
         <li key={item.key} className={"package-highlight is-" + item.status}>
           <span className="package-highlight-icon" aria-hidden="true">
             {item.status === "included"

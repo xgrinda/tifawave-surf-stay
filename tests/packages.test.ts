@@ -68,6 +68,23 @@ test("French card highlights preserve quantities, quote status and singular dinn
   assert.equal(rows[4].text, "Planche et combinaison en cours");
 });
 
+test("card checkmarks respect conditional services in the saved description", () => {
+  const rows = packageHighlights(
+    ["7 nights’ accommodation", "7 breakfasts", "5 coached surf days"],
+    "en",
+    "Accommodation and breakfast are confirmed. Coaching, equipment and transport are subject to provider availability and written confirmation in your personal quote.",
+  );
+  assert.equal(rows[0].status, "included");
+  assert.equal(rows[1].status, "included");
+  assert.equal(rows[3].status, "quote");
+  const french = packageHighlights(
+    ["2 cours de surf"],
+    "fr",
+    "Les cours de surf sont sous réserve de confirmation dans le devis personnalisé.",
+  );
+  assert.equal(french[3].status, "quote");
+});
+
 test("missing or excluded services never gain included checkmarks, and airport transfers are not surf transfers", () => {
   const empty = packageHighlights([], "en");
   assert.equal(empty.length, 6);

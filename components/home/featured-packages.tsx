@@ -44,7 +44,11 @@ export function FeaturedPackages({
                 <span>{pkg.surfLevel}</span>
               </p>
               <h3>{pkg.name}</h3>
-              <PackageHighlights inclusions={pkg.inclusions} locale={locale} />
+              <PackageHighlights
+                inclusions={pkg.inclusions}
+                description={pkg.fullDescription}
+                locale={locale}
+              />
               <div className="hc-package-footer">
                 <p className="hc-offer-price">
                   {pkg.priceLabel}

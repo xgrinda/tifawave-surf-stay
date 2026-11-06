@@ -64,6 +64,7 @@ export type PackageHighlight = {
 export function packageHighlights(
   lines: string[],
   locale: Locale,
+  description = "",
 ): PackageHighlight[] {
   const fr = locale === "fr";
   const publicLines = publicPackageInclusions(lines);
@@ -90,10 +91,14 @@ export function packageHighlights(
     const excluded = /not included|non inclus|not available|indisponible/.test(
       sourceKey,
     );
+    const needsConfirmation =
+      /to confirm|on request|subject to|optional|personal quote|a confirmer|sur demande|sous reserve|facultatif|sur devis|devis personnalise/;
     const conditional =
-      /to confirm|on request|subject to|optional|personal quote|a confirmer|sur demande|sous reserve|facultatif|sur devis/.test(
-        sourceKey,
-      );
+      needsConfirmation.test(sourceKey) ||
+      description.split(/[.!?]/).some((sentence) => {
+        const key = normalized(sentence);
+        return feature.match.test(key) && needsConfirmation.test(key);
+      });
     let text = matches[0].split(/\s*:\s*/)[0].trim();
     if (
       feature.key === "equipment" &&
