@@ -80,7 +80,7 @@ test("card checkmarks respect conditional services in the saved description", ()
   const french = packageHighlights(
     ["2 cours de surf"],
     "fr",
-    "Les cours de surf sont sous réserve de confirmation dans le devis personnalisé.",
+    "Les cours, le matériel et les transports restent soumis à une confirmation écrite dans votre devis personnalisé.",
   );
   assert.equal(french[3].status, "quote");
 });

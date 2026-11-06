@@ -35,7 +35,7 @@ const features = [
   {
     key: "coaching",
     label: ["Surf coaching", "Cours de surf"],
-    match: /coach|lessons?|cours.*surf|surf.*encadre/,
+    match: /coach|lessons?|cours.*surf|cours[,;]|surf.*encadre/,
   },
   {
     key: "equipment",
