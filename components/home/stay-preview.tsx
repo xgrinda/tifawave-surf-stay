@@ -1,4 +1,4 @@
-import { isOptimizedCloudinaryImage } from "@/lib/cloudinary-image";
+import { isExternalImageUrl } from "@/lib/image-url";
 import { getWebsiteSettings } from "@/lib/settings";
 import Image from "next/image";
 import { Container } from "@/components/primitives/container";
@@ -31,7 +31,7 @@ export async function StayPreview({
               priority
               quality={84}
               sizes="(max-width: 880px) 100vw, 50vw"
-              src={image.imageUrl} unoptimized={isOptimizedCloudinaryImage(image.imageUrl)}
+              src={image.imageUrl} unoptimized={isExternalImageUrl(image.imageUrl)}
               style={{
                 objectPosition: focalPositionToCss(image.focalPosition),
               }}

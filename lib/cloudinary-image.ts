@@ -1,5 +1,5 @@
 // Public delivery account, not a credential. Keep the database policy and
-// next.config.mjs remotePatterns scoped to this same account and resource type.
+// browser CSP scoped to this same account and resource type.
 export const cloudinaryImagePrefix =
   "https://res.cloudinary.com/dytykwtc/image/upload/";
 
@@ -17,11 +17,4 @@ export function isCloudinaryImageUrl(value: string): boolean {
   }
   if (/^v[0-9]+$/.test(parts[0]) && parts.length > 1) parts.shift();
   return parts.every((part) => !command.test(part) && /^[A-Za-z0-9_-]+(?:\.(?:jpg|jpeg|png|webp|avif|gif))?$/i.test(part));
-}
-
-/** Respect explicitly optimized Cloudinary delivery instead of encoding it twice. */
-export function isOptimizedCloudinaryImage(value: string): boolean {
-  return isCloudinaryImageUrl(value) &&
-    /(?:\/|,)f_(?:auto|avif|webp|jpg|jpeg|png|gif)(?:,|\/)/.test(value) &&
-    /(?:\/|,)q_(?:auto(?::(?:best|good|eco|low))?|[1-9][0-9]?|100)(?:,|\/)/.test(value);
 }

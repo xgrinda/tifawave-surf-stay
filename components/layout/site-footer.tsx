@@ -1,5 +1,5 @@
 "use client";
-import { isOptimizedCloudinaryImage } from "@/lib/cloudinary-image";
+import { isExternalImageUrl } from "@/lib/image-url";
 
 import Link from "next/link";
 import Image from "next/image";
@@ -71,7 +71,7 @@ export function SiteFooter({
             >
               {logo ? (
                 <Image
-                  src={logo} unoptimized={isOptimizedCloudinaryImage(logo)}
+                  src={logo} unoptimized={isExternalImageUrl(logo)}
                   alt="Tifawave Surf Stay"
                   width={180}
                   height={64}

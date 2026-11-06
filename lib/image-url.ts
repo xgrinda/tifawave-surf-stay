@@ -1,5 +1,5 @@
 import { isCloudinaryImageUrl } from "./cloudinary-image";
-/** Match Next's bounded image hosts; unknown URLs must never crash public pages. */
+/** Approved browser sources; Next's optimizer accepts property Storage only. */
 export function isPublicImageUrl(value: string): boolean {
   try {
     if (/[\\\s\u0000-\u001f\u007f]/.test(value)) return false;
@@ -24,4 +24,10 @@ export function isPublicImageUrl(value: string): boolean {
   } catch {
     return false;
   }
+}
+
+/** External photographs bypass the server optimizer, including originals. */
+export function isExternalImageUrl(value: string): boolean {
+  return isPublicImageUrl(value) &&
+    ["res.cloudinary.com", "images.unsplash.com", "images.pexels.com"].includes(new URL(value).hostname);
 }

@@ -1,4 +1,4 @@
-import { isOptimizedCloudinaryImage } from "@/lib/cloudinary-image";
+import { isExternalImageUrl } from "@/lib/image-url";
 import Image from "next/image";
 import { Container } from "@/components/primitives/container";
 import { focalPositionToCss } from "@/lib/image-position";
@@ -28,7 +28,7 @@ export function PlaceSection({
               fill
               quality={84}
               sizes="(max-width: 880px) 100vw, 50vw"
-              src={image.imageUrl} unoptimized={isOptimizedCloudinaryImage(image.imageUrl)}
+              src={image.imageUrl} unoptimized={isExternalImageUrl(image.imageUrl)}
               style={{
                 objectPosition: focalPositionToCss(image.focalPosition)
               }}

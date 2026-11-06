@@ -199,15 +199,21 @@ test("media library and pricing endpoints fail closed without authentication or 
   );
 });
 
- test("Cloudinary optimizer rejects other accounts and remote transformation tricks before fetching", async () => {
+test("image optimizer refuses all external sources including trusted Cloudinary originals", async () => {
   for (const value of [
+    "https://res.cloudinary.com/dytykwtc/image/upload/v1793922284/paradis-valley.jpg",
+    "https://res.cloudinary.com/dytykwtc/image/upload/f_auto,q_auto/v1793922284/paradis-valley.jpg",
     "https://res.cloudinary.com/other/image/upload/test.jpg",
     "https://res.cloudinary.com/dytykwtc/image/upload/l_fetch:abc/test.jpg",
     "https://res.cloudinary.com/dytykwtc/image/upload/t_unknown/test.jpg",
     "https://res.cloudinary.com/dytykwtc/image/fetch/https://127.0.0.1/test.jpg",
+    "https://images.unsplash.com/photo-test",
+    "https://images.pexels.com/photos/123/test.jpg",
+    "https://127.0.0.1/private.jpg",
+    "https://169.254.169.254/metadata",
+    "https://untrusted.invalid/test.jpg",
   ]) {
     const response = await get("/_next/image?url=" + encodeURIComponent(value) + "&w=640&q=75");
-    assert.equal(response.status,400);
-    assert.deepEqual(await response.json(),{message:"Unsupported image URL."});
+    assert.equal(response.status,400,value);
   }
 });

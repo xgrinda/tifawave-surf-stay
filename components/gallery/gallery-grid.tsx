@@ -1,5 +1,5 @@
 "use client";
-import { isOptimizedCloudinaryImage } from "@/lib/cloudinary-image";
+import { isExternalImageUrl } from "@/lib/image-url";
 
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
@@ -128,7 +128,7 @@ export function GalleryGrid({
               priority={index === 0}
               quality={82}
               sizes="(max-width: 560px) 100vw, (max-width: 920px) 50vw, 25vw"
-              src={image.imageUrl} unoptimized={isOptimizedCloudinaryImage(image.imageUrl)}
+              src={image.imageUrl} unoptimized={isExternalImageUrl(image.imageUrl)}
               style={{
                 objectPosition: focalPositionToCss(image.focalPosition)
               }}
@@ -169,7 +169,7 @@ export function GalleryGrid({
                 fill
                 quality={88}
                 sizes="(max-width: 920px) 100vw, 1060px"
-                src={selectedImage.imageUrl} unoptimized={isOptimizedCloudinaryImage(selectedImage.imageUrl)}
+                src={selectedImage.imageUrl} unoptimized={isExternalImageUrl(selectedImage.imageUrl)}
                 style={{
                   objectPosition: focalPositionToCss(selectedImage.focalPosition)
                 }}

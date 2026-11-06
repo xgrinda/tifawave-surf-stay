@@ -31,8 +31,6 @@ const nextConfig = {
     maximumRedirects: 0,
     dangerouslyAllowLocalIP: false,
     remotePatterns: [
-      { protocol: "https", hostname: "res.cloudinary.com", port: "",
-        pathname: "/dytykwtc/image/upload/**", search: "" },
       {
         hostname: process.env.NEXT_PUBLIC_SUPABASE_URL
           ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
@@ -45,16 +43,6 @@ const nextConfig = {
         hostname: "tuzefzcosvvhzffbxhpm.supabase.co",
         protocol: "https",
         pathname: "/storage/v1/object/public/tifawave-media/**",
-        port: "",
-      },
-      {
-        hostname: "images.unsplash.com",
-        protocol: "https",
-        port: "",
-      },
-      {
-        hostname: "images.pexels.com",
-        protocol: "https",
         port: "",
       },
     ],

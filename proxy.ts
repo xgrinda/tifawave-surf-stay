@@ -3,19 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { assertDatabaseTarget } from "@/lib/security/environment";
 import { adminRouteRoles } from "@/lib/admin/route-access";
 import type { Database } from "@/types/database";
-import { isCloudinaryImageUrl } from "@/lib/cloudinary-image";
 
 export async function proxy(request: NextRequest) {
-  // remotePatterns bounds host/path; also reject unsupported Cloudinary
-  // transformations before Next's optimizer performs any remote fetch.
-  if (request.nextUrl.pathname === "/_next/image") {
-    const source = request.nextUrl.searchParams.get("url") || "";
-    try {
-      if (new URL(source).hostname === "res.cloudinary.com" && !isCloudinaryImageUrl(source))
-        return NextResponse.json({ message: "Unsupported image URL." }, { status: 400 });
-    } catch { /* Local paths and invalid URLs are handled by Next itself. */ }
-    return NextResponse.next();
-  }
   const headers = new Headers(request.headers);
   headers.set("x-pathname", request.nextUrl.pathname);
   let response = NextResponse.next({ request: { headers } });
@@ -125,5 +114,5 @@ export async function proxy(request: NextRequest) {
   return response;
 }
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)", "/_next/image"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

@@ -3,7 +3,7 @@ import { getImageProps } from "next/image";
 import { useEffect, useRef, useState } from "react";
 import type { Locale } from "@/lib/i18n";
 import { focalPositionToCss, type FocalPosition } from "@/lib/image-position";
-import { isOptimizedCloudinaryImage } from "@/lib/cloudinary-image";
+import { isExternalImageUrl } from "@/lib/image-url";
 export function HeroMedia({
   image,
   alt,
@@ -89,16 +89,16 @@ export function HeroMedia({
                   height: 1350,
                   sizes: "100vw",
                   quality: 80,
-                  unoptimized: isOptimizedCloudinaryImage(mobileImage),
+                  unoptimized: isExternalImageUrl(mobileImage),
                 }).props.srcSet || mobileImage
               }
             />
           )}
-          {/* Retain Cloudinary optimization; Next optimizes ordinary originals. */}
+          {/* External hosts deliver directly; Next optimizes property Storage only. */}
           <img
             {...getImageProps({
               src: image,
-              unoptimized: isOptimizedCloudinaryImage(image),
+              unoptimized: isExternalImageUrl(image),
               alt,
               width: 2400,
               height: 1350,

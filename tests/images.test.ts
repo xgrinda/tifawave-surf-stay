@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { getImageProps } from "next/image";
-import { isPublicImageUrl } from "../lib/image-url";
-import { isCloudinaryImageUrl, isOptimizedCloudinaryImage } from "../lib/cloudinary-image";
+import { isPublicImageUrl, isExternalImageUrl } from "../lib/image-url";
+import { isCloudinaryImageUrl } from "../lib/cloudinary-image";
 import { verifyCloudinaryImage } from "../lib/verify-cloudinary-image";
 import { contentSchema } from "../lib/content/schema";
 import { moduleSchemas } from "../lib/admin/module-schema";
@@ -33,9 +33,15 @@ test("existing CMS slots, mobile photos, sections, branding and package schemas 
   assert.ok(!contentSchema.safeParse({homeMedia:[{slot:"breakfast",imageUrl:rejectedImages[1]}]}).success);
 });
 
-test("optimizer and browser policy are bounded to the owned upload path with redirects disabled", async () => {
-  const patterns = config.images!.remotePatterns!.filter((p) => p.hostname === "res.cloudinary.com");
-  assert.deepEqual(patterns,[{protocol:"https",hostname:"res.cloudinary.com",port:"",pathname:"/dytykwtc/image/upload/**",search:""}]);
+test("optimizer accepts property Storage only; browser delivery retains the trusted external allowlist", async () => {
+  const patterns = config.images!.remotePatterns!;
+  assert.equal(patterns.length,2);
+  for (const p of patterns) {
+    assert.ok(p.hostname.endsWith(".supabase.co"));
+    assert.equal(p.protocol,"https");
+    assert.equal(p.port,"");
+    assert.equal(p.pathname,"/storage/v1/object/public/tifawave-media/**");
+  }
   assert.equal(config.images!.maximumRedirects,0);
   assert.equal(config.images!.dangerouslyAllowLocalIP,false);
   const csp = (await config.headers!())[0].headers.find((h) => h.key === "Content-Security-Policy")!.value;
@@ -43,15 +49,16 @@ test("optimizer and browser policy are bounded to the owned upload path with red
   assert.ok(!csp.includes("https://*.cloudinary.com"));
 });
 
-test("already optimized Cloudinary images bypass a second encode, including mobile sources", () => {
-  assert.equal(isOptimizedCloudinaryImage(approvedImages[0]),false);
-  for (const url of approvedImages.slice(1)) {
-    assert.ok(isOptimizedCloudinaryImage(url));
-    const props = getImageProps({src:url,alt:"Photo",width:640,height:480,unoptimized:isOptimizedCloudinaryImage(url)}).props;
+test("all approved external originals and transformed images use direct browser delivery", () => {
+  for (const url of [...approvedImages,"https://images.unsplash.com/photo-test?w=640","https://images.pexels.com/photos/123/test.jpeg"]) {
+    assert.ok(isExternalImageUrl(url));
+    const props = getImageProps({src:url,alt:"Photo",width:640,height:480,unoptimized:isExternalImageUrl(url)}).props;
     assert.equal(props.src,url);
     assert.equal(props.srcSet,undefined);
   }
-  assert.ok(!isOptimizedCloudinaryImage(rejectedImages[1]));
+  for (const url of rejectedImages) assert.equal(isExternalImageUrl(url),false,url);
+  const own="https://tuzefzcosvvhzffbxhpm.supabase.co/storage/v1/object/public/tifawave-media/photo.webp";
+  assert.equal(isExternalImageUrl(own),false);
 });
 
 test("server save probes only approved Cloudinary delivery, without following redirects", async () => {
@@ -77,13 +84,12 @@ test("server save probes only approved Cloudinary delivery, without following re
   await assert.rejects(verifyCloudinaryImage(approvedImages[0],async()=>{throw Error("Timeout");}),/could not be verified/);
 });
 
-test("actual hero picture sources retain directly optimized mobile and desktop URLs", () => {
-  const desktop = approvedImages[1], mobile = approvedImages[2];
-  for (const html of [
-    renderToStaticMarkup(createElement(HeroMedia,{image:desktop,mobileImage:mobile,alt:"Photo",video:"",locale:"fr"})),
-  ]) {
+test("actual bilingual hero sources bypass optimization for external originals and transformed images", () => {
+  const desktop = approvedImages[0], mobile = approvedImages[1];
+  for (const locale of ["en","fr"] as const) {
+    const html = renderToStaticMarkup(createElement(HeroMedia,{image:desktop,mobileImage:mobile,alt:"Photo",video:"",locale}));
     assert.ok(html.includes(desktop));
     assert.ok(html.includes(mobile),"mobile source must not disappear when srcSet is unoptimized");
-    assert.ok(!html.includes("/_next/image"),"no second encode of already optimized delivery");
+    assert.ok(!html.includes("/_next/image"),"external delivery never goes through the optimizer");
   }
 });
