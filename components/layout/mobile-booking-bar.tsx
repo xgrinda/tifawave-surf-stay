@@ -10,10 +10,24 @@ export function MobileBookingBar({ whatsappHref }: { whatsappHref: string }) {
 
   return (
     <aside className="mobile-booking-bar" aria-label={copy.aria.quickBooking}>
-      <a className="btn btn-primary" href={localizedPath(locale, "/book")} data-home-cta="mobile_request" data-intent="room">
+      <a
+        className="btn btn-primary"
+        href={
+          /^\/(fr\/)?book$/.test(pathname)
+            ? "#booking-request"
+            : localizedPath(locale, "/book")
+        }
+        data-home-cta="mobile_request"
+        data-intent="room"
+      >
         {copy.nav.book}
       </a>
-      <a className="btn btn-whatsapp" href={whatsappHref} data-home-cta="mobile_whatsapp" data-intent="contact">
+      <a
+        className="btn btn-whatsapp"
+        href={whatsappHref}
+        data-home-cta="mobile_whatsapp"
+        data-intent="contact"
+      >
         {copy.common.whatsapp}
       </a>
     </aside>

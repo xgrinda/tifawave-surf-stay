@@ -7,12 +7,14 @@ export function GroupRequestFields({
   onFlexibleChange,
   initialDates,
   pending,
+  initialMessage,
 }: {
   locale: Locale;
   flexible: boolean;
   onFlexibleChange: (value: boolean) => void;
   initialDates?: { checkIn: string; checkOut: string; guests: number };
   pending: boolean;
+  initialMessage?: string;
 }) {
   const fr = locale === "fr",
     t = (en: string, french: string) => (fr ? french : en);
@@ -131,6 +133,7 @@ export function GroupRequestFields({
           )}
           <textarea
             name="message"
+            defaultValue={initialMessage}
             rows={3}
             maxLength={3000}
             placeholder={t(

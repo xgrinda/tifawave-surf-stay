@@ -36,6 +36,7 @@
   margin: 0;
 }
 .request-experience .booking-mode-tabs {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   border: 1px solid #d6dfd5;
   border-radius: 19px;
   padding: 7px;

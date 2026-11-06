@@ -155,6 +155,7 @@ export function EnquiryForm({
           onFlexibleChange={setFlexible}
           initialDates={initialDates}
           pending={pending}
+          initialMessage={initialMessage}
         />
       ) : (
         <>

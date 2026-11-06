@@ -269,7 +269,11 @@ export function RequestForm({
       </section>
     );
   return (
-    <section className="booking-panel request-experience" aria-busy={busy}>
+    <section
+      id="booking-request"
+      className="booking-panel request-experience"
+      aria-busy={busy}
+    >
       <div className="request-mode-heading">
         <span className="eyebrow">
           {t("Make it your kind of stay", "Un séjour à votre image")}
@@ -827,15 +831,17 @@ export function RequestForm({
               </label>
               <div className="request-grid">
                 <label className="admin-field">
-                  Email
+                  <span id="booking-email-label">Email</span>
                   <input
+                    aria-labelledby="booking-email-label"
+                    aria-describedby="booking-email-hint"
                     name="guestEmail"
                     type="email"
                     autoComplete="email"
                     maxLength={254}
                     required
                   />
-                  <small>
+                  <small id="booking-email-hint">
                     {t(
                       "We’ll reply to this address.",
                       "Nous répondrons à cette adresse.",
