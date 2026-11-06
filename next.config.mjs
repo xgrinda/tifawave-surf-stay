@@ -15,7 +15,11 @@ const nextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value: "frame-ancestors 'none'; object-src 'none'; base-uri 'self'; img-src 'self' data: blob: https://res.cloudinary.com/dytykwtc/image/upload/ https://tuzefzcosvvhzffbxhpm.supabase.co/storage/v1/object/public/tifawave-media/ https://images.unsplash.com https://images.pexels.com " + (process.env.NEXT_PUBLIC_SUPABASE_URL || "https://unconfigured.supabase.co") + "/storage/v1/object/public/tifawave-media/",
+            value:
+              "frame-ancestors 'none'; frame-src 'self' https://www.google.com/maps/ https://www.google.com/maps https://maps.google.com/maps/ https://maps.google.com/maps; object-src 'none'; base-uri 'self'; img-src 'self' data: blob: https://res.cloudinary.com/dytykwtc/image/upload/ https://tuzefzcosvvhzffbxhpm.supabase.co/storage/v1/object/public/tifawave-media/ https://images.unsplash.com https://images.pexels.com " +
+              (process.env.NEXT_PUBLIC_SUPABASE_URL ||
+                "https://unconfigured.supabase.co") +
+              "/storage/v1/object/public/tifawave-media/",
           },
         ],
       },

@@ -1,3 +1,5 @@
+import { GoogleMap } from "./google-map";
+import { approvedGoogleMapsEmbedUrl } from "@/lib/google-business/map-links";
 import { Container } from "@/components/primitives/container";
 import type { WebsiteSettings } from "@/lib/settings";
 
@@ -13,32 +15,30 @@ const copy = {
   en: {
     eyebrow: "Find us in Tamraght",
     title: "Close to the surf, tucked into village rhythm.",
-    body:
-      "Tifawave is based in Tamraght, a relaxed coastal village near Taghazout and Agadir's surf breaks.",
+    body: "Tifawave is based in Tamraght, a relaxed coastal village near Taghazout and Agadir's surf breaks.",
     mapTitle: "Tifawave location map",
     address: "Address",
-    openMap: "Open in Google Maps"
+    openMap: "Open in Google Maps",
   },
   fr: {
     eyebrow: "Nous trouver à Tamraght",
     title: "Proche du surf, ancré dans le rythme du village.",
-    body:
-      "Tifawave est basé à Tamraght, un village côtier détendu près de Taghazout et des spots autour d'Agadir.",
+    body: "Tifawave est basé à Tamraght, un village côtier détendu près de Taghazout et des spots autour d'Agadir.",
     mapTitle: "Carte de localisation Tifawave",
     address: "Adresse",
-    openMap: "Ouvrir dans Google Maps"
-  }
+    openMap: "Ouvrir dans Google Maps",
+  },
 } as const;
 
 function fallbackGoogleMapsHref(address: string): string {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-    address
+    address,
   )}`;
 }
 
 export function LocationSection({
   locale = "en",
-  settings
+  settings,
 }: LocationSectionProps) {
   const text = copy[locale];
   const mapHref =
@@ -62,16 +62,8 @@ export function LocationSection({
           </a>
         </div>
 
-        {settings.googleMapsEmbedUrl ? (
-          <div className="location-map-frame">
-            <iframe
-              allowFullScreen
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              src={settings.googleMapsEmbedUrl}
-              title={text.mapTitle}
-            />
-          </div>
+        {approvedGoogleMapsEmbedUrl(settings.googleMapsEmbedUrl) ? (
+          <GoogleMap url={settings.googleMapsEmbedUrl} title={text.mapTitle} />
         ) : (
           <div className="location-map-card" aria-label={text.mapTitle}>
             <span>{settings.businessName}</span>

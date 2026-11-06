@@ -1,3 +1,9 @@
+import "./detail-pages.css";
+import { packageInclusionDetails } from "@/lib/packages/card-content";
+import { getActiveRooms } from "@/lib/rooms";
+import { getWebsiteSettings, getWhatsappHref } from "@/lib/settings";
+import { RoomBathroom } from "./room-bathroom";
+import { MobileBookingBar } from "@/components/layout/mobile-booking-bar";
 import { CmsPhoto } from "./cms-photo";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -116,127 +122,260 @@ export async function PackageDetail({
   if (!p) notFound();
   const c = p.catalogue,
     fr = locale === "fr",
-    t = (en: string, frs: string) => (fr ? frs : en),
+    t = (en: string, french: string) => (fr ? french : en),
     path = (x: string) => localizedPath(locale, x);
   const db = createSupabaseServerClient();
-  const photos = await db
-    .from("package_photos")
-    .select(
-      "id,image_url,alt_text,caption,focal_position,mobile_focal_position",
-    )
-    .eq("package_id", p.id)
-    .order("sort_order");
+  const [photos, rooms, settings] = await Promise.all([
+    db
+      .from("package_photos")
+      .select(
+        "id,image_url,alt_text,caption,focal_position,mobile_focal_position",
+      )
+      .eq("package_id", p.id)
+      .order("sort_order"),
+    getActiveRooms(),
+    getWebsiteSettings(),
+  ]);
   const images = (photos.data || []).filter((i) =>
     isPublicImageUrl(i.image_url),
   );
+  const services = packageInclusionDetails(
+    p.inclusions,
+    locale,
+    p.fullDescription,
+  );
+  const included = services.filter((x) => x.status === "included"),
+    conditional = services.filter((x) => x.status === "quote");
+  const excluded = [
+    ...(fr ? c.exclusionsFr : c.exclusions),
+    ...services
+      .filter((x) => x.status === "excluded")
+      .map((x) => x.text + (x.note ? ": " + x.note : "")),
+  ];
+  const requestHref = path("/book") + "?packageId=" + p.id;
+  const formatDate = (value: string) =>
+    new Intl.DateTimeFormat(fr ? "fr-FR" : "en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      timeZone: "UTC",
+    }).format(new Date(value + "T00:00:00Z"));
   return (
-    <main className="surf-package-detail-page sp-catalogue">
-      <section className="surf-package-detail-hero">
-        <Container className="surf-package-detail-hero-inner">
-          <div>
+    <main
+      className="surf-package-detail-page sp-catalogue detail-page"
+      data-booking-href={requestHref}
+    >
+      <section className="detail-hero">
+        <Container className="detail-hero-grid">
+          <div className="detail-hero-copy">
+            <Link className="detail-back-link" href={path("/surf/packages")}>
+              ← {t("All packages", "Tous les séjours")}
+            </Link>
             <p className="eyebrow">{p.unitLabel} · Tamraght</p>
             <h1>{p.name}</h1>
-            <p>{p.shortDescription}</p>
-            <p>{p.fullDescription}</p>
-            <div className="surf-package-detail-actions">
-              <Link
-                className="btn btn-primary"
-                href={path("/book") + "?packageId=" + p.id}
-              >
-                {t("Request This Package", "Demander ce séjour")}
-              </Link>
-              <Link href={path("/surf/packages")}>
-                {t("All packages", "Tous les séjours")} →
-              </Link>
+            <p className="detail-intro">{p.shortDescription}</p>
+            <div className="detail-badges">
+              <span>{p.unitLabel}</span>
+              <span>{p.surfLevel}</span>
             </div>
-            <p>
+            <div className="detail-package-price">
+              <strong>{p.priceLabel}</strong>
+              <small>{p.pricingLabel}</small>
+            </div>
+            <div className="detail-hero-actions">
+              <Link className="btn btn-primary" href={requestHref}>
+                {t("Request This Package", "Demander ce séjour")} →
+              </Link>
+              <a className="detail-text-link" href="#package-inclusions">
+                {t("What’s in the stay", "Les prestations du séjour")} ↓
+              </a>
+            </div>
+            <p className="detail-manual-note">
               {t(
-                "Pending Owner approval · no online payment · no live availability guarantee",
-                "En attente de l’accord du propriétaire · aucun paiement en ligne · disponibilités vérifiées manuellement",
+                "Pending Owner approval · no online payment",
+                "Validation du propriétaire requise · aucun paiement en ligne",
               )}
             </p>
           </div>
-          <aside className="surf-package-summary">
-            <p className="eyebrow">{t("The essentials", "L’essentiel")}</p>
-            <h2>{p.priceLabel}</h2>
-            <p>{p.pricingLabel}</p>
-            <dl>
-              <dt>{t("Duration", "Durée")}</dt>
-              <dd>{p.unitLabel}</dd>
-              <dt>{t("Surf levels", "Niveaux de surf")}</dt>
-              <dd>{p.surfLevel}</dd>
-            </dl>
-          </aside>
+          {images[0] ? (
+            <div className="detail-hero-image">
+              <CmsPhoto
+                src={images[0].image_url}
+                alt={fr ? p.name : images[0].alt_text}
+                position={images[0].focal_position}
+                mobilePosition={images[0].mobile_focal_position}
+                priority
+                sizes="(max-width:850px) 100vw,50vw"
+              />
+            </div>
+          ) : (
+            <div className="detail-photo-fallback">
+              <span>Tifawave.</span>
+              <p>
+                {t(
+                  "Your surf stay in Tamraght",
+                  "Votre séjour surf à Tamraght",
+                )}
+              </p>
+            </div>
+          )}
         </Container>
       </section>
-      {images[0] && (
-        <Container>
-          <div className="sp-hero-photo">
-            <CmsPhoto
-              src={images[0].image_url}
-              alt={fr ? p.name : images[0].alt_text}
-              position={images[0].focal_position}
-              mobilePosition={images[0].mobile_focal_position}
-            />
+      <Container>
+        <nav
+          className="detail-page-nav"
+          aria-label={t("Package details", "Détails du séjour")}
+        >
+          <a href="#package-inclusions">{t("Inclusions", "Prestations")}</a>
+          <a href="#package-rooms">{t("Accommodation", "Hébergement")}</a>
+          {c.extras.length > 0 && (
+            <a href="#package-extras">
+              {t("Optional extras", "Options facultatives")}
+            </a>
+          )}
+        </nav>
+        <section id="package-inclusions" className="detail-section">
+          <div className="detail-section-heading">
+            <p className="eyebrow">
+              {t(
+                "Your stay, clearly explained",
+                "Votre séjour, en toute clarté",
+              )}
+            </p>
+            <h2>
+              {t("Know what’s included.", "Les prestations en un coup d’œil.")}
+            </h2>
           </div>
-        </Container>
-      )}
-      <section className="surf-package-detail-body">
-        <Container>
-          <div className="sp-two">
-            <section>
-              <h2>{t("Included in this offer", "Inclus dans cette offre")}</h2>
-              <ul>
-                {p.inclusions.map((x) => (
-                  <li key={x}>{x}</li>
-                ))}
-              </ul>
-            </section>
-            <section>
-              <h2>{t("Not included", "Non inclus")}</h2>
-              {(fr ? c.exclusionsFr : c.exclusions).length ? (
+          <div className="detail-service-grid">
+            <section className="detail-service-card">
+              <span className="detail-status-label">
+                ✓ {t("Included", "Inclus")}
+              </span>
+              <h3>{t("Part of your stay", "Compris dans votre séjour")}</h3>
+              {included.length ? (
                 <ul>
-                  {(fr ? c.exclusionsFr : c.exclusions).map((x) => (
-                    <li key={x}>{x}</li>
+                  {included.map((x, i) => (
+                    <li key={i}>
+                      <span aria-hidden="true">✓</span>
+                      <div>
+                        <strong>{x.text}</strong>
+                        {x.note && <small>{x.note}</small>}
+                      </div>
+                    </li>
                   ))}
                 </ul>
               ) : (
                 <p>
                   {t(
-                    "Ask us to confirm any additional services before booking.",
-                    "Faites confirmer tout service supplémentaire avant réservation.",
+                    "We’ll confirm the included services in your personal quote.",
+                    "Nous préciserons les prestations incluses dans votre devis personnalisé.",
                   )}
                 </p>
               )}
             </section>
+            {conditional.length > 0 && (
+              <section className="detail-service-card is-conditional">
+                <span className="detail-status-label">
+                  ○ {t("To confirm", "À confirmer")}
+                </span>
+                <h3>
+                  {t(
+                    "Let’s agree the details",
+                    "Des détails à convenir ensemble",
+                  )}
+                </h3>
+                <p>
+                  {t(
+                    "Arrangements and any extra cost are confirmed in your personal quote.",
+                    "L’organisation et les éventuels suppléments sont précisés dans votre devis personnalisé.",
+                  )}
+                </p>
+                <ul>
+                  {conditional.map((x, i) => (
+                    <li key={i}>
+                      <span aria-hidden="true">○</span>
+                      <div>
+                        <strong>{x.text}</strong>
+                        {x.note && <small>{x.note}</small>}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
           </div>
-          <section>
+          <details className="detail-disclosure">
+            <summary>
+              {t(
+                "Not included & other conditions",
+                "Non inclus et autres conditions",
+              )}
+              <span aria-hidden="true">+</span>
+            </summary>
+            {excluded.length ? (
+              <ul>
+                {excluded.map((x, i) => (
+                  <li key={i}>{x}</li>
+                ))}
+              </ul>
+            ) : (
+              <p>
+                {t(
+                  "Ask us to confirm any additional services before booking.",
+                  "Faites confirmer tout service supplémentaire avant réservation.",
+                )}
+              </p>
+            )}
+          </details>
+          {p.fullDescription && (
+            <details className="detail-disclosure detail-story">
+              <summary>
+                {t("More about this stay", "En savoir plus sur ce séjour")}
+                <span aria-hidden="true">+</span>
+              </summary>
+              <p style={{ whiteSpace: "pre-wrap" }}>{p.fullDescription}</p>
+            </details>
+          )}
+        </section>
+        <section id="package-rooms" className="detail-section">
+          <div className="detail-section-heading">
+            <p className="eyebrow">
+              {t("Make yourself at home", "Installez-vous chez nous")}
+            </p>
             <h2>
-              {t("Choose your accommodation", "Choisissez votre hébergement")}
+              {t("Choose your accommodation.", "Choisissez votre hébergement.")}
             </h2>
             <p>
               {t(
-                "A preferred room option, subject to room arrangements and manual availability checks. Rates cover the full package.",
-                "Une préférence d’hébergement, sous réserve de la répartition des chambres et des vérifications manuelles. Les tarifs couvrent le séjour complet.",
+                "Choose a preference for your request. Room arrangements and availability are checked personally.",
+                "Indiquez une préférence dans votre demande. La répartition et les disponibilités sont vérifiées personnellement.",
               )}
             </p>
-            <div className="sp-variants">
-              {c.variants.map((v) => (
+          </div>
+          <div className="detail-variant-grid">
+            {c.variants.map((v) => {
+              const room = rooms.find((r) => r.id === v.roomId),
+                rate = packageStartingPrice(
+                  { ...c, variants: [v] },
+                  propertyToday(),
+                );
+              return (
                 <article key={v.id}>
+                  <span className="detail-variant-capacity">
+                    {v.minGuests || 1}–{v.maxGuests || 23}{" "}
+                    {t("guests", "voyageurs")} · {p.unitLabel}
+                  </span>
                   <h3>{localized(v.label, v.labelFr, locale)}</h3>
-                  <p>
-                    {(() => {
-                      const rate = packageStartingPrice(
-                        { ...c, variants: [v] },
-                        propertyToday(),
-                      );
-                      return rate
-                        ? (fr ? "À partir de " : "From ") +
-                            money(rate.priceCents, c.currency, locale)
-                        : money(null, c.currency, locale);
-                    })()}
+                  {room?.bathroomType && (
+                    <RoomBathroom type={room.bathroomType} locale={locale} />
+                  )}
+                  <p className="detail-variant-price">
+                    {rate
+                      ? (fr ? "À partir de " : "From ") +
+                        money(rate.priceCents, c.currency, locale)
+                      : money(null, c.currency, locale)}
+                    <small>{pricingBasis(c.pricingBasis, locale)}</small>
                   </p>
-                  <small>{p.pricingLabel}</small>
                   <Link
                     className="btn btn-secondary"
                     href={
@@ -252,44 +391,73 @@ export async function PackageDetail({
                     {t("Request this option", "Demander cette option")} →
                   </Link>
                 </article>
-              ))}
+              );
+            })}
+          </div>
+        </section>
+        {c.extras.length > 0 && (
+          <section id="package-extras" className="detail-section">
+            <div className="detail-section-heading">
+              <p className="eyebrow">{t("A little extra", "Un petit plus")}</p>
+              <h2>
+                {t("Make the stay your own.", "Un séjour à votre image.")}
+              </h2>
+              <p>
+                {t(
+                  "Optional experiences and services, selected in your request and confirmed separately.",
+                  "Des expériences et prestations facultatives, à sélectionner dans votre demande et à confirmer séparément.",
+                )}
+              </p>
             </div>
+            <details className="detail-disclosure detail-extras">
+              <summary>
+                {t(
+                  `Explore ${c.extras.length} optional extras`,
+                  `Découvrir les ${c.extras.length} options`,
+                )}
+                <span aria-hidden="true">+</span>
+              </summary>
+              <div className="detail-extra-grid">
+                {c.extras.map((e) => {
+                  const [title, ...notes] = localized(
+                    e.label,
+                    e.labelFr,
+                    locale,
+                  ).split(" · ");
+                  return (
+                    <article key={e.id}>
+                      <h3>{title}</h3>
+                      {notes.length > 0 && <p>{notes.join(" · ")}</p>}
+                      <div className="detail-extra-price">
+                        {money(e.priceCents, c.currency, locale)}
+                        <small>{pricingBasis(e.basis, locale)}</small>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </details>
           </section>
-          {c.extras.length > 0 && (
-            <section>
-              <h2>{t("Optional extras", "Options facultatives")}</h2>
-              <ul>
-                {c.extras.map((e) => (
-                  <li key={e.id}>
-                    {localized(e.label, e.labelFr, locale)} ·{" "}
-                    {money(e.priceCents, c.currency, locale)} ·{" "}
-                    {pricingBasis(e.basis, locale)}
-                  </li>
-                ))}
-              </ul>
+        )}
+        {c.seasons.length > 0 && (
+          <section className="detail-section">
+            <details className="detail-disclosure">
+              <summary>
+                {t("Seasonal rates", "Tarifs saisonniers")}
+                <span aria-hidden="true">+</span>
+              </summary>
               <p>
                 {t(
-                  "Select extras in your request. All extras require confirmation.",
-                  "Sélectionnez les options dans votre demande. Elles doivent être confirmées.",
+                  "Your arrival date selects the rate for the whole stay. The start date is included; the end date is excluded. Ask for a personal quote where no amount is shown.",
+                  "La date d’arrivée détermine le tarif du séjour complet. La date de début est incluse ; la date de fin est exclue. Demandez un devis lorsqu’aucun montant n’est indiqué.",
                 )}
               </p>
-            </section>
-          )}
-          {c.seasons.length > 0 && (
-            <section>
-              <h2>{t("Seasonal rates", "Tarifs saisonniers")}</h2>
-              <p>
-                {t(
-                  "Your arrival date selects the rate for the whole stay. Start included, end excluded. A personal quote is required where no amount is shown.",
-                  "La date d’arrivée détermine le tarif du séjour complet. Début inclus, fin exclue. Un devis est nécessaire lorsqu’aucun montant n’est indiqué.",
-                )}
-              </p>
-              <div className="sp-variants">
+              <div className="detail-variant-grid">
                 {c.seasons.map((s) => (
                   <article key={s.id}>
-                    <p>
-                      {s.start} → {s.end}
-                    </p>
+                    <span className="detail-variant-capacity">
+                      {formatDate(s.start)} → {formatDate(s.end)}
+                    </span>
                     <h3>
                       {s.variantId
                         ? localized(
@@ -298,22 +466,27 @@ export async function PackageDetail({
                               .labelFr,
                             locale,
                           )
-                        : t("All room options", "Toutes les variantes")}
+                        : t("All room options", "Tous les hébergements")}
                     </h3>
-                    <p>
+                    <p className="detail-variant-price">
                       {money(
                         c.chargesIncluded ? s.priceCents : null,
                         c.currency,
                         locale,
                       )}
+                      <small>{pricingBasis(c.pricingBasis, locale)}</small>
                     </p>
-                    <small>{p.pricingLabel}</small>
                   </article>
                 ))}
               </div>
-            </section>
-          )}
-          {images.length > 1 && (
+            </details>
+          </section>
+        )}
+        {images.length > 1 && (
+          <section className="detail-section">
+            <div className="detail-section-heading">
+              <h2>{t("A closer look.", "Un peu plus près.")}</h2>
+            </div>
             <div className="room-detail-gallery-grid">
               {images.slice(1).map((i) => (
                 <div className="room-detail-gallery-image" key={i.id}>
@@ -326,29 +499,39 @@ export async function PackageDetail({
                 </div>
               ))}
             </div>
-          )}
-          <section className="sp-request">
+          </section>
+        )}
+        <section className="detail-final-request">
+          <div>
+            <p className="eyebrow">
+              {t(
+                "Your next wave starts here",
+                "Votre prochaine vague commence ici",
+              )}
+            </p>
             <h2>
               {t(
-                "Send your dates. We’ll check personally.",
-                "Envoyez vos dates. Nous vérifierons personnellement.",
+                "Send your dates. We’ll take it from here.",
+                "Envoyez vos dates. Nous prenons le relais.",
               )}
             </h2>
             <p>
               {t(
-                "Your request does not hold a room or bed. The Owner checks Booking.com, Airbnb and separately managed reservations before confirming your stay and services.",
-                "Votre demande ne bloque ni chambre ni lit. Le propriétaire vérifie Booking.com, Airbnb et les réservations gérées séparément avant de confirmer le séjour et ses prestations.",
+                "Your request stays Pending. The Owner checks Booking.com, Airbnb and existing reservations, then confirms your stay, services and price personally. No online payment.",
+                "Votre demande reste en attente. Le propriétaire vérifie Booking.com, Airbnb et les réservations existantes, puis confirme personnellement le séjour, les prestations et le tarif. Aucun paiement en ligne.",
               )}
             </p>
-            <Link
-              className="btn btn-primary"
-              href={path("/book") + "?packageId=" + p.id}
-            >
-              {t("Request This Package", "Demander ce séjour")}
-            </Link>
-          </section>
-        </Container>
-      </section>
+          </div>
+          <Link className="btn btn-primary" href={requestHref}>
+            {t("Request This Package", "Demander ce séjour")} →
+          </Link>
+        </section>
+      </Container>
+      <MobileBookingBar
+        whatsappHref={getWhatsappHref(settings)}
+        bookingHref={requestHref}
+        bookingIntent="surf"
+      />
     </main>
   );
 }

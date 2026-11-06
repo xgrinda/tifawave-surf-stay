@@ -134,3 +134,45 @@ export function packageHighlights(
     ];
   });
 }
+
+/** Full detail lists retain every public inclusion and its qualification. */
+export function packageInclusionDetails(
+  lines: string[],
+  locale: Locale,
+  description = "",
+) {
+  const highlights = packageHighlights(lines, locale, description);
+  return publicPackageInclusions(lines).map((line) => {
+    const key = normalized(line);
+    const feature = features.find(
+      (f) =>
+        f.match.test(key) &&
+        !(f.key === "coaching" && features[4].match.test(key)),
+    );
+    const related = highlights.find((h) => h.key === feature?.key);
+    const excluded = /not included|non inclus|not available|indisponible/.test(
+      key,
+    );
+    const conditional =
+      /to confirm|on request|subject to|optional|personal quote|a confirmer|sur demande|sous reserve|facultatif|sur devis|devis personnalise/.test(
+        key,
+      ) || related?.status === "quote";
+    const [heading, ...notes] = line.split(/\s*:\s*/);
+    let text = heading.trim();
+    if (/^1\s/.test(text))
+      text = text
+        .replace(/dinners/i, "dinner")
+        .replace(/dîners/i, "dîner")
+        .replace(/marocains/i, "marocain")
+        .replace(/faits maison/i, "fait maison");
+    return {
+      text,
+      note: notes.join(": "),
+      status: excluded
+        ? ("excluded" as const)
+        : conditional
+          ? ("quote" as const)
+          : ("included" as const),
+    };
+  });
+}

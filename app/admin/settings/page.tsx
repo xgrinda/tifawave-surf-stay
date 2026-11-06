@@ -183,7 +183,9 @@ export default async function AdminSettingsPage({
                   type="url"
                 />
                 <small>
-                  Optional. Used only on About and FAQ for the lazy-loaded map.
+                  Optional. Used on the homepage, About and FAQ. In Google Maps,
+                  choose Share → Embed a map, then paste only the iframe src URL
+                  here.
                 </small>
               </label>
             </div>

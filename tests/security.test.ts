@@ -208,3 +208,42 @@ test("emails escape guest HTML and receipts cannot imply an approved stay", () =
     ),
   );
 });
+
+import { approvedGoogleMapsEmbedUrl } from "../lib/google-business/map-links";
+import { GoogleMap } from "../components/location/google-map";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+test("map embeds only allow Google's HTTPS map delivery, without redirect endpoints or private hosts", () => {
+  const valid =
+    "https://www.google.com/maps/embed?pb=!1m18!2sTifawave%20Surf%20Stay";
+  assert.equal(approvedGoogleMapsEmbedUrl(valid), valid);
+  assert.ok(
+    approvedGoogleMapsEmbedUrl(
+      "https://maps.google.com/maps?q=Tifawave&output=embed",
+    ),
+  );
+  for (const unsafe of [
+    "http://www.google.com/maps/embed?pb=x",
+    "https://www.google.com.evil.invalid/maps/embed?pb=x",
+    "https://user:password@www.google.com/maps/embed?pb=x",
+    "https://www.google.com/url?q=https://127.0.0.1",
+    "https://www.google.com/maps/embed?pb=x&url=https://127.0.0.1",
+    "https://127.0.0.1/maps/embed?pb=x",
+    "https://maps.app.goo.gl/test",
+    "https://www.google.com:8080/maps/embed?pb=x",
+    "<iframe src='https://www.google.com/maps/embed?pb=x'></iframe>",
+  ])
+    assert.equal(approvedGoogleMapsEmbedUrl(unsafe), null, unsafe);
+  const html = renderToStaticMarkup(
+    createElement(GoogleMap, { url: valid, title: "Tifawave location map" }),
+  );
+  assert.match(html, /<iframe/);
+  assert.match(html, /loading="lazy"/);
+  assert.match(html, /title="Tifawave location map"/);
+  assert.equal(
+    renderToStaticMarkup(
+      createElement(GoogleMap, { url: "https://127.0.0.1/", title: "Map" }),
+    ),
+    "",
+  );
+});

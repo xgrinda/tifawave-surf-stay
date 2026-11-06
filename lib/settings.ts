@@ -1,3 +1,4 @@
+import { approvedGoogleMapsEmbedUrl } from "@/lib/google-business/map-links";
 import { cache } from "react";
 import { unstable_noStore as noStore } from "next/cache";
 import { createSupabaseStaffClient } from "@/lib/supabase/staff";
@@ -93,6 +94,16 @@ function optionalUrl(value: string): string {
   return url.toString();
 }
 
+function googleEmbedUrl(value: string): string {
+  if (!value.trim()) return "";
+  const url = approvedGoogleMapsEmbedUrl(value);
+  if (!url)
+    throw new Error(
+      "Use an HTTPS Google Maps embed URL, such as https://www.google.com/maps/embed?pb=… . Paste the iframe src URL, not the full HTML.",
+    );
+  return url;
+}
+
 function googleUrl(value: string): string {
   if (!value.trim()) return "";
   const url = approvedGoogleReviewUrl(value);
@@ -142,7 +153,7 @@ function normalizeSettings(input: UpdateWebsiteSettingsInput): WebsiteSettings {
     whatsappNumber: optionalText(input.whatsappNumber),
     address: requiredText(input.address, DEFAULT_WEBSITE_SETTINGS.address),
     googleMapsUrl: optionalUrl(input.googleMapsUrl),
-    googleMapsEmbedUrl: optionalUrl(input.googleMapsEmbedUrl),
+    googleMapsEmbedUrl: googleEmbedUrl(input.googleMapsEmbedUrl),
     googleBusinessAccountId: optionalText(input.googleBusinessAccountId),
     googleBusinessLocationId: optionalText(input.googleBusinessLocationId),
     googleReviewsProfileUrl: googleUrl(input.googleReviewsProfileUrl),

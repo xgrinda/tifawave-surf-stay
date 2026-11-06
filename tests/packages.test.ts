@@ -371,3 +371,58 @@ test("per-room rates count the configured rooms once and reject invalid occupanc
   assert.equal(packageEstimate(c, "double", "2031-08-01", 5), null);
   assert.equal(packageEstimate(c, "double", "2031-08-01", 2, ["forged"]), null);
 });
+
+import { packageInclusionDetails } from "../lib/packages/card-content";
+import { roomStayFacts } from "../lib/room-stay-facts";
+test("detail inclusions separate confirmed services from provider conditions without dropping public terms", () => {
+  const lines = [
+    "3 nights’ accommodation",
+    "3 breakfasts",
+    "1 homemade Moroccan dinners: arrangements and cost to confirm",
+    "2 surf lessons",
+    "Wi-Fi availability to confirm",
+    "Internal planning target only: EUR 199/person",
+  ];
+  const before = JSON.stringify(lines);
+  const result = packageInclusionDetails(
+    lines,
+    "en",
+    "Accommodation and breakfast are confirmed. Coaching and lessons are subject to provider confirmation in your personal quote.",
+  );
+  assert.equal(result.length, 5);
+  assert.deepEqual(
+    result.map((r) => r.status),
+    ["included", "included", "quote", "quote", "quote"],
+  );
+  assert.equal(result[2].text, "1 homemade Moroccan dinner");
+  assert.equal(result[2].note, "arrangements and cost to confirm");
+  assert.equal(JSON.stringify(lines), before);
+  assert.ok(!JSON.stringify(result).includes("199"));
+  const french = packageInclusionDetails(
+    ["1 dîners marocains faits maison : coût à confirmer"],
+    "fr",
+  );
+  assert.equal(french[0].text, "1 dîner marocain fait maison");
+});
+test("room facts distinguish individual dorm beds and never invent unknown beds or amenities", () => {
+  const dorm = roomStayFacts(
+    { slug: "4-bed-dorm-room", maxGuests: 1, bathroomType: "shared_dorm" },
+    true,
+    "fr",
+  );
+  assert.ok(dorm.some((f) => f.value.includes("1 voyageur par lit")));
+  assert.ok(dorm.some((f) => f.value.includes("4 lits")));
+  assert.ok(!JSON.stringify(dorm).includes("1 voyageurs"));
+  const unknown = roomStayFacts(
+    { slug: "unknown", maxGuests: 3, bathroomType: "unknown" },
+    false,
+    "en",
+  );
+  assert.equal(unknown.length, 1);
+  const family = roomStayFacts(
+    { slug: "family-room-4p", maxGuests: 4, bathroomType: "private" },
+    true,
+    "en",
+  );
+  assert.ok(family.some((f) => f.value === "One double bed + two single beds"));
+});

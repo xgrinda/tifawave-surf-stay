@@ -3,22 +3,36 @@
 import { usePathname } from "next/navigation";
 import { getLocaleFromPathname, i18n, localizedPath } from "@/lib/i18n";
 
-export function MobileBookingBar({ whatsappHref }: { whatsappHref: string }) {
+export function MobileBookingBar({
+  whatsappHref,
+  bookingHref,
+  bookingIntent = "room",
+}: {
+  whatsappHref: string;
+  bookingHref?: string;
+  bookingIntent?: "room" | "surf";
+}) {
   const pathname = usePathname();
   const locale = getLocaleFromPathname(pathname);
   const copy = i18n[locale];
 
   return (
-    <aside className="mobile-booking-bar" aria-label={copy.aria.quickBooking}>
+    <aside
+      className={
+        "mobile-booking-bar" + (bookingHref ? " detail-booking-bar" : "")
+      }
+      aria-label={copy.aria.quickBooking}
+    >
       <a
         className="btn btn-primary"
         href={
-          /^\/(fr\/)?book$/.test(pathname)
+          bookingHref ||
+          (/^\/(fr\/)?book$/.test(pathname)
             ? "#booking-request"
-            : localizedPath(locale, "/book")
+            : localizedPath(locale, "/book"))
         }
         data-home-cta="mobile_request"
-        data-intent="room"
+        data-intent={bookingIntent}
       >
         {copy.nav.book}
       </a>

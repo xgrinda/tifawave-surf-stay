@@ -1,3 +1,5 @@
+import { GoogleMap } from "@/components/location/google-map";
+import { approvedGoogleMapsEmbedUrl } from "@/lib/google-business/map-links";
 import type { Content } from "@/lib/content/schema";
 import { roomSlotBySlug, defaultRoomOrder } from "@/lib/content/home-slots";
 import { FeaturedPackages } from "./featured-packages";
@@ -1072,12 +1074,23 @@ export async function HomePage({
               )}
               <h2 id="hc-location-title">{location.heading}</h2>
               <p>{location.body}</p>
-              <div className="hc-map-card">
-                <span>Tamraght</span>
-                <small>{t("Atlantic Morocco", "Maroc atlantique")}</small>
-                <div className="hc-map-line" aria-hidden="true" />
-                <strong>Tifawave.</strong>
-              </div>
+              {approvedGoogleMapsEmbedUrl(settings.googleMapsEmbedUrl) ? (
+                <GoogleMap
+                  url={settings.googleMapsEmbedUrl}
+                  title={t(
+                    "Tifawave Surf Stay location map",
+                    "Carte de localisation de Tifawave Surf Stay",
+                  )}
+                  className="hc-location-map"
+                />
+              ) : (
+                <div className="hc-map-card">
+                  <span>Tamraght</span>
+                  <small>{t("Atlantic Morocco", "Maroc atlantique")}</small>
+                  <div className="hc-map-line" aria-hidden="true" />
+                  <strong>Tifawave.</strong>
+                </div>
+              )}
               <div className="hc-location-links">
                 {settings.googleMapsUrl && (
                   <a
