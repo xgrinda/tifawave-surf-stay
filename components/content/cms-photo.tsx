@@ -1,7 +1,9 @@
 "use client";
-import Image, { getImageProps } from "next/image";
+import { getImageProps } from "next/image";
+import { ResponsiveImage as Image } from "@/components/content/responsive-image";
+import { imageDeliveryOptions } from "@/lib/image-delivery";
 import { useState } from "react";
-import { isExternalImageUrl, isPublicImageUrl } from "@/lib/image-url";
+import { isPublicImageUrl } from "@/lib/image-url";
 export function CmsPhoto({
   src,
   alt,
@@ -36,7 +38,7 @@ export function CmsPhoto({
           <source
             media="(max-width:760px)"
             srcSet={
-              getImageProps({ src: mobileSrc, alt: "", fill: true, sizes, unoptimized: isExternalImageUrl(mobileSrc) })
+              getImageProps({ src: mobileSrc, alt: "", fill: true, sizes, ...imageDeliveryOptions(mobileSrc) })
                 .props.srcSet || mobileSrc
             }
             sizes={sizes}
@@ -44,7 +46,6 @@ export function CmsPhoto({
         )}
         <Image
           src={src}
-          unoptimized={isExternalImageUrl(src)}
           alt={alt}
           fill
           priority={priority}

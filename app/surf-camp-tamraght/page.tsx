@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { Container } from "@/components/primitives/container";
 export const metadata = {
-  title: "Surf stay in Tamraght, Morocco | Tifawave",
+  title: "Surf House Stay in Tamraght | Tifawave Surf Stay",
   description:
-    "Explore Tifawave Surf Stay in Tamraght: rooms, individual dorm beds, surf package enquiries and group stays with personal manual confirmation.",
+    "Plan your Tamraght surf stay at Tifawave. Explore private rooms, dorm beds, breakfast-included stays and surf enquiries with personal confirmation.",
   alternates: { canonical: "/surf-camp-tamraght" },
 };
 export default function Page() {

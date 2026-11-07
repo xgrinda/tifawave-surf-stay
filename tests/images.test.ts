@@ -10,6 +10,7 @@ import { approvedImages, rejectedImages, imageRoot } from "./image-fixtures";
 import config from "../next.config.mjs";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { imageDeliveryOptions, cloudinaryDeliveryUrl } from "../lib/image-delivery";
 import { HeroMedia } from "../components/home/hero-media";
 
 test("only the Owner's Cloudinary image uploads and safe transforms are allowed", () => {
@@ -88,8 +89,35 @@ test("actual bilingual hero sources bypass optimization for external originals a
   const desktop = approvedImages[0], mobile = approvedImages[1];
   for (const locale of ["en","fr"] as const) {
     const html = renderToStaticMarkup(createElement(HeroMedia,{image:desktop,mobileImage:mobile,alt:"Photo",video:"",locale}));
-    assert.ok(html.includes(desktop));
-    assert.ok(html.includes(mobile),"mobile source must not disappear when srcSet is unoptimized");
+    assert.ok(html.includes(cloudinaryDeliveryUrl(desktop,2400).split("/image/upload/")[1].split("/").at(-1)!));
+    assert.ok(html.includes(cloudinaryDeliveryUrl(mobile,1080).split("/image/upload/")[1].split("/").at(-1)!),"mobile source must not disappear");
+    assert.ok(html.includes("srcSet="));
+    assert.ok(html.includes("f_auto,q_auto"));
     assert.ok(!html.includes("/_next/image"),"external delivery never goes through the optimizer");
   }
+});
+
+
+test("Cloudinary delivery preserves owned asset IDs, transforms, alpha format selection and browser-only variants", () => {
+  const src = imageRoot + "v123/folder/property.png";
+  const url = cloudinaryDeliveryUrl(src, 640);
+  assert.equal(url, imageRoot + "c_limit,w_640,f_auto,q_auto/v123/folder/property.png");
+  assert.ok(isCloudinaryImageUrl(url));
+  assert.ok(!url.includes("c_fill"));
+  assert.ok(!url.includes("f_jpg"));
+  const edited = imageRoot + "c_fill,w_1200,h_800/v123/selected.jpg";
+  assert.equal(cloudinaryDeliveryUrl(edited,750),imageRoot + "c_fill,w_1200,h_800/c_limit,w_750,f_auto,q_auto/v123/selected.jpg");
+  for (const src of rejectedImages) assert.equal(cloudinaryDeliveryUrl(src,640),src);
+  for (const width of [0, -1, 3841, 1.5]) assert.throws(()=>cloudinaryDeliveryUrl(src,width));
+  const props = getImageProps({src,alt:"Owner photo",fill:true,sizes:"(max-width:760px) 100vw,50vw",...imageDeliveryOptions(src)}).props;
+  assert.ok(props.srcSet?.includes("w_640,f_auto,q_auto"));
+  assert.ok(props.srcSet?.includes("w_3840,f_auto,q_auto"));
+  assert.ok(!props.src.includes("/_next/image"));
+  assert.equal(props.loading,"lazy");
+  const html = renderToStaticMarkup(createElement("img",getImageProps({src,alt:"Owner photo",width:180,height:64,...imageDeliveryOptions(src)}).props));
+  assert.ok(html.includes("srcSet="));
+  assert.ok(!html.includes("/_next/image"));
+  const storage="https://tuzefzcosvvhzffbxhpm.supabase.co/storage/v1/object/public/tifawave-media/existing.webp";
+  assert.equal(imageDeliveryOptions(storage).unoptimized,false);
+  assert.equal(imageDeliveryOptions(storage).loader,undefined);
 });

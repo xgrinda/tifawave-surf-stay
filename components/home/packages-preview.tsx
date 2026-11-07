@@ -1,6 +1,5 @@
-import { isExternalImageUrl } from "@/lib/image-url";
 import Link from "next/link";
-import Image from "next/image";
+import { ResponsiveImage as Image } from "@/components/content/responsive-image";
 import { Container } from "@/components/primitives/container";
 import { focalPositionToCss } from "@/lib/image-position";
 import type { HomeImage } from "@/lib/home-media";
@@ -79,7 +78,7 @@ export async function PackagesPreview({
                         fill
                         quality={82}
                         sizes="(max-width: 880px) 100vw, 33vw"
-                        src={image.imageUrl} unoptimized={isExternalImageUrl(image.imageUrl)}
+                        src={image.imageUrl}
                         style={{
                           objectPosition: focalPositionToCss(
                             image.focalPosition,

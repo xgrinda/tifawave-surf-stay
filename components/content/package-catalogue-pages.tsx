@@ -52,6 +52,7 @@ export async function PackageList({ locale }: { locale: Locale }) {
               <article className="surf-package-panel" key={p.id}>
                 {p.cover && (
                   <CmsPhoto
+                    sizes="(max-width:700px) 100vw,50vw"
                     src={p.cover.url}
                     alt={p.cover.alt}
                     position={p.cover.position}
@@ -491,6 +492,7 @@ export async function PackageDetail({
               {images.slice(1).map((i) => (
                 <div className="room-detail-gallery-image" key={i.id}>
                   <CmsPhoto
+                    sizes="(max-width:880px) 100vw,33vw"
                     src={i.image_url}
                     alt={fr ? p.name : i.alt_text}
                     position={i.focal_position}

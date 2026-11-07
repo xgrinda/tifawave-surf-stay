@@ -1,8 +1,7 @@
 "use client";
-import { isExternalImageUrl } from "@/lib/image-url";
 
 import Link from "next/link";
-import Image from "next/image";
+import { ResponsiveImage as Image } from "@/components/content/responsive-image";
 import { usePathname } from "next/navigation";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { Container } from "@/components/primitives/container";
@@ -71,7 +70,7 @@ export function SiteFooter({
             >
               {logo ? (
                 <Image
-                  src={logo} unoptimized={isExternalImageUrl(logo)}
+                  src={logo}
                   alt="Tifawave Surf Stay"
                   width={180}
                   height={64}

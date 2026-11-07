@@ -3,7 +3,7 @@ import { getImageProps } from "next/image";
 import { useEffect, useRef, useState } from "react";
 import type { Locale } from "@/lib/i18n";
 import { focalPositionToCss, type FocalPosition } from "@/lib/image-position";
-import { isExternalImageUrl } from "@/lib/image-url";
+import { imageDeliveryOptions } from "@/lib/image-delivery";
 export function HeroMedia({
   image,
   alt,
@@ -89,7 +89,7 @@ export function HeroMedia({
                   height: 1350,
                   sizes: "100vw",
                   quality: 80,
-                  unoptimized: isExternalImageUrl(mobileImage),
+                  ...imageDeliveryOptions(mobileImage),
                 }).props.srcSet || mobileImage
               }
             />
@@ -98,7 +98,7 @@ export function HeroMedia({
           <img
             {...getImageProps({
               src: image,
-              unoptimized: isExternalImageUrl(image),
+              ...imageDeliveryOptions(image),
               alt,
               width: 2400,
               height: 1350,

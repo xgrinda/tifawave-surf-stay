@@ -1,3 +1,8 @@
+import {
+  pageSeoDefaults,
+  roomSeoDefaults,
+  withTifawaveBrand,
+} from "@/lib/seo-metadata";
 import "./detail-pages.css";
 import { roomStayFacts } from "@/lib/room-stay-facts";
 import { MobileBookingBar } from "@/components/layout/mobile-booking-bar";
@@ -85,21 +90,18 @@ export async function catalogueMetadata(
     : null;
   const path =
     (kind === "room" ? "/stay" : "/surf/packages") + (slug ? "/" + slug : "");
+  const defaults =
+    item && kind === "room" && "maxGuests" in item
+      ? roomSeoDefaults(item, locale, (await getWebsiteSettings()).breakfastIncluded)
+      : !slug
+        ? pageSeoDefaults[kind === "room" ? "stay" : "packages"][locale]
+        : null;
   return {
-    title:
-      (c?.seoTitle ||
-        c?.title ||
-        item?.name ||
-        (kind === "room"
-          ? locale === "fr"
-            ? "Chambres et lits"
-            : "Rooms & beds"
-          : locale === "fr"
-            ? "Séjours surf"
-            : "Surf packages")) + " | Tifawave",
-    description:
-      c?.seoDescription ||
-      c?.summary ||
+    title: withTifawaveBrand(
+      c?.seoTitle || defaults?.title || c?.title ||
+      (item ? `${item.name} ${locale === "fr" ? "à" : "in"} Tamraght` : "Tifawave"),
+    ),
+    description: c?.seoDescription || defaults?.description || c?.summary ||
       (item && "shortDescription" in item ? item.shortDescription : null) ||
       (locale === "fr"
         ? "Tifawave Surf Stay · Tamraght, Maroc. Demandes de séjour et confirmation manuelle."
@@ -146,6 +148,7 @@ export async function RoomList({ locale }: { locale: Locale }) {
                 {room.images[0] && (
                   <div className="stay-room-card-media">
                     <CmsPhoto
+                      sizes="(max-width:880px) 100vw,33vw"
                       src={room.images[0].imageUrl}
                       alt={fr ? room.name : room.images[0].altText || room.name}
                       priority={index === 0}
@@ -356,6 +359,7 @@ export async function RoomDetail({
             <div className="room-detail-primary-image detail-hero-image">
               <CmsPhoto
                 src={room.images[0].imageUrl}
+                sizes="(max-width:850px) 100vw,50vw"
                 alt={fr ? room.name : room.images[0].altText || room.name}
                 priority
                 position={focalPositionToCss(room.images[0].focalPosition)}
@@ -412,6 +416,7 @@ export async function RoomDetail({
               {room.images.slice(1).map((image) => (
                 <div className="room-detail-gallery-image" key={image.id}>
                   <CmsPhoto
+                    sizes="(max-width:880px) 100vw,33vw"
                     src={image.imageUrl}
                     alt={fr ? room.name : image.altText || room.name}
                     position={focalPositionToCss(image.focalPosition)}

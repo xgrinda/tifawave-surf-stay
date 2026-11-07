@@ -1,3 +1,4 @@
+import { pageSeoDefaults, withTifawaveBrand } from "@/lib/seo-metadata";
 import "@/components/booking/request-experience.css";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -40,12 +41,16 @@ export async function enquiryMetadata(
   locale: Locale,
 ): Promise<Metadata> {
   const c = await publishedContent("page", area, locale);
+  const defaults =
+    area === "groups" || area === "contact"
+      ? pageSeoDefaults[area][locale]
+      : null;
   return {
-    title:
-      (c?.seoTitle || c?.title || titles[area][locale === "fr" ? 1 : 0]) +
-      " | Tifawave",
+    title: withTifawaveBrand(
+      c?.seoTitle || defaults?.title || c?.title || titles[area][locale === "fr" ? 1 : 0],
+    ),
     description:
-      c?.seoDescription || c?.summary || intro[area][locale === "fr" ? 1 : 0],
+      c?.seoDescription || defaults?.description || c?.summary || intro[area][locale === "fr" ? 1 : 0],
     alternates: {
       canonical: localizedPath(locale, "/" + area),
       languages: { en: "/" + area, fr: "/fr/" + area },

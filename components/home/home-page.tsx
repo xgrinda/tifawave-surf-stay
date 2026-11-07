@@ -452,6 +452,7 @@ export async function HomePage({
                     <div className="hc-room-photo">
                       {selected || img ? (
                         <CmsPhoto
+                          sizes="(max-width:760px) 100vw,(max-width:1100px) 50vw,33vw"
                           src={
                             selected?.imageUrl ||
                             doc?.heroImage ||

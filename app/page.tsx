@@ -1,3 +1,4 @@
+import { pageSeoDefaults } from "@/lib/seo-metadata";
 import { getBranding } from "@/lib/content/branding";
 import type { Metadata } from "next";
 import { HomePage } from "@/components/home/home-page";
@@ -10,11 +11,11 @@ export async function generateMetadata(): Promise<Metadata> {
     title:
       content?.seoTitle ||
       branding.titleEn ||
-      "Tifawave Surf Stay | Rooms & Surf in Tamraght",
+      pageSeoDefaults.home.en.title,
     description:
       content?.seoDescription ||
       branding.descriptionEn ||
-      "Come for the waves. Stay for the vibes. Explore rooms, breakfast-included stays, surf enquiries and group trips in Tamraght. Personal booking approval.",
+      pageSeoDefaults.home.en.description,
     alternates: {
       canonical: getSiteUrl() + "",
       languages: { en: getSiteUrl(), fr: getSiteUrl() + "/fr" },
